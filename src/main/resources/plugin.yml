@@ -1,0 +1,4 @@
+name: RedeemX
+version: '1.0-EAP'
+main: me.justlime.redeemX.RedeemX
+api-version: '1.21'
