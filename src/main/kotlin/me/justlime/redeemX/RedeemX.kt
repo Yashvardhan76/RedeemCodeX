@@ -16,7 +16,7 @@ class RedeemX : JavaPlugin() {
         redeemCodeDao.createTable()
 
         // Register commands
-        getCommand("rxc")?.setExecutor(RedeemCommand(this))
+        getCommand("rcx")?.setExecutor(RedeemCommand(this))
 
         logger.info("RedeemX Plugin has been enabled!")
     }

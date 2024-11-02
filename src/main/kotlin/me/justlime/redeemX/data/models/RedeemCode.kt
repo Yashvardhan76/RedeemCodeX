@@ -13,5 +13,4 @@ data class RedeemCode(
     val permission: String?,
     val secureCode: String?,
     val specificPlayerId: String?,
-    val guiEditMode: Boolean
 )

@@ -21,14 +21,17 @@ class RedeemCommand(private val plugin: RedeemX) : CommandExecutor {
             "delete" -> handleDelete(sender, args)
             "modify" -> handleModify(sender, args)
             "info" -> handleInfo(sender)
+            else -> sender.sendMessage("Unknown subcommand. Use 'gen', 'delete', 'modify', or 'info'.")
         }
         return true
     }
 
     private fun handleGenerate(sender: CommandSender, args: Array<out String>) {
         if (sender is Player && args.size > 2) {
-            val commands = listOf(args[1])
+            val commands = listOf(args[1])  // Assuming a single command; adjust if it should be multiple
             val codeName = args[2]
+
+            // Create the redeem code with default or example values for the other fields
             val redeemCode = RedeemCode(
                 code = codeName,
                 commands = commands,
@@ -38,15 +41,27 @@ class RedeemCommand(private val plugin: RedeemX) : CommandExecutor {
                 expiry = null,
                 permission = null,
                 secureCode = null,
-                specificPlayerId = null,
-                guiEditMode = false
+                specificPlayerId = null
             )
-            plugin.redeemCodeDao.insert(redeemCode)
-            sender.sendMessage("Code generated: $codeName")
+
+            try {
+                // Attempt to insert the code into the database
+                val success = plugin.redeemCodeDao.insert(redeemCode)
+                if (success) {
+                    sender.sendMessage("Code generated successfully: $codeName")
+                } else {
+                    sender.sendMessage("Failed to generate the code. Please try again.")
+                }
+            } catch (e: Exception) {
+                sender.sendMessage("An error occurred while generating the code.")
+                e.printStackTrace()  // Log the error to the console for debugging
+            }
+
         } else {
             sender.sendMessage("Usage: /rxc gen <commands/template> <codesize/customName>")
         }
     }
+
 
     private fun handleDelete(sender: CommandSender, args: Array<out String>) {
         // Implement deletion logic

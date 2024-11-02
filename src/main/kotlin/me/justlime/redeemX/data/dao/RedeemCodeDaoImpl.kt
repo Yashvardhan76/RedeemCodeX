@@ -14,20 +14,19 @@ class RedeemCodeDaoImpl(private val dbManager: DatabaseManager) : RedeemCodeDao 
             conn.createStatement().use { statement: Statement ->
                 statement.executeUpdate(
                     """
-                    CREATE TABLE IF NOT EXISTS redeem_codes (
-                        id INT PRIMARY KEY AUTO_INCREMENT,
-                        code VARCHAR(50) UNIQUE,
-                        commands TEXT,
-                        maxRedeems INT,
-                        maxPerPlayer INT,
-                        isEnabled BOOLEAN,
-                        expiry TIMESTAMP,
-                        permission VARCHAR(50),
-                        secureCode VARCHAR(50),
-                        specificPlayerId VARCHAR(50),
-                        guiEditMode BOOLEAN
-                    )
-                    """
+        CREATE TABLE IF NOT EXISTS redeem_codes (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            code TEXT UNIQUE,
+            commands TEXT,
+            maxRedeems INTEGER,
+            maxPerPlayer INTEGER,
+            isEnabled BOOLEAN,
+            expiry TEXT,
+            permission TEXT,
+            secureCode TEXT,
+            specificPlayerId TEXT
+        )
+        """
                 )
             }
         }
@@ -48,7 +47,6 @@ class RedeemCodeDaoImpl(private val dbManager: DatabaseManager) : RedeemCodeDao 
                 statement.setString(7, redeemCode.permission)
                 statement.setString(8, redeemCode.secureCode)
                 statement.setString(9, redeemCode.specificPlayerId)
-                statement.setBoolean(10, redeemCode.guiEditMode)
                 isInserted = statement.executeUpdate() > 0
             }
         }
@@ -97,7 +95,6 @@ class RedeemCodeDaoImpl(private val dbManager: DatabaseManager) : RedeemCodeDao 
                 statement.setString(6, redeemCode.permission)
                 statement.setString(7, redeemCode.secureCode)
                 statement.setString(8, redeemCode.specificPlayerId)
-                statement.setBoolean(9, redeemCode.guiEditMode)
                 statement.setString(10, redeemCode.code)
                 isUpdated = statement.executeUpdate() > 0
             }
@@ -141,7 +138,6 @@ class RedeemCodeDaoImpl(private val dbManager: DatabaseManager) : RedeemCodeDao 
             permission = result.getString("permission"),
             secureCode = result.getString("secureCode"),
             specificPlayerId = result.getString("specificPlayerId"),
-            guiEditMode = result.getBoolean("guiEditMode")
         )
     }
 }

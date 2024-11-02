@@ -20,7 +20,8 @@ dependencies {
     compileOnly("org.spigotmc:spigot-api:1.21.1-R0.1-SNAPSHOT")
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
 
-    implementation("mysql:mysql-connector-java:8.0.33") // MySQL connector for database access
+    implementation("org.xerial:sqlite-jdbc:3.42.0.1")
+    // MySQL connector for database access
     implementation("org.xerial:sqlite-jdbc:3.42.0") // SQLite, if using SQLite instead of MySQL
 }
 
