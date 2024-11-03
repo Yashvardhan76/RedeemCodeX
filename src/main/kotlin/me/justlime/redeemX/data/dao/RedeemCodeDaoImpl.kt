@@ -2,10 +2,7 @@ package me.justlime.redeemX.data.dao
 
 import me.justlime.redeemX.data.DatabaseManager
 import me.justlime.redeemX.data.models.RedeemCode
-import java.sql.Connection
-import java.sql.PreparedStatement
-import java.sql.ResultSet
-import java.sql.Statement
+import java.sql.*
 
 class RedeemCodeDaoImpl(private val dbManager: DatabaseManager) : RedeemCodeDao {
 
@@ -36,7 +33,7 @@ class RedeemCodeDaoImpl(private val dbManager: DatabaseManager) : RedeemCodeDao 
         var isInserted = false
         dbManager.getConnection()?.use { conn: Connection ->
             conn.prepareStatement(
-                "INSERT INTO redeem_codes (code, commands, maxRedeems, maxPerPlayer, isEnabled, expiry, permission, secureCode, specificPlayerId, guiEditMode) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+                "INSERT INTO redeem_codes (code, commands, maxRedeems, maxPerPlayer, isEnabled, expiry, permission, secureCode, specificPlayerId) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)"
             ).use { statement: PreparedStatement ->
                 statement.setString(1, redeemCode.code)
                 statement.setString(2, redeemCode.commands.joinToString(","))
@@ -47,7 +44,16 @@ class RedeemCodeDaoImpl(private val dbManager: DatabaseManager) : RedeemCodeDao 
                 statement.setString(7, redeemCode.permission)
                 statement.setString(8, redeemCode.secureCode)
                 statement.setString(9, redeemCode.specificPlayerId)
-                isInserted = statement.executeUpdate() > 0
+                try {
+                    isInserted = statement.executeUpdate() > 0
+                } catch (e: SQLException) {
+                    if (e.message?.contains("UNIQUE constraint failed") == true) {
+                        // Notify the sender that the code is already in use
+                        return false
+                    } else {
+                        throw e // Rethrow if it's another SQL error
+                    }
+                }
             }
         }
         return isInserted
@@ -81,6 +87,7 @@ class RedeemCodeDaoImpl(private val dbManager: DatabaseManager) : RedeemCodeDao 
         return redeemCode
     }
 
+
     override fun update(redeemCode: RedeemCode): Boolean {
         var isUpdated = false
         dbManager.getConnection()?.use { conn: Connection ->
@@ -112,6 +119,22 @@ class RedeemCodeDaoImpl(private val dbManager: DatabaseManager) : RedeemCodeDao 
         }
         return isDeleted
     }
+
+    override fun deleteAll(): Boolean {
+        var isDeletedAll = false
+        dbManager.getConnection()?.use { conn: Connection ->
+            val sql = "DELETE FROM redeem_codes"
+            conn.prepareStatement(sql).use {
+                // Execute the delete operation
+                val affectedRows = it.executeUpdate()
+                isDeletedAll = affectedRows > 0 // Check if any rows were affected (deleted)
+            }
+        } ?: run {
+            return isDeletedAll
+        }
+        return isDeletedAll
+    }
+
 
     override fun getAllCodes(): List<RedeemCode> {
         val codes = mutableListOf<RedeemCode>()

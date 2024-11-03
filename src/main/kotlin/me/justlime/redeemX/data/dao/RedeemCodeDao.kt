@@ -10,4 +10,5 @@ interface RedeemCodeDao {
     fun update(redeemCode: RedeemCode): Boolean
     fun deleteById(id: Int): Boolean
     fun getAllCodes(): List<RedeemCode>
+    fun deleteAll(): Boolean
 }
