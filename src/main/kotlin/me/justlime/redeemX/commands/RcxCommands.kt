@@ -7,40 +7,49 @@ import kotlinx.coroutines.withContext
 import me.justlime.redeemX.RedeemX
 import me.justlime.redeemX.data.models.RedeemCode
 import org.bukkit.ChatColor
-import org.bukkit.command.Command
-import org.bukkit.command.CommandExecutor
 import org.bukkit.command.CommandSender
 import org.bukkit.entity.Player
 import java.util.*
 
-class RedeemCommand(private val plugin: RedeemX) : CommandExecutor {
+class RedeemCommand(private val plugin: RedeemX) {
 
-    override fun onCommand(sender: CommandSender, command: Command, label: String, args: Array<out String>): Boolean {
-        if (args.isEmpty()) {
-            sender.sendMessage("Usage: /rxc <gen|delete|modify|info>")
-            return true
-        }
+    fun rcx(rcx: CommandHandler) {
 
-        when (args[0].lowercase()) {
-            "gen" -> handleGenerate(sender, args)
-            "modify" -> handleModify(sender, args)
-            "delete" -> handleDelete(sender, args)
-            "delete_all" -> handleDeleteAll(sender, args)
-            "info" -> handleInfo(sender)
-            else -> sender.sendMessage("Unknown subcommand. Use 'gen', 'delete', 'modify', or 'info'.")
+
+        rcx.addSubCommand("gen").addSubCmd("now1"){ sender, args ->
+            rcx.addSubCommand("h")
         }
-        return true
+        rcx.addSubCommand("modify")
+        rcx.addSubCommand("delete")
+        rcx.addSubCommand("delete_all")
+        rcx.addSubCommand("info")
+        rcx.register()
     }
-    //addSubCmd("modify"){
-    // addSubCmd("perms"){
-    //
-    // }
-    //}
-    //
-    // }
-    //
-    //
-    //
+
+    fun redeem(redeem: CommandHandler) {
+        redeem.addSubCommand("redeem")
+
+        redeem.register()
+    }
+
+
+//    override fun onCommand(sender: CommandSender, command: Command, label: String, args: Array<out String>): Boolean {
+//        if (args.isEmpty()) {
+//            sender.sendMessage("Usage: /rxc <gen|delete|modify|info>")
+//            return true
+//        }
+//
+//        when (args[0].lowercase()) {
+//            "gen" -> handleGenerate(sender, args)
+//            "modify" -> handleModify(sender, args)
+//            "delete" -> handleDelete(sender, args)
+//            "delete" -> handleDeleteAll(sender, args)
+//            "info" -> handleInfo(sender)
+//            else -> sender.sendMessage("Unknown subcommand. Use 'gen', 'delete', 'modify', or 'info'.")
+//        }
+//        return true
+//    }
+
 
     private fun handleGenerate(sender: CommandSender, args: Array<out String>) {
         if (sender is Player && args.size > 1) {
@@ -150,6 +159,7 @@ class RedeemCommand(private val plugin: RedeemX) : CommandExecutor {
             sender.sendMessage("Failed to delete the code: ${redeemCode.code}")
         }
     }
+
     private fun handleDeleteAll(sender: CommandSender, args: Array<out String>) {
         if (args.size < 2 || args[1] != "CONFIRM") {
             sender.sendMessage("${ChatColor.YELLOW}Usage: /rxc deleteall CONFIRM")
