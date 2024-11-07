@@ -11,7 +11,7 @@ class TabCompleterList : TabCompleter {
         sender: CommandSender, command: Command, label: String, args: Array<out String>
     ): MutableList<String>? {
         val completions: MutableList<String> = mutableListOf()
-        val onlinePlayers = Bukkit.getOnlinePlayers()
+        Bukkit.getOnlinePlayers()
             .filter { player -> player.name.startsWith(args[0], true) } // true for case-insensitive matching
 
         // Add filtered player names to completions
@@ -31,8 +31,9 @@ class TabCompleterList : TabCompleter {
                     completions.add("CUSTOM")
                     completions.add("SIZE")
                 }
-                "modify" -> completions.add("codeId")
-                "delete" -> completions.add("codeId")
+
+                "modify" -> completions.add("code")
+                "delete" -> completions.add("code")
             }
 
             3 -> when (args[0]) {
@@ -40,19 +41,19 @@ class TabCompleterList : TabCompleter {
                     completions.add("cmd")
                     completions.add("template")
                 }
+
                 "modify" -> {
                     completions.add("enabled")
                     completions.add("max_redeems")
-                    completions.add("max_per_player")
+                    completions.add("max_player")
                     completions.add("max_redeems_per_player")
-                    completions.add("expire_time")
+                    completions.add("duration")
                     completions.add("permission")
-                    completions.add("changeCode")
-                    completions.add("specificPlayerId")
-                    completions.add("secureCode")
-                    completions.add("AddCommand")
-                    completions.add("deleteCommand")
-                    completions.add("deleteAllCommands")
+//                    completions.add("change_code") TODO
+                    completions.add("set_target")
+                    completions.add("set_pin")
+                    completions.add("command")
+//                    completions.add("rewards") TODO
                     return completions
                 }
             }
@@ -60,6 +61,11 @@ class TabCompleterList : TabCompleter {
             4 -> when (args[2]) {
                 "cmd" -> {}
                 "template" -> {}
+                "duration" -> {
+                    completions.add("add")
+                    completions.add("set")
+                    completions.add("unset")
+                }
 
                 "enabled" -> {
                     completions.add("true")
@@ -68,32 +74,33 @@ class TabCompleterList : TabCompleter {
 
                 "max_redeems" -> {}
                 "max_per_player" -> {}
-                "max_redeems_per_player" -> {
-                    completions.add("TODO")
-                }
-
-                "expire_time" -> {
-                    completions.add("7d")
-                }
-
+                "max_redeems_per_player" -> {}
                 "permission" -> {
                     completions.add("true")
                     completions.add("false")
                     completions.add("CUSTOM")
                 }
 
-                "changeCode" -> {
-                    completions.add("SIZE")
-                    completions.add("CUSTOM")
+//                "change_code" -> {
+//                    completions.add("SIZE")
+//                    completions.add("CUSTOM")
+//                }
+
+                "set_pin" -> {
+                    completions.add("-1")
                 }
 
-                "secureCode" -> {}
-                "AddCommand" -> {}
-                "deleteCommand" -> {
-                    completions.add("TODO")
+                "command" -> {
+                    completions.add("add")
+                    completions.add("set")
+                    completions.add("unset")
                 }
 
-                "specificPlayerId" -> {
+                "rewards" -> {
+                    TODO()
+                }
+
+                "set_target" -> {
                     return null
                 }
             }

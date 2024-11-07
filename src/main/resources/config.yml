@@ -1,5 +1,5 @@
 
 
-# Maximum number of attempts for code generation to avoid infinite loops. Recommended less then 25000
+# Maximum number of attempts for code generation to avoid infinite loops. Recommended less then 2500
 max_attempts: 1000
 

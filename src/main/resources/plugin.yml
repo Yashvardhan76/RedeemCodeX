@@ -1,8 +1,12 @@
 name: RedeemX
 version: '1.0-EAP'
 main: me.justlime.redeemX.RedeemX
-api-version: '1.21'
+api-version: 1.13
 commands:
   rcx:
     usage: "/rcx"
     description: generate code
+    permission: redeemx.admin
+  redeem:
+    usage: "/redeem <code>"
+    description: redeem code

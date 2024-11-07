@@ -3,6 +3,7 @@ package me.justlime.redeemX.data.dao
 import me.justlime.redeemX.data.DatabaseManager
 import me.justlime.redeemX.data.models.RedeemCode
 import java.sql.*
+import java.time.LocalDateTime
 
 class RedeemCodeDaoImpl(private val dbManager: DatabaseManager) : RedeemCodeDao {
 
@@ -12,16 +13,16 @@ class RedeemCodeDaoImpl(private val dbManager: DatabaseManager) : RedeemCodeDao 
                 statement.executeUpdate(
                     """
         CREATE TABLE IF NOT EXISTS redeem_codes (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            code TEXT UNIQUE,
+            code TEXT PRIMARY KEY,
             commands TEXT,
-            maxRedeems INTEGER,
-            maxPerPlayer INTEGER,
+            duration TEXT,
             isEnabled BOOLEAN,
-            expiry TEXT,
+            max_redeems INTEGER,
+            max_player INTEGER,
+            max_redeems_per_player INTEGER,
             permission TEXT,
-            secureCode TEXT,
-            specificPlayerId TEXT
+            pin INT,
+            target TEXT
         )
         """
                 )
@@ -33,17 +34,18 @@ class RedeemCodeDaoImpl(private val dbManager: DatabaseManager) : RedeemCodeDao 
         var isInserted = false
         dbManager.getConnection()?.use { conn: Connection ->
             conn.prepareStatement(
-                "INSERT INTO redeem_codes (code, commands, maxRedeems, maxPerPlayer, isEnabled, expiry, permission, secureCode, specificPlayerId) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)"
+                "INSERT INTO redeem_codes (code, commands, duration, isEnabled, max_redeems, max_player, max_redeems_per_player, permission, pin, target) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?,?)"
             ).use { statement: PreparedStatement ->
                 statement.setString(1, redeemCode.code)
                 statement.setString(2, redeemCode.commands.joinToString(","))
-                statement.setInt(3, redeemCode.maxRedeems)
-                statement.setInt(4, redeemCode.maxPerPlayer)
-                statement.setBoolean(5, redeemCode.isEnabled)
-                statement.setObject(6, redeemCode.expiry)
-                statement.setString(7, redeemCode.permission)
-                statement.setString(8, redeemCode.secureCode)
-                statement.setString(9, redeemCode.specificPlayerId)
+                statement.setObject(3, redeemCode.duration)
+                statement.setBoolean(4, redeemCode.isEnabled)
+                statement.setInt(5, redeemCode.max_redeems)
+                statement.setInt(6, redeemCode.max_player)
+                statement.setInt(7, redeemCode.max_redeems_per_player)
+                statement.setString(8, redeemCode.permission)
+                statement.setInt(9, redeemCode.pin)
+                statement.setString(10, redeemCode.target)
                 try {
                     isInserted = statement.executeUpdate() > 0
                 } catch (e: SQLException) {
@@ -59,19 +61,6 @@ class RedeemCodeDaoImpl(private val dbManager: DatabaseManager) : RedeemCodeDao 
         return isInserted
     }
 
-    override fun findById(id: Int): RedeemCode? {
-        var redeemCode: RedeemCode? = null
-        dbManager.getConnection()?.use { conn: Connection ->
-            conn.prepareStatement("SELECT * FROM redeem_codes WHERE id = ?").use { statement: PreparedStatement ->
-                statement.setInt(1, id)
-                val result = statement.executeQuery()
-                if (result.next()) {
-                    redeemCode = mapResultSetToRedeemCode(result)
-                }
-            }
-        }
-        return redeemCode
-    }
 
     override fun findByCode(code: String): RedeemCode? {
         var redeemCode: RedeemCode? = null
@@ -87,21 +76,33 @@ class RedeemCodeDaoImpl(private val dbManager: DatabaseManager) : RedeemCodeDao 
         return redeemCode
     }
 
+    override fun deleteByCode(code: String): Boolean {
+        var isDeleted = false
+        dbManager.getConnection()?.use { conn: Connection ->
+            conn.prepareStatement("DELETE FROM redeem_codes WHERE code = ?").use { statement: PreparedStatement ->
+                statement.setString(1, code)
+                isDeleted = statement.executeUpdate() > 0
+            }
+        }
+        return isDeleted
+    }
+
 
     override fun update(redeemCode: RedeemCode): Boolean {
         var isUpdated = false
         dbManager.getConnection()?.use { conn: Connection ->
             conn.prepareStatement(
-                "UPDATE redeem_codes SET commands = ?, maxRedeems = ?, maxPerPlayer = ?, isEnabled = ?, expiry = ?, permission = ?, secureCode = ?, specificPlayerId = ?, guiEditMode = ? WHERE code = ?"
+                "UPDATE redeem_codes SET commands = ?, duration = ?, isEnabled = ?, max_redeems = ?, max_player = ?,max_redeems_per_player = ?, permission = ?, pin = ?, target = ? WHERE code = ?"
             ).use { statement: PreparedStatement ->
                 statement.setString(1, redeemCode.commands.joinToString(","))
-                statement.setInt(2, redeemCode.maxRedeems)
-                statement.setInt(3, redeemCode.maxPerPlayer)
-                statement.setBoolean(4, redeemCode.isEnabled)
-                statement.setObject(5, redeemCode.expiry)
-                statement.setString(6, redeemCode.permission)
-                statement.setString(7, redeemCode.secureCode)
-                statement.setString(8, redeemCode.specificPlayerId)
+                statement.setString(2, redeemCode.duration)
+                statement.setBoolean(3, redeemCode.isEnabled)
+                statement.setInt(4, redeemCode.max_redeems)
+                statement.setInt(5, redeemCode.max_player)
+                statement.setInt(6, redeemCode.max_redeems_per_player)
+                statement.setString(7, redeemCode.permission)
+                statement.setInt(8, redeemCode.pin)
+                statement.setString(9, redeemCode.target)
                 statement.setString(10, redeemCode.code)
                 isUpdated = statement.executeUpdate() > 0
             }
@@ -109,21 +110,10 @@ class RedeemCodeDaoImpl(private val dbManager: DatabaseManager) : RedeemCodeDao 
         return isUpdated
     }
 
-    override fun deleteById(id: Int): Boolean {
-        var isDeleted = false
-        dbManager.getConnection()?.use { conn: Connection ->
-            conn.prepareStatement("DELETE FROM redeem_codes WHERE id = ?").use { statement: PreparedStatement ->
-                statement.setInt(1, id)
-                isDeleted = statement.executeUpdate() > 0
-            }
-        }
-        return isDeleted
-    }
-
     override fun deleteAll(): Boolean {
         var isDeletedAll = false
         dbManager.getConnection()?.use { conn: Connection ->
-            val sql = "DELETE FROM redeem_codes"
+            val sql = "delete from redeem_codes"
             conn.prepareStatement(sql).use {
                 // Execute the delete operation
                 val affectedRows = it.executeUpdate()
@@ -149,18 +139,40 @@ class RedeemCodeDaoImpl(private val dbManager: DatabaseManager) : RedeemCodeDao 
         return codes
     }
 
+    override fun isExpired(code: String): Boolean {
+        val redeemCode = findByCode(code) ?: return true  // Return true if code doesn't exist
+        val expiry = redeemCode.duration ?: return false    // If no expiry is set, consider it as not expired
+//        return expiry.isBefore(LocalDateTime.now())       // Check if expiry is before the current time
+        return false
+    }
+
+
+    private fun calculateExpiry(duration: String): LocalDateTime? {
+        val now = LocalDateTime.now()
+        val amount = duration.dropLast(1).toIntOrNull() ?: return null
+        return when (duration.takeLast(1)) {
+            "s" -> now.plusSeconds(amount.toLong())
+            "m" -> now.plusMinutes(amount.toLong())
+            "h" -> now.plusHours(amount.toLong())
+            "d" -> now.plusDays(amount.toLong())
+            "mo" -> now.plusMonths(amount.toLong())
+            "y" -> now.plusYears(amount.toLong())
+            else -> return null
+        }
+    }
+
     private fun mapResultSetToRedeemCode(result: ResultSet): RedeemCode {
         return RedeemCode(
-            id = result.getInt("id"),
             code = result.getString("code"),
             commands = result.getString("commands").split(","),
-            maxRedeems = result.getInt("maxRedeems"),
-            maxPerPlayer = result.getInt("maxPerPlayer"),
+            duration = result.getString("duration"),
             isEnabled = result.getBoolean("isEnabled"),
-            expiry = result.getTimestamp("expiry")?.toLocalDateTime(),
+            max_redeems = result.getInt("max_redeems"),
+            max_player = result.getInt("max_player"),
+            max_redeems_per_player = result.getInt("max_redeems_per_player"),
             permission = result.getString("permission"),
-            secureCode = result.getString("secureCode"),
-            specificPlayerId = result.getString("specificPlayerId"),
+            pin = result.getInt("pin"),
+            target = result.getString("target"),
         )
     }
 }

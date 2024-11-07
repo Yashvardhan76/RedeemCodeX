@@ -5,10 +5,10 @@ import me.justlime.redeemX.data.models.RedeemCode
 interface RedeemCodeDao {
     fun createTable()
     fun insert(redeemCode: RedeemCode): Boolean
-    fun findById(id: Int): RedeemCode?
-    fun findByCode(code: String): RedeemCode?
     fun update(redeemCode: RedeemCode): Boolean
-    fun deleteById(id: Int): Boolean
-    fun getAllCodes(): List<RedeemCode>
     fun deleteAll(): Boolean
+    fun deleteByCode(code: String): Boolean
+    fun findByCode(code: String): RedeemCode?
+    fun getAllCodes(): List<RedeemCode>
+    fun isExpired(code: String): Boolean
 }
