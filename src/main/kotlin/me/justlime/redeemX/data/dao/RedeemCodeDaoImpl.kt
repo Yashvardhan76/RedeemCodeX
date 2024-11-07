@@ -152,14 +152,15 @@ class RedeemCodeDaoImpl(private val dbManager: DatabaseManager) : RedeemCodeDao 
     override fun addCommand(code: String, command: String): Boolean {
         val redeemCode = getByCode(code) ?: return false
         val id = (redeemCode.commands.keys.maxOrNull() ?: 0) + 1
-        redeemCode.commands += (id to command)
-        val commandsString = redeemCode.commands.entries.joinToString(",") { "${it.key}:${it.value}" }
+        val updatedCommands = redeemCode.commands + (id to command)
+        val commandsString = updatedCommands.entries.joinToString(",") { "${it.key}:${it.value}" }
         var isUpdated = false
         dbManager.getConnection()?.use { conn: Connection ->
             conn.prepareStatement(
                 "UPDATE redeem_codes SET commands = ? WHERE code = ?"
             ).use { statement: PreparedStatement ->
                 statement.setString(1, commandsString)
+                statement.setString(2, code)
                 isUpdated = statement.executeUpdate() > 0
             }
         }
@@ -207,12 +208,23 @@ class RedeemCodeDaoImpl(private val dbManager: DatabaseManager) : RedeemCodeDao 
 
     private fun mapResultSetToRedeemCode(result: ResultSet): RedeemCode {
         val commandsString = result.getString("commands")
-
-        // Convert "1:say hello,2:eco bal 1000" back to a map
-        val commandsMap = commandsString.split(",").associate {
-            val (id, command) = it.split(":")
-            id.toInt() to command
-        }
+            // Convert "1:say hello,2:eco bal 1000" back to a map
+        val commandsMap = commandsString.split(",")
+            .mapNotNull {
+                val parts = it.split(":")
+                if (parts.size == 2) {
+                    val id = parts[0].toIntOrNull()
+                    val command = parts[1].takeIf { it.isNotBlank() }
+                    if (id != null && command != null) {
+                        id to command
+                    } else {
+                        null
+                    }
+                } else {
+                    null
+                }
+            }
+            .toMap()
 
         return RedeemCode(
             code = result.getString("code"),

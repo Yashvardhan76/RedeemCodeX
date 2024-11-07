@@ -37,30 +37,33 @@ class RCXCommand(private val plugin: RedeemX) : CommandExecutor {
 
     private fun handleGenerate(sender: CommandSender, args: Array<out String>) {
         if (args.size > 1) {
-            val code = args[1]
-            val commands = args.slice(3 until args.size)
+            var code = args[1]
+//            val commands = args.slice(3 until args.size)
             val maxAttempts = plugin.config.getInt("max_attempts")
-
             // Check if codeNameOrSize is a number
             if (code.toIntOrNull() != null) {
+
                 generateUniqueCode(code.toInt(), maxAttempts) { uniqueCode ->
                     if (uniqueCode != null) {
-                        createRedeemCode(sender, uniqueCode, commands)
+                        createRedeemCode(sender, uniqueCode)
                     } else {
                         // Handle the failure to generate a unique code
                         sender.sendMessage("Unable to generate a unique code of length ${code.toInt()}. Please try a different length or name. (Total $maxAttempts attempts)")
                     }
                 }
+
             } else {
-                createRedeemCode(sender, code.uppercase(Locale.getDefault()), commands)
+                code = code.uppercase()
+                createRedeemCode(sender, code)
             }
         } else {
             sender.sendMessage("Usage: /rxc gen <code> <commands/template> <commands/template_name>")
         }
     }
 
-    private fun createRedeemCode(sender: CommandSender, codeName: String, commands: List<String>) {
+    private fun createRedeemCode(sender: CommandSender, codeName: String) {
         // Check if code already exists
+        sender.sendMessage("Hello $codeName!")
         if (plugin.redeemCodeDao.getByCode(codeName) != null) {
             sender.sendMessage("The code '$codeName' already exists. Please choose a unique code.")
             return
@@ -159,14 +162,13 @@ class RCXCommand(private val plugin: RedeemX) : CommandExecutor {
 
 
     private fun handleModify(sender: CommandSender, args: Array<out String>) {
-//        if (args.size < 3) {
-//            sender.sendMessage("Usage: /rxc modify <code> <property> <method> <value>")
-//            return
-//        }
-        sender.sendMessage("work")
+        if (args.size <= 4) {
+            sender.sendMessage("Usage: /rxc modify <code> <property> <value>")
+            return
+        }
 
         val codeIdToModify = args[1]
-        val property = args[2].lowercase(Locale.getDefault())
+        val property = args[2].lowercase()
         val value = args[3]
 
         // Attempt to find the redeem code by the provided code
@@ -178,25 +180,31 @@ class RCXCommand(private val plugin: RedeemX) : CommandExecutor {
 
         when (property) {
             "max_redeems" -> {
-                redeemCode.max_redeems = value.toIntOrNull() ?: return sender.sendMessage("Invalid value for max_redeems.")
+                redeemCode.max_redeems =
+                    value.toIntOrNull() ?: return sender.sendMessage("Invalid value for max_redeems.")
                 sender.sendMessage("Updated max_redeems for code '${redeemCode.code}' to ${redeemCode.max_redeems}.")
             }
+
             "max_per_player" -> {
-                redeemCode.max_player = value.toIntOrNull() ?: return sender.sendMessage("Invalid value for max_per_player.")
+                redeemCode.max_player =
+                    value.toIntOrNull() ?: return sender.sendMessage("Invalid value for max_per_player.")
                 sender.sendMessage("Updated max_per_player for code '$codeIdToModify' to ${redeemCode.max_player}.")
             }
+
             "enabled" -> {
                 redeemCode.isEnabled = value.lowercase() == "true"
                 sender.sendMessage("Updated enabled status for code '$codeIdToModify' to ${redeemCode.isEnabled}.")
             }
+
             "command" -> {
-                if (args.size < 5) {
+                if (args.size <= 5) {
                     sender.sendMessage("Usage for commands: /rxc modify <code> command <add|remove> <command_text>")
                     return
                 }
 
-                val method = args[3].lowercase(Locale.getDefault())
+                val method = args[3].lowercase()
                 val commandValue = args.drop(4).joinToString(" ") // Joins all words from index 4 onwards
+                sender.sendMessage("entered $commandValue")
 
                 when (method) {
                     "add" -> {
@@ -216,6 +224,7 @@ class RCXCommand(private val plugin: RedeemX) : CommandExecutor {
                     else -> sender.sendMessage("Unknown method '$method' for commands. Use 'add' or 'remove'.")
                 }
             }
+
             else -> {
                 sender.sendMessage("Unknown property '$property'. Available properties: max_redeems, max_per_player, enabled, command.")
                 return
