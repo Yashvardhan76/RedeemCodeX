@@ -16,7 +16,7 @@ class RedeemCommand(private val plugin: RedeemX) : CommandExecutor, TabCompleter
         }
         if (args.isEmpty()) return false
         val code = args[0].uppercase(Locale.getDefault())
-        if (plugin.redeemCodeDao.findByCode(code) == null) {
+        if (plugin.redeemCodeDao.getByCode(code) == null) {
             sender.sendMessage("The Code Doesn't Exist")
             return true
         }

@@ -1,11 +1,14 @@
 package me.justlime.redeemX.data
 
+import me.justlime.redeemX.RedeemX
+import org.bukkit.plugin.java.JavaPlugin
+import java.io.File
 import java.sql.Connection
 import java.sql.DriverManager
 import java.sql.SQLException
 
-class DatabaseManager {
-    private val url = "jdbc:sqlite:redeemx.db"
+class DatabaseManager(databaseFile: File) {
+    private val url = "jdbc:sqlite:$databaseFile"
 
     fun getConnection(): Connection? {
         return try {

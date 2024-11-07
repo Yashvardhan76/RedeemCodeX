@@ -6,9 +6,19 @@ interface RedeemCodeDao {
     fun createTable()
     fun insert(redeemCode: RedeemCode): Boolean
     fun update(redeemCode: RedeemCode): Boolean
+
     fun deleteAll(): Boolean
     fun deleteByCode(code: String): Boolean
-    fun findByCode(code: String): RedeemCode?
+    fun getByCode(code: String): RedeemCode?
+
+    fun addCommand(code: String, command: String): Boolean
+    fun setCommand(code: String, command: String): Boolean
+    fun setCommandById(code: String, id: Int, command: String): Boolean
+    fun getAllCommands(code: String): Boolean
+    fun getCommandById(code: String,id: Int): RedeemCode?
+    fun deleteCommandById(code: String, id: Int): Boolean
+    fun deleteAllCommands(code: String): Boolean
+
     fun getAllCodes(): List<RedeemCode>
     fun isExpired(code: String): Boolean
 }

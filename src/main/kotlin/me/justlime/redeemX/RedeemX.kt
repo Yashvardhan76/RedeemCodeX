@@ -7,10 +7,12 @@ import me.justlime.redeemX.data.DatabaseManager
 import me.justlime.redeemX.data.dao.RedeemCodeDaoImpl
 import me.justlime.redeemX.data.models.RedeemCode
 import org.bukkit.plugin.java.JavaPlugin
+import java.io.File
 
 class RedeemX : JavaPlugin() {
     lateinit var redeemCodeDao: RedeemCodeDaoImpl
     private lateinit var databaseManager: DatabaseManager
+    private val db = File(dataFolder, "redeemx.db")
 
     override fun onEnable() {
         //config
@@ -22,7 +24,7 @@ class RedeemX : JavaPlugin() {
 
         // Initialize the database and DAO
 
-        databaseManager = DatabaseManager()
+        databaseManager = DatabaseManager(db)
         redeemCodeDao = RedeemCodeDaoImpl(databaseManager)
         redeemCodeDao.createTable()
 

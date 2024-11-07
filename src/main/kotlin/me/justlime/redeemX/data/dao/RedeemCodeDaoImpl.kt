@@ -6,7 +6,6 @@ import java.sql.*
 import java.time.LocalDateTime
 
 class RedeemCodeDaoImpl(private val dbManager: DatabaseManager) : RedeemCodeDao {
-
     override fun createTable() {
         dbManager.getConnection()?.use { conn: Connection ->
             conn.createStatement().use { statement: Statement ->
@@ -22,7 +21,8 @@ class RedeemCodeDaoImpl(private val dbManager: DatabaseManager) : RedeemCodeDao 
             max_redeems_per_player INTEGER,
             permission TEXT,
             pin INT,
-            target TEXT
+            target TEXT,
+            usedBy TEXT
         )
         """
                 )
@@ -32,12 +32,13 @@ class RedeemCodeDaoImpl(private val dbManager: DatabaseManager) : RedeemCodeDao 
 
     override fun insert(redeemCode: RedeemCode): Boolean {
         var isInserted = false
+        val commandsString = redeemCode.commands.entries.joinToString(",") { "${it.key}:${it.value}" }
         dbManager.getConnection()?.use { conn: Connection ->
             conn.prepareStatement(
-                "INSERT INTO redeem_codes (code, commands, duration, isEnabled, max_redeems, max_player, max_redeems_per_player, permission, pin, target) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?,?)"
+                "INSERT INTO redeem_codes (code, commands, duration, isEnabled, max_redeems, max_player, max_redeems_per_player, permission, pin, target, usedBy) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?,?,?)"
             ).use { statement: PreparedStatement ->
                 statement.setString(1, redeemCode.code)
-                statement.setString(2, redeemCode.commands.joinToString(","))
+                statement.setString(2, commandsString)
                 statement.setObject(3, redeemCode.duration)
                 statement.setBoolean(4, redeemCode.isEnabled)
                 statement.setInt(5, redeemCode.max_redeems)
@@ -46,14 +47,14 @@ class RedeemCodeDaoImpl(private val dbManager: DatabaseManager) : RedeemCodeDao 
                 statement.setString(8, redeemCode.permission)
                 statement.setInt(9, redeemCode.pin)
                 statement.setString(10, redeemCode.target)
+                statement.setString(11, redeemCode.usedBy)
                 try {
                     isInserted = statement.executeUpdate() > 0
                 } catch (e: SQLException) {
                     if (e.message?.contains("UNIQUE constraint failed") == true) {
-                        // Notify the sender that the code is already in use
                         return false
                     } else {
-                        throw e // Rethrow if it's another SQL error
+                        throw e
                     }
                 }
             }
@@ -62,7 +63,8 @@ class RedeemCodeDaoImpl(private val dbManager: DatabaseManager) : RedeemCodeDao 
     }
 
 
-    override fun findByCode(code: String): RedeemCode? {
+    override fun getByCode(code: String): RedeemCode? {
+
         var redeemCode: RedeemCode? = null
         dbManager.getConnection()?.use { conn: Connection ->
             conn.prepareStatement("SELECT * FROM redeem_codes WHERE code = ?").use { statement: PreparedStatement ->
@@ -90,11 +92,12 @@ class RedeemCodeDaoImpl(private val dbManager: DatabaseManager) : RedeemCodeDao 
 
     override fun update(redeemCode: RedeemCode): Boolean {
         var isUpdated = false
+        val commandsString = redeemCode.commands.entries.joinToString(",") { "${it.key}:${it.value}" }
         dbManager.getConnection()?.use { conn: Connection ->
             conn.prepareStatement(
                 "UPDATE redeem_codes SET commands = ?, duration = ?, isEnabled = ?, max_redeems = ?, max_player = ?,max_redeems_per_player = ?, permission = ?, pin = ?, target = ? WHERE code = ?"
             ).use { statement: PreparedStatement ->
-                statement.setString(1, redeemCode.commands.joinToString(","))
+                statement.setString(1, commandsString)
                 statement.setString(2, redeemCode.duration)
                 statement.setBoolean(3, redeemCode.isEnabled)
                 statement.setInt(4, redeemCode.max_redeems)
@@ -140,10 +143,51 @@ class RedeemCodeDaoImpl(private val dbManager: DatabaseManager) : RedeemCodeDao 
     }
 
     override fun isExpired(code: String): Boolean {
-        val redeemCode = findByCode(code) ?: return true  // Return true if code doesn't exist
+        val redeemCode = getByCode(code) ?: return true  // Return true if code doesn't exist
         val expiry = redeemCode.duration ?: return false    // If no expiry is set, consider it as not expired
 //        return expiry.isBefore(LocalDateTime.now())       // Check if expiry is before the current time
         return false
+    }
+
+    override fun addCommand(code: String, command: String): Boolean {
+        val redeemCode = getByCode(code) ?: return false
+        val id = (redeemCode.commands.keys.maxOrNull() ?: 0) + 1
+        redeemCode.commands += (id to command)
+        val commandsString = redeemCode.commands.entries.joinToString(",") { "${it.key}:${it.value}" }
+        var isUpdated = false
+        dbManager.getConnection()?.use { conn: Connection ->
+            conn.prepareStatement(
+                "UPDATE redeem_codes SET commands = ? WHERE code = ?"
+            ).use { statement: PreparedStatement ->
+                statement.setString(1, commandsString)
+                isUpdated = statement.executeUpdate() > 0
+            }
+        }
+        return isUpdated
+    }
+
+    override fun setCommand(code: String, command: String): Boolean {
+        TODO("Not yet implemented")
+    }
+
+    override fun setCommandById(code: String, id: Int, command: String): Boolean {
+        TODO("Not yet implemented")
+    }
+
+    override fun getAllCommands(code: String): Boolean {
+        TODO("Not yet implemented")
+    }
+
+    override fun getCommandById(code: String, id: Int): RedeemCode? {
+        TODO("Not yet implemented")
+    }
+
+    override fun deleteCommandById(code: String, id: Int): Boolean {
+        TODO("Not yet implemented")
+    }
+
+    override fun deleteAllCommands(code: String): Boolean {
+        TODO("Not yet implemented")
     }
 
 
@@ -162,9 +206,17 @@ class RedeemCodeDaoImpl(private val dbManager: DatabaseManager) : RedeemCodeDao 
     }
 
     private fun mapResultSetToRedeemCode(result: ResultSet): RedeemCode {
+        val commandsString = result.getString("commands")
+
+        // Convert "1:say hello,2:eco bal 1000" back to a map
+        val commandsMap = commandsString.split(",").associate {
+            val (id, command) = it.split(":")
+            id.toInt() to command
+        }
+
         return RedeemCode(
             code = result.getString("code"),
-            commands = result.getString("commands").split(","),
+            commands = commandsMap,
             duration = result.getString("duration"),
             isEnabled = result.getBoolean("isEnabled"),
             max_redeems = result.getInt("max_redeems"),
@@ -173,6 +225,8 @@ class RedeemCodeDaoImpl(private val dbManager: DatabaseManager) : RedeemCodeDao 
             permission = result.getString("permission"),
             pin = result.getInt("pin"),
             target = result.getString("target"),
+            usedBy = result.getString("usedBy"),
         )
     }
+
 }
