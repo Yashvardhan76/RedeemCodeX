@@ -1,24 +1,24 @@
 package me.justlime.redeemX
 
-import me.justlime.redeemX.commands.CommandHandler
+import me.justlime.redeemX.commands.RCXCommand
 import me.justlime.redeemX.commands.RedeemCommand
+import me.justlime.redeemX.commands.TabCompleterList
 import me.justlime.redeemX.data.DatabaseManager
 import me.justlime.redeemX.data.dao.RedeemCodeDaoImpl
+import me.justlime.redeemX.data.models.RedeemCode
 import org.bukkit.plugin.java.JavaPlugin
 
 class RedeemX : JavaPlugin() {
-    lateinit var commandHandler: CommandHandler
     lateinit var redeemCodeDao: RedeemCodeDaoImpl
     private lateinit var databaseManager: DatabaseManager
 
     override fun onEnable() {
         //config
         this.saveDefaultConfig()
-        commandHandler = CommandHandler(this, "rcx")
-        RedeemCommand(this).rcx(commandHandler)
-        commandHandler = CommandHandler(this, "redeem")
-        RedeemCommand(this).redeem(commandHandler)
-
+        getCommand("rcx")?.setExecutor(RCXCommand(this))
+        getCommand("rcx")?.tabCompleter = TabCompleterList()
+        getCommand("redeem")?.setExecutor(RedeemCommand(this))
+        getCommand("redeem")?.tabCompleter = RedeemCommand(this)
 
         // Initialize the database and DAO
 
@@ -33,8 +33,11 @@ class RedeemX : JavaPlugin() {
         logger.info("RedeemX Plugin has been enabled!")
     }
 
+
     override fun onDisable() {
         databaseManager.close()
         logger.info("RedeemX Plugin has been disabled!")
     }
+
+
 }
