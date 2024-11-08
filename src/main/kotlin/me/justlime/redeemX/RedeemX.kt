@@ -18,7 +18,7 @@ class RedeemX : JavaPlugin() {
         //config
         this.saveDefaultConfig()
         getCommand("rcx")?.setExecutor(RCXCommand(this))
-        getCommand("rcx")?.tabCompleter = TabCompleterList()
+        getCommand("rcx")?.tabCompleter = TabCompleterList(this)
         getCommand("redeem")?.setExecutor(RedeemCommand(this))
         getCommand("redeem")?.tabCompleter = RedeemCommand(this)
 

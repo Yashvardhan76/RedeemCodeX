@@ -1,16 +1,17 @@
 package me.justlime.redeemX.commands
 
+import me.justlime.redeemX.RedeemX
 import org.bukkit.Bukkit
 import org.bukkit.command.Command
 import org.bukkit.command.CommandSender
 import org.bukkit.command.TabCompleter
 
 
-class TabCompleterList : TabCompleter {
+class TabCompleterList(private val plugin: RedeemX) : TabCompleter {
     override fun onTabComplete(
         sender: CommandSender, command: Command, label: String, args: Array<out String>
     ): MutableList<String>? {
-        val completions: MutableList<String> = mutableListOf()
+        var completions: MutableList<String> = mutableListOf()
         Bukkit.getOnlinePlayers()
             .filter { player -> player.name.startsWith(args[0], true) } // true for case-insensitive matching
 
@@ -32,8 +33,8 @@ class TabCompleterList : TabCompleter {
                     completions.add("SIZE")
                 }
 
-                "modify" -> completions.add("code")
-                "delete" -> completions.add("code")
+                "modify" -> completions = tabCodes().toMutableList()
+                "delete" -> completions = tabCodes().toMutableList()
             }
 
             3 -> when (args[0]) {
@@ -45,14 +46,14 @@ class TabCompleterList : TabCompleter {
                 "modify" -> {
                     completions.add("enabled")
                     completions.add("max_redeems")
-                    completions.add("max_player")
-                    completions.add("max_redeems_per_player")
+                    completions.add("max_per_player")
                     completions.add("duration")
                     completions.add("permission")
 //                    completions.add("change_code") TODO
                     completions.add("set_target")
                     completions.add("set_pin")
                     completions.add("command")
+                    completions.add("list")
 //                    completions.add("rewards") TODO
                     return completions
                 }
@@ -93,7 +94,8 @@ class TabCompleterList : TabCompleter {
                 "command" -> {
                     completions.add("add")
                     completions.add("set")
-                    completions.add("unset")
+                    completions.add("list")
+                    completions.add("preview")
                 }
 
                 "rewards" -> {
@@ -105,8 +107,15 @@ class TabCompleterList : TabCompleter {
                 }
             }
         }
-
         return completions
+            .filter { it.startsWith(args.lastOrNull() ?: "", ignoreCase = true) }
+            .sortedBy { it.lowercase() }
+            .toMutableList()
     }
 
+    private fun tabCodes(): Array<String> {
+        val completion: Array<String> = plugin.redeemCodeDao.getAllCodes().map { it.code }.toTypedArray()
+        return completion
+    }
 }
+

@@ -150,10 +150,14 @@ class RedeemCodeDaoImpl(private val dbManager: DatabaseManager) : RedeemCodeDao 
     }
 
     override fun addCommand(code: String, command: String): Boolean {
+
         val redeemCode = getByCode(code) ?: return false
-        val id = (redeemCode.commands.keys.maxOrNull() ?: 0) + 1
+
+        val id = (getByCode(code)?.commands?.keys?.maxOrNull() ?: 0) + 1
+
         val updatedCommands = redeemCode.commands + (id to command)
         val commandsString = updatedCommands.entries.joinToString(",") { "${it.key}:${it.value}" }
+
         var isUpdated = false
         dbManager.getConnection()?.use { conn: Connection ->
             conn.prepareStatement(
@@ -162,6 +166,7 @@ class RedeemCodeDaoImpl(private val dbManager: DatabaseManager) : RedeemCodeDao 
                 statement.setString(1, commandsString)
                 statement.setString(2, code)
                 isUpdated = statement.executeUpdate() > 0
+
             }
         }
         return isUpdated
@@ -175,12 +180,16 @@ class RedeemCodeDaoImpl(private val dbManager: DatabaseManager) : RedeemCodeDao 
         TODO("Not yet implemented")
     }
 
-    override fun getAllCommands(code: String): Boolean {
-        TODO("Not yet implemented")
+    override fun getAllCommands(code: String): Map<Int, String>? {
+        val commands = getByCode(code)?.commands?: return null
+        if (commands.values.toString().trim().isEmpty()) return null
+        return commands
     }
 
-    override fun getCommandById(code: String, id: Int): RedeemCode? {
-        TODO("Not yet implemented")
+    override fun getCommandById(code: String, id: Int): String? {
+        val commands = getByCode(code)?.commands?.containsKey(id)?.toString() ?: return null
+        if (commands.trim().isEmpty())return null
+        return commands
     }
 
     override fun deleteCommandById(code: String, id: Int): Boolean {
@@ -208,7 +217,7 @@ class RedeemCodeDaoImpl(private val dbManager: DatabaseManager) : RedeemCodeDao 
 
     private fun mapResultSetToRedeemCode(result: ResultSet): RedeemCode {
         val commandsString = result.getString("commands")
-            // Convert "1:say hello,2:eco bal 1000" back to a map
+        // Convert "1:say hello,2:eco bal 1000" back to a map
         val commandsMap = commandsString.split(",")
             .mapNotNull {
                 val parts = it.split(":")

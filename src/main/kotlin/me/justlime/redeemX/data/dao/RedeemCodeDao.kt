@@ -14,8 +14,8 @@ interface RedeemCodeDao {
     fun addCommand(code: String, command: String): Boolean
     fun setCommand(code: String, command: String): Boolean
     fun setCommandById(code: String, id: Int, command: String): Boolean
-    fun getAllCommands(code: String): Boolean
-    fun getCommandById(code: String,id: Int): RedeemCode?
+    fun getAllCommands(code: String): Map<Int, String>?
+    fun getCommandById(code: String,id: Int): String?
     fun deleteCommandById(code: String, id: Int): Boolean
     fun deleteAllCommands(code: String): Boolean
 

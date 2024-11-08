@@ -8,9 +8,9 @@ import me.justlime.redeemX.RedeemX
 import me.justlime.redeemX.data.models.RedeemCode
 import org.bukkit.ChatColor
 import org.bukkit.command.Command
+import org.bukkit.command.CommandException
 import org.bukkit.command.CommandExecutor
 import org.bukkit.command.CommandSender
-import java.util.*
 
 class RCXCommand(private val plugin: RedeemX) : CommandExecutor {
 
@@ -94,6 +94,7 @@ class RCXCommand(private val plugin: RedeemX) : CommandExecutor {
         }
     }
 
+
     private fun generateUniqueCode(length: Int, maxAttempts: Int = 1024, callback: (String?) -> Unit) {
         val charset = ('A'..'Z') + ('0'..'9')
 
@@ -162,67 +163,77 @@ class RCXCommand(private val plugin: RedeemX) : CommandExecutor {
 
 
     private fun handleModify(sender: CommandSender, args: Array<out String>) {
-        if (args.size <= 4) {
-            sender.sendMessage("Usage: /rxc modify <code> <property> <value>")
+        if (args.size < 4) {
+            sender.sendMessage("Usage: /rxc modify <code> <property>")
             return
         }
-
-        val codeIdToModify = args[1]
+        val codeId = args[1]
         val property = args[2].lowercase()
         val value = args[3]
 
+
         // Attempt to find the redeem code by the provided code
-        val redeemCode = plugin.redeemCodeDao.getByCode(codeIdToModify)
+        val redeemCode = plugin.redeemCodeDao.getByCode(codeId)
         if (redeemCode == null) {
-            sender.sendMessage("The code '$codeIdToModify' does not exist.")
+            sender.sendMessage("The code '$codeId' does not exist.")
             return
         }
-
         when (property) {
-            "max_redeems" -> {
+            "max_redeems" ->
                 redeemCode.max_redeems =
                     value.toIntOrNull() ?: return sender.sendMessage("Invalid value for max_redeems.")
-                sender.sendMessage("Updated max_redeems for code '${redeemCode.code}' to ${redeemCode.max_redeems}.")
-            }
 
-            "max_per_player" -> {
+
+            "max_per_player" ->
                 redeemCode.max_player =
                     value.toIntOrNull() ?: return sender.sendMessage("Invalid value for max_per_player.")
-                sender.sendMessage("Updated max_per_player for code '$codeIdToModify' to ${redeemCode.max_player}.")
-            }
 
-            "enabled" -> {
+
+            "duration" ->
+                redeemCode.duration = value
+
+            "permission" -> redeemCode.permission = value
+
+            "set_target" -> redeemCode.target = value
+
+            "set_pin" -> redeemCode.pin = value.toIntOrNull() ?: return sender.sendMessage("Invalid value for set_pin.")
+
+
+            "enabled" ->
                 redeemCode.isEnabled = value.lowercase() == "true"
-                sender.sendMessage("Updated enabled status for code '$codeIdToModify' to ${redeemCode.isEnabled}.")
-            }
+
 
             "command" -> {
-                if (args.size <= 5) {
-                    sender.sendMessage("Usage for commands: /rxc modify <code> command <add|remove> <command_text>")
-                    return
-                }
 
                 val method = args[3].lowercase()
                 val commandValue = args.drop(4).joinToString(" ") // Joins all words from index 4 onwards
-                sender.sendMessage("entered $commandValue")
-
-                when (method) {
-                    "add" -> {
-                        if (plugin.redeemCodeDao.addCommand(codeIdToModify, commandValue)) {
-                            sender.sendMessage("Command added to code '$codeIdToModify': $commandValue")
-                        } else {
-                            sender.sendMessage("Failed to add command to code '$codeIdToModify'.")
+                if (args.size > 5 && method.equals("add", ignoreCase = true))
+                    if (plugin.redeemCodeDao.addCommand(codeId, commandValue)) {
+                        sender.sendMessage("Command added to code '$codeId': $commandValue")
+                    } else {
+                        sender.sendMessage("Failed to add command to code '$codeId'.")
+                    }
+                else if (method == "list") {
+                    val list = plugin.redeemCodeDao.getAllCommands(codeId).toString()
+                    sender.sendMessage(list)
+                } else if (method == "preview") {
+                    val list = plugin.redeemCodeDao.getAllCommands(codeId)
+                    if (!list.isNullOrEmpty()) {
+                        list.values.forEach {
+                            try {
+                                plugin.server.dispatchCommand(plugin.server.consoleSender, it)
+                            } catch (e: CommandException) {
+                                plugin.server.consoleSender.sendMessage("[Error] $it")
+                            }
                         }
                     }
-//                    "remove" -> {
-//                        if (plugin.redeemCodeDao.removeCommand(codeIdToModify, commandValue)) {
-//                            sender.sendMessage("Command removed from code '$codeIdToModify': $commandValue")
-//                        } else {
-//                            sender.sendMessage("Failed to remove command from code '$codeIdToModify'.")
-//                        }
-//                    }
-                    else -> sender.sendMessage("Unknown method '$method' for commands. Use 'add' or 'remove'.")
-                }
+                } else sender.sendMessage("Unknown method '$method' for commands. Use 'add' or 'remove'.")
+                return
+            }
+
+            "list" -> {
+                sender.sendMessage(plugin.redeemCodeDao.getByCode(codeId)?.toString())
+                return
             }
 
             else -> {
@@ -230,16 +241,14 @@ class RCXCommand(private val plugin: RedeemX) : CommandExecutor {
                 return
             }
         }
-
-        // Attempt to update the redeem code in the database
+        sender.sendMessage("Updated $property for code '${redeemCode.code}' to  $value ")
         val success = plugin.redeemCodeDao.update(redeemCode)
         if (success) {
-            sender.sendMessage("Successfully modified the code: $codeIdToModify")
+            sender.sendMessage("Successfully updated the code: ${redeemCode.code}")
         } else {
-            sender.sendMessage("Failed to modify the code: $codeIdToModify")
+            sender.sendMessage("Failed to updated the code: ${redeemCode.code}")
         }
     }
-
 
     private fun handleInfo(sender: CommandSender) {
         sender.sendMessage("RedeemX Plugin Version: ${plugin.description.version}")
