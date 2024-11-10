@@ -4,6 +4,8 @@ import me.justlime.redeemX.data.DatabaseManager
 import me.justlime.redeemX.data.models.RedeemCode
 import java.sql.*
 import java.time.LocalDateTime
+import java.time.ZoneId
+import java.time.ZonedDateTime
 
 class RedeemCodeDaoImpl(private val dbManager: DatabaseManager) : RedeemCodeDao {
     override fun createTable() {
@@ -14,11 +16,11 @@ class RedeemCodeDaoImpl(private val dbManager: DatabaseManager) : RedeemCodeDao 
         CREATE TABLE IF NOT EXISTS redeem_codes (
             code TEXT PRIMARY KEY,
             commands TEXT,
+            storedTime TIMESTAMP,
             duration TEXT,
             isEnabled BOOLEAN,
             max_redeems INTEGER,
             max_player INTEGER,
-            max_redeems_per_player INTEGER,
             permission TEXT,
             pin INT,
             target TEXT,
@@ -33,21 +35,23 @@ class RedeemCodeDaoImpl(private val dbManager: DatabaseManager) : RedeemCodeDao 
     override fun insert(redeemCode: RedeemCode): Boolean {
         var isInserted = false
         val commandsString = redeemCode.commands.entries.joinToString(",") { "${it.key}:${it.value}" }
+        val usageString = redeemCode.usage.entries.joinToString(",") { "${it.key}:${it.value}" }
+        val stamp: Timestamp? = if(redeemCode.storedTime != null) Timestamp.valueOf(redeemCode.storedTime) else null
         dbManager.getConnection()?.use { conn: Connection ->
             conn.prepareStatement(
-                "INSERT INTO redeem_codes (code, commands, duration, isEnabled, max_redeems, max_player, max_redeems_per_player, permission, pin, target, usedBy) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?,?,?)"
+                "INSERT INTO redeem_codes (code, commands, storedTime, duration, isEnabled, max_redeems, max_player, permission, pin, target, usedBy) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?,?,?)"
             ).use { statement: PreparedStatement ->
                 statement.setString(1, redeemCode.code)
                 statement.setString(2, commandsString)
+                statement.setTimestamp(3, stamp)
                 statement.setObject(3, redeemCode.duration)
                 statement.setBoolean(4, redeemCode.isEnabled)
-                statement.setInt(5, redeemCode.max_redeems)
-                statement.setInt(6, redeemCode.max_player)
-                statement.setInt(7, redeemCode.max_redeems_per_player)
+                statement.setInt(5, redeemCode.maxRedeems)
+                statement.setInt(6, redeemCode.maxPlayers)
                 statement.setString(8, redeemCode.permission)
                 statement.setInt(9, redeemCode.pin)
                 statement.setString(10, redeemCode.target)
-                statement.setString(11, redeemCode.usedBy)
+                statement.setString(11, usageString)
                 try {
                     isInserted = statement.executeUpdate() > 0
                 } catch (e: SQLException) {
@@ -63,7 +67,7 @@ class RedeemCodeDaoImpl(private val dbManager: DatabaseManager) : RedeemCodeDao 
     }
 
 
-    override fun getByCode(code: String): RedeemCode? {
+    override fun get(code: String): RedeemCode? {
 
         var redeemCode: RedeemCode? = null
         dbManager.getConnection()?.use { conn: Connection ->
@@ -93,20 +97,22 @@ class RedeemCodeDaoImpl(private val dbManager: DatabaseManager) : RedeemCodeDao 
     override fun update(redeemCode: RedeemCode): Boolean {
         var isUpdated = false
         val commandsString = redeemCode.commands.entries.joinToString(",") { "${it.key}:${it.value}" }
+        val usageString = redeemCode.usage.entries.joinToString(",") { "${it.key}:${it.value}" }
         dbManager.getConnection()?.use { conn: Connection ->
             conn.prepareStatement(
-                "UPDATE redeem_codes SET commands = ?, duration = ?, isEnabled = ?, max_redeems = ?, max_player = ?,max_redeems_per_player = ?, permission = ?, pin = ?, target = ? WHERE code = ?"
+                "UPDATE redeem_codes SET commands = ?,storedTime = ?, duration = ?, isEnabled = ?, max_redeems = ?, max_player = ?, permission = ?, pin = ?, target = ?, usedBy = ? WHERE code = ?"
             ).use { statement: PreparedStatement ->
                 statement.setString(1, commandsString)
-                statement.setString(2, redeemCode.duration)
-                statement.setBoolean(3, redeemCode.isEnabled)
-                statement.setInt(4, redeemCode.max_redeems)
-                statement.setInt(5, redeemCode.max_player)
-                statement.setInt(6, redeemCode.max_redeems_per_player)
+                statement.setTimestamp(2, Timestamp.valueOf(redeemCode.storedTime))
+                statement.setString(3, redeemCode.duration)
+                statement.setBoolean(4, redeemCode.isEnabled)
+                statement.setInt(5, redeemCode.maxRedeems)
+                statement.setInt(6, redeemCode.maxPlayers)
                 statement.setString(7, redeemCode.permission)
                 statement.setInt(8, redeemCode.pin)
                 statement.setString(9, redeemCode.target)
-                statement.setString(10, redeemCode.code)
+                statement.setString(10, usageString)
+                statement.setString(11, redeemCode.code)
                 isUpdated = statement.executeUpdate() > 0
             }
         }
@@ -142,112 +148,100 @@ class RedeemCodeDaoImpl(private val dbManager: DatabaseManager) : RedeemCodeDao 
         return codes
     }
 
+    private val timeZoneId: ZoneId = ZoneId.of("Asia/Kolkata")
+    private val timeZone: ZonedDateTime = ZonedDateTime.now(timeZoneId)
+    private val currenTime: LocalDateTime = timeZone.toLocalDateTime()
     override fun isExpired(code: String): Boolean {
-        val redeemCode = getByCode(code) ?: return true  // Return true if code doesn't exist
-        val expiry = redeemCode.duration ?: return false    // If no expiry is set, consider it as not expired
-//        return expiry.isBefore(LocalDateTime.now())       // Check if expiry is before the current time
-        return false
+        val redeemCode = get(code)
+        val storedTime = redeemCode?.storedTime?: return false
+        val duration = redeemCode.duration ?: return false
+        val calcTime = calculateExpiry(storedTime, duration)
+        return calcTime?.isBefore(currenTime) ?: false
     }
 
-    override fun addCommand(code: String, command: String): Boolean {
 
-        val redeemCode = getByCode(code) ?: return false
-
-        val id = (getByCode(code)?.commands?.keys?.maxOrNull() ?: 0) + 1
-
-        val updatedCommands = redeemCode.commands + (id to command)
-        val commandsString = updatedCommands.entries.joinToString(",") { "${it.key}:${it.value}" }
-
-        var isUpdated = false
-        dbManager.getConnection()?.use { conn: Connection ->
-            conn.prepareStatement(
-                "UPDATE redeem_codes SET commands = ? WHERE code = ?"
-            ).use { statement: PreparedStatement ->
-                statement.setString(1, commandsString)
-                statement.setString(2, code)
-                isUpdated = statement.executeUpdate() > 0
-
-            }
+    private fun calculateExpiry(time: LocalDateTime, duration: String): LocalDateTime? {
+        val amount = duration.dropLast(1).toIntOrNull() ?: return null
+        return when (duration.takeLast(1)) {
+            "s" -> time.plusSeconds(amount.toLong())
+            "m" -> time.plusMinutes(amount.toLong())
+            "h" -> time.plusHours(amount.toLong())
+            "d" -> time.plusDays(amount.toLong())
+            "mo" -> time.plusMonths(amount.toLong())
+            "y" -> time.plusYears(amount.toLong())
+            else -> return null
         }
-        return isUpdated
     }
 
-    override fun setCommand(code: String, command: String): Boolean {
-        TODO("Not yet implemented")
-    }
-
-    override fun setCommandById(code: String, id: Int, command: String): Boolean {
-        TODO("Not yet implemented")
-    }
-
-    override fun getAllCommands(code: String): Map<Int, String>? {
-        val commands = getByCode(code)?.commands?: return null
+    override fun getAllCommands(code: String): MutableMap<Int, String>? {
+        val commands = get(code)?.commands ?: return null
         if (commands.values.toString().trim().isEmpty()) return null
         return commands
     }
 
     override fun getCommandById(code: String, id: Int): String? {
-        val commands = getByCode(code)?.commands?.containsKey(id)?.toString() ?: return null
-        if (commands.trim().isEmpty())return null
+        val commands = get(code)?.commands?.containsKey(id)?.toString() ?: return null
+        if (commands.trim().isEmpty()) return null
         return commands
     }
 
-    override fun deleteCommandById(code: String, id: Int): Boolean {
-        TODO("Not yet implemented")
-    }
-
-    override fun deleteAllCommands(code: String): Boolean {
-        TODO("Not yet implemented")
-    }
-
-
-    private fun calculateExpiry(duration: String): LocalDateTime? {
-        val now = LocalDateTime.now()
-        val amount = duration.dropLast(1).toIntOrNull() ?: return null
-        return when (duration.takeLast(1)) {
-            "s" -> now.plusSeconds(amount.toLong())
-            "m" -> now.plusMinutes(amount.toLong())
-            "h" -> now.plusHours(amount.toLong())
-            "d" -> now.plusDays(amount.toLong())
-            "mo" -> now.plusMonths(amount.toLong())
-            "y" -> now.plusYears(amount.toLong())
-            else -> return null
-        }
-    }
 
     private fun mapResultSetToRedeemCode(result: ResultSet): RedeemCode {
-        val commandsString = result.getString("commands")
-        // Convert "1:say hello,2:eco bal 1000" back to a map
-        val commandsMap = commandsString.split(",")
-            .mapNotNull {
-                val parts = it.split(":")
-                if (parts.size == 2) {
-                    val id = parts[0].toIntOrNull()
-                    val command = parts[1].takeIf { it.isNotBlank() }
-                    if (id != null && command != null) {
-                        id to command
-                    } else {
-                        null
-                    }
-                } else {
-                    null
-                }
-            }
-            .toMap()
+        val commandsString = result.getString("commands") ?: null
+        val usageString = result.getString("usedBy") ?: null
+        val storedTime = if(result.getTimestamp("duration") == null) null else result.getTimestamp("duration")?.toLocalDateTime()
+        val commandMap = parseToMapId(commandsString)
+        val playerUsageMap = parseToMapString(usageString)
 
         return RedeemCode(
             code = result.getString("code"),
-            commands = commandsMap,
+            commands = commandMap,
+            storedTime = storedTime,
             duration = result.getString("duration"),
             isEnabled = result.getBoolean("isEnabled"),
-            max_redeems = result.getInt("max_redeems"),
-            max_player = result.getInt("max_player"),
-            max_redeems_per_player = result.getInt("max_redeems_per_player"),
+            maxRedeems = result.getInt("max_redeems"),
+            maxPlayers = result.getInt("max_player"),
             permission = result.getString("permission"),
             pin = result.getInt("pin"),
             target = result.getString("target"),
-            usedBy = result.getString("usedBy"),
+            usage = playerUsageMap,
         )
+    }
+
+    private fun parseToMapId(input: String?, separator: String = ":"): MutableMap<Int, String> {
+        if (input.isNullOrBlank()) return mutableMapOf()
+        val resultMap = mutableMapOf<Int, String>()
+
+        for (entry in input.split(",")) {
+            val parts = entry.split(separator)
+            if (parts.size == 2) {
+                val key = parts[0].toIntOrNull()
+                val value = parts[1].takeIf { it.isNotBlank() }
+                if (key != null && value != null) {
+                    resultMap[key] = value
+                }
+            }
+        }
+
+        return resultMap
+    }
+
+    private fun parseToMapString(input: String?, separator: String = ":"): MutableMap<String, Int> {
+        if (input.isNullOrBlank()) return mutableMapOf()
+        val resultMap = mutableMapOf<String, Int>()
+
+        for (entry in input.split(",")) {
+            val parts = entry.split(separator)
+            if (parts.size == 2) {
+                val key = parts[0].takeIf { it.isNotBlank() }
+                val value = parts[1].toIntOrNull()
+                if (key != null && value != null) {
+                    resultMap[key] = value
+                }
+            }
+        }
+
+        return resultMap
     }
 
 }

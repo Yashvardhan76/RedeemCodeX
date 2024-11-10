@@ -5,7 +5,6 @@ import me.justlime.redeemX.commands.RedeemCommand
 import me.justlime.redeemX.commands.TabCompleterList
 import me.justlime.redeemX.data.DatabaseManager
 import me.justlime.redeemX.data.dao.RedeemCodeDaoImpl
-import me.justlime.redeemX.data.models.RedeemCode
 import org.bukkit.plugin.java.JavaPlugin
 import java.io.File
 

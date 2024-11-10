@@ -11,6 +11,9 @@ import org.bukkit.command.Command
 import org.bukkit.command.CommandException
 import org.bukkit.command.CommandExecutor
 import org.bukkit.command.CommandSender
+import java.time.LocalDateTime
+import java.time.ZoneId
+import java.time.ZonedDateTime
 
 class RCXCommand(private val plugin: RedeemX) : CommandExecutor {
 
@@ -64,7 +67,7 @@ class RCXCommand(private val plugin: RedeemX) : CommandExecutor {
     private fun createRedeemCode(sender: CommandSender, codeName: String) {
         // Check if code already exists
         sender.sendMessage("Hello $codeName!")
-        if (plugin.redeemCodeDao.getByCode(codeName) != null) {
+        if (plugin.redeemCodeDao.get(codeName) != null) {
             sender.sendMessage("The code '$codeName' already exists. Please choose a unique code.")
             return
         }
@@ -72,7 +75,7 @@ class RCXCommand(private val plugin: RedeemX) : CommandExecutor {
         // Create the redeem code with default or example values for the other fields
         val redeemCode = RedeemCode(
             code = codeName,
-            max_player = 1,
+            maxPlayers = 1,
             isEnabled = true,
             duration = null,
             permission = null,
@@ -90,7 +93,7 @@ class RCXCommand(private val plugin: RedeemX) : CommandExecutor {
             }
         } catch (e: Exception) {
             sender.sendMessage("An error occurred while generating the code.")
-            e.printStackTrace() // Log the error to the console for debugging
+            e.printStackTrace()
         }
     }
 
@@ -104,16 +107,14 @@ class RCXCommand(private val plugin: RedeemX) : CommandExecutor {
             var attempts = 0
 
             do {
-                code = (1..length)
-                    .map { charset.random() }
-                    .joinToString("")
+                code = (1..length).map { charset.random() }.joinToString("")
                 attempts++
                 // Check if max attempts is reached
                 if (attempts >= maxAttempts) {
                     withContext(Dispatchers.Main) { callback(null) } // Notify failure on the main thread
                     return@launch // Exit the coroutine
                 }
-            } while (plugin.redeemCodeDao.getByCode(code) != null) // Ensure code is unique in DB
+            } while (plugin.redeemCodeDao.get(code) != null) // Ensure code is unique in DB
 
             // Return the unique code on the main thread
             withContext(Dispatchers.Main) { callback(code) }
@@ -130,7 +131,7 @@ class RCXCommand(private val plugin: RedeemX) : CommandExecutor {
         val codeToDelete = args[1]
 
         // Attempt to find the redeem code by the provided code
-        val redeemCode = plugin.redeemCodeDao.getByCode(codeToDelete)
+        val redeemCode = plugin.redeemCodeDao.get(codeToDelete)
 
         if (redeemCode == null) {
             sender.sendMessage("The code '$codeToDelete' does not exist.")
@@ -163,34 +164,54 @@ class RCXCommand(private val plugin: RedeemX) : CommandExecutor {
 
 
     private fun handleModify(sender: CommandSender, args: Array<out String>) {
+        if (args.size < 3) {
+            sender.sendMessage("Usage: /rxc modify <code> <property>")
+            return
+        }
+
+        val code = args[1]
+        val property = args[2].lowercase()
+
+        if (property == "list") {
+            sender.sendMessage(plugin.redeemCodeDao.get(code)?.toString())
+            return
+        }
         if (args.size < 4) {
             sender.sendMessage("Usage: /rxc modify <code> <property>")
             return
         }
-        val codeId = args[1]
-        val property = args[2].lowercase()
         val value = args[3]
 
-
         // Attempt to find the redeem code by the provided code
-        val redeemCode = plugin.redeemCodeDao.getByCode(codeId)
+        val redeemCode = plugin.redeemCodeDao.get(code)
         if (redeemCode == null) {
-            sender.sendMessage("The code '$codeId' does not exist.")
+            sender.sendMessage("The code '$code' does not exist.")
             return
         }
+
         when (property) {
-            "max_redeems" ->
-                redeemCode.max_redeems =
-                    value.toIntOrNull() ?: return sender.sendMessage("Invalid value for max_redeems.")
+
+            "max_redeems" -> redeemCode.maxRedeems =
+                value.toIntOrNull() ?: return sender.sendMessage("Invalid value for max_redeems.")
 
 
-            "max_per_player" ->
-                redeemCode.max_player =
-                    value.toIntOrNull() ?: return sender.sendMessage("Invalid value for max_per_player.")
+            "max_per_player" -> redeemCode.maxPlayers =
+                value.toIntOrNull() ?: return sender.sendMessage("Invalid value for max_per_player.")
 
 
-            "duration" ->
+            "duration" -> {
+                val timeZoneId: ZoneId = ZoneId.of("Asia/Kolkata")
+                val timeZone: ZonedDateTime = ZonedDateTime.now(timeZoneId)
+                val currenTime: LocalDateTime = timeZone.toLocalDateTime()
+                if (redeemCode.storedTime == null) redeemCode.storedTime = currenTime
+                when(value ) {
+                    "add" -> {}
+                    "set" -> {}
+                    "remove" -> {}
+                }
+
                 redeemCode.duration = value
+            }
 
             "permission" -> redeemCode.permission = value
 
@@ -199,41 +220,65 @@ class RCXCommand(private val plugin: RedeemX) : CommandExecutor {
             "set_pin" -> redeemCode.pin = value.toIntOrNull() ?: return sender.sendMessage("Invalid value for set_pin.")
 
 
-            "enabled" ->
-                redeemCode.isEnabled = value.lowercase() == "true"
+            "enabled" -> redeemCode.isEnabled = value.lowercase() == "true"
 
 
             "command" -> {
 
                 val method = args[3].lowercase()
-                val commandValue = args.drop(4).joinToString(" ") // Joins all words from index 4 onwards
-                if (args.size > 5 && method.equals("add", ignoreCase = true))
-                    if (plugin.redeemCodeDao.addCommand(codeId, commandValue)) {
-                        sender.sendMessage("Command added to code '$codeId': $commandValue")
-                    } else {
-                        sender.sendMessage("Failed to add command to code '$codeId'.")
+                val list = redeemCode.commands
+                val console = plugin.server.consoleSender
+                when (method) {
+                    "add" -> {
+                        val commandValue = args.drop(4).joinToString(" ")
+                        if (args.size <= 4 || commandValue.isBlank()) {
+                            sender.sendMessage("No command Passed")
+                            return
+                        }
+                        val id = redeemCode.commands.keys.maxOrNull() ?: 0
+                        redeemCode.commands[id] = commandValue + 1
                     }
-                else if (method == "list") {
-                    val list = plugin.redeemCodeDao.getAllCommands(codeId).toString()
-                    sender.sendMessage(list)
-                } else if (method == "preview") {
-                    val list = plugin.redeemCodeDao.getAllCommands(codeId)
-                    if (!list.isNullOrEmpty()) {
-                        list.values.forEach {
-                            try {
-                                plugin.server.dispatchCommand(plugin.server.consoleSender, it)
-                            } catch (e: CommandException) {
-                                plugin.server.consoleSender.sendMessage("[Error] $it")
+
+                    "list" -> {
+                        sender.sendMessage(list.values.joinToString("\n"))
+                        return
+                    }
+
+                    "set" -> {
+                        var commandValue = args.drop(4).joinToString(" ")
+                        if (args.size <= 4 || commandValue.isBlank()) {
+                            sender.sendMessage("No command Passed")
+                            return
+                        }
+                        val id = args[4].toIntOrNull()
+                        if (id != null) {
+                            commandValue = args.drop(5).joinToString(" ")
+                            redeemCode.commands[id] = commandValue
+                            return
+                        }
+                        sender.sendMessage("ID Not Passed")
+                        return
+                    }
+
+                    "preview" -> {
+                        if (!list.values.isEmpty()) {
+                            list.values.forEach {
+                                try {
+                                    plugin.server.dispatchCommand(console, it)
+                                } catch (e: CommandException) {
+                                    console.sendMessage("[Error] $it")
+                                    sender.sendMessage("[Error] $it")
+                                }
                             }
                         }
+                        return
                     }
-                } else sender.sendMessage("Unknown method '$method' for commands. Use 'add' or 'remove'.")
-                return
-            }
 
-            "list" -> {
-                sender.sendMessage(plugin.redeemCodeDao.getByCode(codeId)?.toString())
-                return
+                    else -> {
+                        sender.sendMessage("Unknown method '$method' for commands. Use 'add' or 'remove'.")
+                        return
+                    }
+                }
             }
 
             else -> {
@@ -241,13 +286,15 @@ class RCXCommand(private val plugin: RedeemX) : CommandExecutor {
                 return
             }
         }
-        sender.sendMessage("Updated $property for code '${redeemCode.code}' to  $value ")
+
         val success = plugin.redeemCodeDao.update(redeemCode)
         if (success) {
-            sender.sendMessage("Successfully updated the code: ${redeemCode.code}")
+            sender.sendMessage("Updated $property for code '${redeemCode.code}' to  $value ")
         } else {
             sender.sendMessage("Failed to updated the code: ${redeemCode.code}")
+            return
         }
+
     }
 
     private fun handleInfo(sender: CommandSender) {

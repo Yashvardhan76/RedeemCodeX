@@ -6,25 +6,85 @@ import org.bukkit.command.CommandExecutor
 import org.bukkit.command.CommandSender
 import org.bukkit.command.TabCompleter
 import org.bukkit.entity.Player
-import java.util.*
 
 class RedeemCommand(private val plugin: RedeemX) : CommandExecutor, TabCompleter {
+
     override fun onCommand(sender: CommandSender, command: Command, label: String, args: Array<out String>): Boolean {
         if (sender !is Player) {
-            sender.sendMessage("This command can only be run by players")
+            sender.sendMessage("This command can only be run by players.")
             return true
         }
-        if (args.isEmpty()) return false
-        val code = args[0].uppercase(Locale.getDefault())
-        if (plugin.redeemCodeDao.getByCode(code) == null) {
-            sender.sendMessage("The Code Doesn't Exist")
+
+        if (args.isEmpty()) {
+            sender.sendMessage("Usage: /redeem <code> [pin]")
             return true
         }
-        if (!plugin.redeemCodeDao.isExpired(code)) {
-            sender.sendMessage("The Code has been redeemed")
+
+        val senderCode = args[0].uppercase()
+        val redeemCodeDao = plugin.redeemCodeDao
+        val code = redeemCodeDao.get(senderCode)
+
+        if (code == null) {
+            sender.sendMessage("The code '$senderCode' does not exist.")
             return true
         }
-        return false
+
+        if (!code.permission.isNullOrBlank() && !sender.hasPermission(code.permission!!)) {
+            sender.sendMessage("You don't have permission to use this command.")
+            return true
+        }
+
+        if (!code.isEnabled) {
+            sender.sendMessage("The code $senderCode is not enabled.")
+            return true
+        }
+
+        if (redeemCodeDao.isExpired(senderCode)) {
+            sender.sendMessage("The code '$senderCode' has expired.")
+            return true
+        }
+
+        if (code.pin >= 0) {
+            if (args.size < 2) {
+                sender.sendMessage("This code requires a pin. Usage: /redeem <code> <pin>")
+                return true
+            }
+
+            val inputPin = args[1].toIntOrNull()
+            if (inputPin != code.pin) {
+                sender.sendMessage("The pin is incorrect.")
+                return true
+            }
+        }
+
+        // Check redemption limits
+        val usageCount = code.usage[sender.name] ?: 0
+        if (usageCount >= code.maxRedeems) {
+            sender.sendMessage("You have reached the maximum redemption limit for this code.")
+            return true
+        }
+
+        //Check Maximum Player Limit
+        if (code.usage.size >= code.maxPlayers) {
+            sender.sendMessage("The maximum number of players have redeemed this code.")
+            return true
+        }
+
+        // Check if code has a specific target player
+        if (!code.target.isNullOrEmpty() && code.target != sender.name) {
+            sender.sendMessage("This code can only be redeemed by ${code.target}.")
+            return true
+        }
+
+        // Redeem the code
+        code.usage[sender.name] = usageCount + 1
+        if (redeemCodeDao.update(code)) {
+            sender.sendMessage("You have successfully redeemed the code '$senderCode'.")
+        } else {
+            sender.sendMessage("Failed to redeem the code. Please try again later.")
+        }
+
+        return true
     }
 
     override fun onTabComplete(
@@ -33,7 +93,6 @@ class RedeemCommand(private val plugin: RedeemX) : CommandExecutor, TabCompleter
         label: String,
         args: Array<out String>
     ): MutableList<String> {
-        val completion = emptyList<String>().toMutableList()
-        return completion
+        return mutableListOf() // Return an empty list for now
     }
 }
