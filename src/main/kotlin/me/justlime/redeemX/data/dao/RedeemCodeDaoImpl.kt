@@ -8,6 +8,10 @@ import java.time.ZoneId
 import java.time.ZonedDateTime
 
 class RedeemCodeDaoImpl(private val dbManager: DatabaseManager) : RedeemCodeDao {
+    private val timeZoneId: ZoneId = ZoneId.of("Asia/Kolkata")
+    private val timeZone: ZonedDateTime = ZonedDateTime.now(timeZoneId)
+    private val currenTime: LocalDateTime = timeZone.toLocalDateTime()
+
     override fun createTable() {
         dbManager.getConnection()?.use { conn: Connection ->
             conn.createStatement().use { statement: Statement ->
@@ -36,22 +40,24 @@ class RedeemCodeDaoImpl(private val dbManager: DatabaseManager) : RedeemCodeDao 
         var isInserted = false
         val commandsString = redeemCode.commands.entries.joinToString(",") { "${it.key}:${it.value}" }
         val usageString = redeemCode.usage.entries.joinToString(",") { "${it.key}:${it.value}" }
-        val stamp: Timestamp? = if(redeemCode.storedTime != null) Timestamp.valueOf(redeemCode.storedTime) else null
+        val stamp = redeemCode.storedTime?.let { Timestamp.valueOf(it) }
+
         dbManager.getConnection()?.use { conn: Connection ->
             conn.prepareStatement(
                 "INSERT INTO redeem_codes (code, commands, storedTime, duration, isEnabled, max_redeems, max_player, permission, pin, target, usedBy) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?,?,?)"
-            ).use { statement: PreparedStatement ->
+            ).use { statement ->
                 statement.setString(1, redeemCode.code)
                 statement.setString(2, commandsString)
                 statement.setTimestamp(3, stamp)
-                statement.setObject(3, redeemCode.duration)
-                statement.setBoolean(4, redeemCode.isEnabled)
-                statement.setInt(5, redeemCode.maxRedeems)
-                statement.setInt(6, redeemCode.maxPlayers)
+                statement.setString(4, redeemCode.duration)
+                statement.setBoolean(5, redeemCode.isEnabled)
+                statement.setInt(6, redeemCode.maxRedeems)
+                statement.setInt(7, redeemCode.maxPlayers)
                 statement.setString(8, redeemCode.permission)
                 statement.setInt(9, redeemCode.pin)
                 statement.setString(10, redeemCode.target)
                 statement.setString(11, usageString)
+
                 try {
                     isInserted = statement.executeUpdate() > 0
                 } catch (e: SQLException) {
@@ -66,12 +72,10 @@ class RedeemCodeDaoImpl(private val dbManager: DatabaseManager) : RedeemCodeDao 
         return isInserted
     }
 
-
     override fun get(code: String): RedeemCode? {
-
         var redeemCode: RedeemCode? = null
-        dbManager.getConnection()?.use { conn: Connection ->
-            conn.prepareStatement("SELECT * FROM redeem_codes WHERE code = ?").use { statement: PreparedStatement ->
+        dbManager.getConnection()?.use { conn ->
+            conn.prepareStatement("SELECT * FROM redeem_codes WHERE code = ?").use { statement ->
                 statement.setString(1, code)
                 val result = statement.executeQuery()
                 if (result.next()) {
@@ -93,17 +97,16 @@ class RedeemCodeDaoImpl(private val dbManager: DatabaseManager) : RedeemCodeDao 
         return isDeleted
     }
 
-
     override fun update(redeemCode: RedeemCode): Boolean {
         var isUpdated = false
         val commandsString = redeemCode.commands.entries.joinToString(",") { "${it.key}:${it.value}" }
         val usageString = redeemCode.usage.entries.joinToString(",") { "${it.key}:${it.value}" }
-        dbManager.getConnection()?.use { conn: Connection ->
+        dbManager.getConnection()?.use { conn ->
             conn.prepareStatement(
-                "UPDATE redeem_codes SET commands = ?,storedTime = ?, duration = ?, isEnabled = ?, max_redeems = ?, max_player = ?, permission = ?, pin = ?, target = ?, usedBy = ? WHERE code = ?"
-            ).use { statement: PreparedStatement ->
+                "UPDATE redeem_codes SET commands = ?, storedTime = ?, duration = ?, isEnabled = ?, max_redeems = ?, max_player = ?, permission = ?, pin = ?, target = ?, usedBy = ? WHERE code = ?"
+            ).use { statement ->
                 statement.setString(1, commandsString)
-                statement.setTimestamp(2, Timestamp.valueOf(redeemCode.storedTime))
+                statement.setTimestamp(2, redeemCode.storedTime?.let { Timestamp.valueOf(it) })
                 statement.setString(3, redeemCode.duration)
                 statement.setBoolean(4, redeemCode.isEnabled)
                 statement.setInt(5, redeemCode.maxRedeems)
@@ -134,7 +137,6 @@ class RedeemCodeDaoImpl(private val dbManager: DatabaseManager) : RedeemCodeDao 
         return isDeletedAll
     }
 
-
     override fun getAllCodes(): List<RedeemCode> {
         val codes = mutableListOf<RedeemCode>()
         dbManager.getConnection()?.use { conn: Connection ->
@@ -148,28 +150,29 @@ class RedeemCodeDaoImpl(private val dbManager: DatabaseManager) : RedeemCodeDao 
         return codes
     }
 
-    private val timeZoneId: ZoneId = ZoneId.of("Asia/Kolkata")
-    private val timeZone: ZonedDateTime = ZonedDateTime.now(timeZoneId)
-    private val currenTime: LocalDateTime = timeZone.toLocalDateTime()
     override fun isExpired(code: String): Boolean {
-        val redeemCode = get(code)
-        val storedTime = redeemCode?.storedTime?: return false
+        val redeemCode = get(code) ?: return false
+        val storedTime = redeemCode.storedTime ?: return false
         val duration = redeemCode.duration ?: return false
-        val calcTime = calculateExpiry(storedTime, duration)
-        return calcTime?.isBefore(currenTime) ?: false
-    }
 
+        // Dynamically fetch current time for each call
+        val currentTime = ZonedDateTime.now(timeZoneId).toLocalDateTime()
+        val expiryTime = calculateExpiry(storedTime, duration)
+
+        return expiryTime?.isBefore(currentTime) ?: false
+    }
 
     private fun calculateExpiry(time: LocalDateTime, duration: String): LocalDateTime? {
         val amount = duration.dropLast(1).toIntOrNull() ?: return null
-        return when (duration.takeLast(1)) {
+        val unit = duration.takeLast(1)
+        return when (unit) {
             "s" -> time.plusSeconds(amount.toLong())
             "m" -> time.plusMinutes(amount.toLong())
             "h" -> time.plusHours(amount.toLong())
             "d" -> time.plusDays(amount.toLong())
             "mo" -> time.plusMonths(amount.toLong())
             "y" -> time.plusYears(amount.toLong())
-            else -> return null
+            else -> null
         }
     }
 
@@ -185,11 +188,10 @@ class RedeemCodeDaoImpl(private val dbManager: DatabaseManager) : RedeemCodeDao 
         return commands
     }
 
-
     private fun mapResultSetToRedeemCode(result: ResultSet): RedeemCode {
-        val commandsString = result.getString("commands") ?: null
-        val usageString = result.getString("usedBy") ?: null
-        val storedTime = if(result.getTimestamp("duration") == null) null else result.getTimestamp("duration")?.toLocalDateTime()
+        val commandsString = result.getString("commands")
+        val usageString = result.getString("usedBy")
+        val storedTime = result.getTimestamp("storedTime")?.toLocalDateTime()
         val commandMap = parseToMapId(commandsString)
         val playerUsageMap = parseToMapString(usageString)
 

@@ -1,7 +1,5 @@
 package me.justlime.redeemX.data
 
-import me.justlime.redeemX.RedeemX
-import org.bukkit.plugin.java.JavaPlugin
 import java.io.File
 import java.sql.Connection
 import java.sql.DriverManager

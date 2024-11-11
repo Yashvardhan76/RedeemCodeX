@@ -75,12 +75,16 @@ class RCXCommand(private val plugin: RedeemX) : CommandExecutor {
         // Create the redeem code with default or example values for the other fields
         val redeemCode = RedeemCode(
             code = codeName,
-            maxPlayers = 1,
-            isEnabled = true,
+            commands = mutableMapOf(),
+            storedTime = null,
             duration = null,
+            isEnabled = false,
+            maxRedeems = 1,
+            maxPlayers = 1,
             permission = null,
             pin = -1,
             target = null,
+            usage = mutableMapOf()
         )
 
         try {
@@ -195,22 +199,51 @@ class RCXCommand(private val plugin: RedeemX) : CommandExecutor {
                 value.toIntOrNull() ?: return sender.sendMessage("Invalid value for max_redeems.")
 
 
-            "max_per_player" -> redeemCode.maxPlayers =
+            "max_player" -> redeemCode.maxPlayers =
                 value.toIntOrNull() ?: return sender.sendMessage("Invalid value for max_per_player.")
-
 
             "duration" -> {
                 val timeZoneId: ZoneId = ZoneId.of("Asia/Kolkata")
-                val timeZone: ZonedDateTime = ZonedDateTime.now(timeZoneId)
-                val currenTime: LocalDateTime = timeZone.toLocalDateTime()
-                if (redeemCode.storedTime == null) redeemCode.storedTime = currenTime
-                when(value ) {
-                    "add" -> {}
-                    "set" -> {}
-                    "remove" -> {}
-                }
+                val currentTime: LocalDateTime = LocalDateTime.now(timeZoneId)
 
-                redeemCode.duration = value
+                // Set the storedTime to current time if it hasn't been set
+                if (redeemCode.storedTime == null) redeemCode.storedTime = currentTime
+
+                // Determine the action to perform on duration
+                val durationAction = value.lowercase()
+                var durationValue = args.getOrNull(4)
+                var existingDuration = redeemCode.duration
+                if (existingDuration == null) existingDuration = "0s"
+                if (durationValue == null) durationValue = "0"
+
+                when (durationAction) {
+                    "set" -> {
+                        redeemCode.storedTime = currentTime
+                        redeemCode.duration = adjustDuration("0s", durationValue, isAdding = true).toString() + 's'
+                    }
+
+                    "add" -> redeemCode.duration =
+                        adjustDuration(existingDuration, durationValue, isAdding = true).toString() + 's'
+
+                    "remove" -> {
+                        val duration =
+                            adjustDuration(existingDuration, durationValue, isAdding = false).toString() + 's'
+                        redeemCode.duration = if ((duration.drop(1).toIntOrNull() ?: -1) < 0) null else duration
+
+                    }
+
+                    else -> {
+                        println("Invalid duration operation specified: $durationAction")
+                    }
+                }
+                val success = plugin.redeemCodeDao.update(redeemCode)
+                if (success) {
+                    sender.sendMessage("Updated $property for code '${redeemCode.code}' to ${redeemCode.duration} ")
+                } else {
+                    sender.sendMessage("Failed to updated the code: ${redeemCode.code}")
+                    return
+                }
+                return
             }
 
             "permission" -> redeemCode.permission = value
@@ -236,7 +269,7 @@ class RCXCommand(private val plugin: RedeemX) : CommandExecutor {
                             return
                         }
                         val id = redeemCode.commands.keys.maxOrNull() ?: 0
-                        redeemCode.commands[id] = commandValue + 1
+                        redeemCode.commands[id + 1] = commandValue
                     }
 
                     "list" -> {
@@ -245,32 +278,23 @@ class RCXCommand(private val plugin: RedeemX) : CommandExecutor {
                     }
 
                     "set" -> {
-                        var commandValue = args.drop(4).joinToString(" ")
-                        if (args.size <= 4 || commandValue.isBlank()) {
+
+                        val commandValue = args.drop(5).joinToString(" ")
+                        val id = args[4].toIntOrNull()
+                        if (args.size <= 5 || commandValue.isBlank()) {
                             sender.sendMessage("No command Passed")
                             return
                         }
-                        val id = args[4].toIntOrNull()
-                        if (id != null) {
-                            commandValue = args.drop(5).joinToString(" ")
-                            redeemCode.commands[id] = commandValue
+                        if (id == null) {
+                            sender.sendMessage("ID Not Passed")
                             return
                         }
-                        sender.sendMessage("ID Not Passed")
-                        return
+
+                        redeemCode.commands[id] = commandValue
                     }
 
                     "preview" -> {
-                        if (!list.values.isEmpty()) {
-                            list.values.forEach {
-                                try {
-                                    plugin.server.dispatchCommand(console, it)
-                                } catch (e: CommandException) {
-                                    console.sendMessage("[Error] $it")
-                                    sender.sendMessage("[Error] $it")
-                                }
-                            }
-                        }
+                        if (!list.values.isEmpty()) list.values.forEach { plugin.server.dispatchCommand(console, it) }
                         return
                     }
 
@@ -280,7 +304,6 @@ class RCXCommand(private val plugin: RedeemX) : CommandExecutor {
                     }
                 }
             }
-
             else -> {
                 sender.sendMessage("Unknown property '$property'. Available properties: max_redeems, max_per_player, enabled, command.")
                 return
@@ -289,7 +312,7 @@ class RCXCommand(private val plugin: RedeemX) : CommandExecutor {
 
         val success = plugin.redeemCodeDao.update(redeemCode)
         if (success) {
-            sender.sendMessage("Updated $property for code '${redeemCode.code}' to  $value ")
+            sender.sendMessage("Updated $property for code '${redeemCode.code}' to $value ")
         } else {
             sender.sendMessage("Failed to updated the code: ${redeemCode.code}")
             return
@@ -300,5 +323,28 @@ class RCXCommand(private val plugin: RedeemX) : CommandExecutor {
     private fun handleInfo(sender: CommandSender) {
         sender.sendMessage("RedeemX Plugin Version: ${plugin.description.version}")
     }
+
+    private fun adjustDuration(existingDuration: String, adjustmentDuration: String, isAdding: Boolean): Long {
+        val timeUnitToSeconds =
+            mapOf("s" to 1L, "m" to 60L, "h" to 3600L, "d" to 86400L, "mo" to 2592000L, "y" to 31536000L)
+
+        // Parse existing and adjustment durations
+        val existingAmount = existingDuration.dropLast(1).toLongOrNull() ?: return 0L
+        val existingUnit = existingDuration.takeLast(1)
+        val adjustmentAmount = adjustmentDuration.dropLast(1).toLongOrNull() ?: return 0L
+        val adjustmentUnit = adjustmentDuration.takeLast(1)
+
+        // Convert both to seconds
+        val existingSeconds = existingAmount * (timeUnitToSeconds[existingUnit] ?: return 0L)
+        val adjustmentSeconds = adjustmentAmount * (timeUnitToSeconds[adjustmentUnit] ?: return 0L)
+
+        // Perform addition or subtraction
+        return if (isAdding) {
+            existingSeconds + adjustmentSeconds
+        } else {
+            existingSeconds - adjustmentSeconds
+        }
+    }
+
 
 }

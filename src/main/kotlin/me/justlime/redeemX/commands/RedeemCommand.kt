@@ -65,7 +65,7 @@ class RedeemCommand(private val plugin: RedeemX) : CommandExecutor, TabCompleter
         }
 
         //Check Maximum Player Limit
-        if (code.usage.size >= code.maxPlayers) {
+        if (code.usage.size > code.maxPlayers) {
             sender.sendMessage("The maximum number of players have redeemed this code.")
             return true
         }
@@ -77,8 +77,15 @@ class RedeemCommand(private val plugin: RedeemX) : CommandExecutor, TabCompleter
         }
 
         // Redeem the code
+        val console = plugin.server.consoleSender
+        code.commands.values.forEach {
+            plugin.server.dispatchCommand(console, it)
+        }
+
         code.usage[sender.name] = usageCount + 1
-        if (redeemCodeDao.update(code)) {
+        val success = redeemCodeDao.update(code)
+
+        if (success) {
             sender.sendMessage("You have successfully redeemed the code '$senderCode'.")
         } else {
             sender.sendMessage("Failed to redeem the code. Please try again later.")

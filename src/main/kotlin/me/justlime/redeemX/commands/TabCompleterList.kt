@@ -22,9 +22,15 @@ class TabCompleterList(private val plugin: RedeemX) : TabCompleter {
         when (args.size) {
             1 -> {
                 completions.add("gen")
+                completions.add("bulk_gen")
                 completions.add("modify")
                 completions.add("delete")
                 completions.add("delete_all")
+                completions.add("delete_Expired")
+                completions.add("renew")
+                completions.add("preview")
+                completions.add("reload")
+                completions.add("help")
             }
 
             2 -> when (args[0]) {
@@ -32,21 +38,20 @@ class TabCompleterList(private val plugin: RedeemX) : TabCompleter {
                     completions.add("CUSTOM")
                     completions.add("SIZE")
                 }
-
-                "modify" -> completions = tabCodes().toMutableList()
-                "delete" -> completions = tabCodes().toMutableList()
+                "help" -> {}
+                "reload" -> {}
+                else -> completions = tabCodes().toMutableList()
             }
 
             3 -> when (args[0]) {
                 "gen" -> {
-                    completions.add("cmd")
-                    completions.add("template")
+                    completions.add("template-1")
                 }
 
                 "modify" -> {
                     completions.add("enabled")
                     completions.add("max_redeems")
-                    completions.add("max_per_player")
+                    completions.add("max_player")
                     completions.add("duration")
                     completions.add("permission")
 //                    completions.add("change_code") TODO
@@ -65,7 +70,7 @@ class TabCompleterList(private val plugin: RedeemX) : TabCompleter {
                 "duration" -> {
                     completions.add("add")
                     completions.add("set")
-                    completions.add("unset")
+                    completions.add("remove")
                 }
 
                 "enabled" -> {
