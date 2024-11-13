@@ -1,0 +1,49 @@
+# Plugin message prefix
+prefix: "&6[RCX] &r"
+
+restricted-to-players: "{prefix} >> &cThis command can only be executed by Players in-game."
+
+# Messages for redeeming codes
+redeemed-message:
+  success:
+    chat: "&aYou have successfully redeemed the code: &b{code}"
+    title:
+      text: "&aRedeemed &b{code}"
+      subtitle: "&7Successfully redeemed the code: &b{code}"
+      fade-in: 10      # Duration in ticks (20 ticks = 1 second)
+      stay: 70
+      fade-out: 10
+    actionbar: "&aCode &b{code} &ahas been redeemed successfully!"
+
+  # Message shown if the code has already been redeemed by the player
+  already-redeemed:
+    chat: "&cYou have already redeemed this code: &b{code}"
+    actionbar: "&cYou have already used this code!"
+
+  # Message shown if the code is invalid
+  invalid-code:
+    chat: "&cInvalid code. Please try again or contact support."
+    actionbar: "&cCode not found. Please enter a valid code."
+
+  # Message shown if the code has expired
+  expired-code:
+    chat: "&eThe code &b{code} &ehas expired and cannot be redeemed."
+    actionbar: "&eThe code &b{code} &eis expired."
+
+  # Message for when a code has reached its maximum redemption limit
+  max-redemptions:
+    chat: "&cThe code &b{code} &chas reached its maximum redemptions."
+    actionbar: "&cThe code &b{code} &chas no remaining uses."
+  # General error message in case of any unexpected issue
+  error:
+    chat: "&cAn error occurred while redeeming your code. Please try again later."
+    actionbar: "&cUnexpected error. Please contact support."
+
+
+
+# Placeholder variables to be used within messages
+placeholders:
+  # {code} will be replaced by the actual code used
+  code: "{code}"
+  # {player} will be replaced by the player's name who is redeeming the code
+  player: "{player}"

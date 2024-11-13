@@ -1,6 +1,7 @@
 package me.justlime.redeemX.commands
 
 import me.justlime.redeemX.RedeemX
+import me.justlime.redeemX.config.ConfigManager
 import org.bukkit.command.Command
 import org.bukkit.command.CommandExecutor
 import org.bukkit.command.CommandSender
@@ -8,10 +9,14 @@ import org.bukkit.command.TabCompleter
 import org.bukkit.entity.Player
 
 class RedeemCommand(private val plugin: RedeemX) : CommandExecutor, TabCompleter {
+    val config = ConfigManager(plugin).config
+    val messages = ConfigManager(plugin).message
 
     override fun onCommand(sender: CommandSender, command: Command, label: String, args: Array<out String>): Boolean {
         if (sender !is Player) {
-            sender.sendMessage("This command can only be run by players.")
+            sender.sendMessage(
+                messages.getString("restricted-to-players")
+            )
             return true
         }
 
@@ -21,7 +26,7 @@ class RedeemCommand(private val plugin: RedeemX) : CommandExecutor, TabCompleter
         }
 
         val senderCode = args[0].uppercase()
-        val redeemCodeDao = plugin.redeemCodeDao
+        val redeemCodeDao = plugin.redeemCodeDB
         val code = redeemCodeDao.get(senderCode)
 
         if (code == null) {
@@ -83,7 +88,7 @@ class RedeemCommand(private val plugin: RedeemX) : CommandExecutor, TabCompleter
         }
 
         code.usage[sender.name] = usageCount + 1
-        val success = redeemCodeDao.update(code)
+        val success = redeemCodeDao.upsert(code)
 
         if (success) {
             sender.sendMessage("You have successfully redeemed the code '$senderCode'.")
@@ -94,12 +99,9 @@ class RedeemCommand(private val plugin: RedeemX) : CommandExecutor, TabCompleter
         return true
     }
 
-    override fun onTabComplete(
-        sender: CommandSender,
-        command: Command,
-        label: String,
-        args: Array<out String>
+    //To Avoid Getting Player Names
+    override fun onTabComplete(sender: CommandSender, command: Command, label: String, args: Array<out String>
     ): MutableList<String> {
-        return mutableListOf() // Return an empty list for now
+        return mutableListOf()
     }
 }

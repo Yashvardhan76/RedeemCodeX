@@ -3,3 +3,37 @@
 # Maximum number of attempts for code generation to avoid infinite loops. Recommended less then 2500
 max_attempts: 1000
 
+default:
+  code-generate-digit: 6
+  commands:
+    - "say redeemed"
+  code-expired-duration: "30d"
+  enabled: false
+  max_redeems: 1
+  max_player: 1
+  permission-required: false       #true/false or "rank.vip.{code}"
+  pin: -1                  #set -1 to disabled pin
+
+code-minimum-digit: 4             #The minimum digit of code required to generate
+code-maximum-digit: 16            #The maximum digit of code required to generate
+
+auto-delete-expired-codes: true   #It will only done when server got restart as it is a heavy operation
+auto-delete-redeemed-code-: false
+
+#Set cooldown for using /redeem
+
+cooldown: 3s
+
+renew:
+  reset-expired: true
+  clear-usage: true
+  clear-rewards: false
+  clear-commands: false
+  remove-permission-required: false
+
+
+
+maximum-pool-size: 5  # Adjust the pool size as necessary for your server load
+
+#Don't change it unless you know what you are doing
+database-version: 1.0

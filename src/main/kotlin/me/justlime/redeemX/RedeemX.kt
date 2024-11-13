@@ -1,44 +1,36 @@
 package me.justlime.redeemX
 
-import me.justlime.redeemX.commands.RCXCommand
-import me.justlime.redeemX.commands.RedeemCommand
-import me.justlime.redeemX.commands.TabCompleterList
+import me.justlime.redeemX.commands.CommandManager
+import me.justlime.redeemX.config.ConfigManager
 import me.justlime.redeemX.data.DatabaseManager
 import me.justlime.redeemX.data.dao.RedeemCodeDaoImpl
+import me.justlime.redeemX.utilities.UtilitiesManager
 import org.bukkit.plugin.java.JavaPlugin
-import java.io.File
 
 class RedeemX : JavaPlugin() {
-    lateinit var redeemCodeDao: RedeemCodeDaoImpl
-    private lateinit var databaseManager: DatabaseManager
-    private val db = File(dataFolder, "redeemx.db")
+    lateinit var redeemCodeDB: RedeemCodeDaoImpl
+    lateinit var configFile: ConfigManager
+
 
     override fun onEnable() {
         //config
-        this.saveDefaultConfig()
-        getCommand("rcx")?.setExecutor(RCXCommand(this))
-        getCommand("rcx")?.tabCompleter = TabCompleterList(this)
-        getCommand("redeem")?.setExecutor(RedeemCommand(this))
-        getCommand("redeem")?.tabCompleter = RedeemCommand(this)
+        configFile = ConfigManager(this)
 
-        // Initialize the database and DAO
 
-        databaseManager = DatabaseManager(db)
-        redeemCodeDao = RedeemCodeDaoImpl(databaseManager)
-        redeemCodeDao.createTable()
+        //Register and Initialize
+        redeemCodeDB = DatabaseManager.getInstance(this).getRedeemCodeDao()
+        redeemCodeDB.createTable()
+        redeemCodeDB.fetchCodes()
 
-        // Register commands
-//        getCommand("rcx")?.setExecutor(RedeemCommand(this))
-        //tab completer register
-//        getCommand("rcx")?.tabCompleter = TabCompleterList()
+        UtilitiesManager(this)
+        CommandManager(this)
+
         logger.info("RedeemX Plugin has been enabled!")
     }
 
-
     override fun onDisable() {
-        databaseManager.close()
+        DatabaseManager.getInstance(this).closePool()
         logger.info("RedeemX Plugin has been disabled!")
     }
-
 
 }

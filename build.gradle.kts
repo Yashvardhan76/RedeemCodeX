@@ -20,25 +20,17 @@ repositories {
 dependencies {
     compileOnly("org.spigotmc:spigot-api:1.21.1-R0.1-SNAPSHOT")
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
-
-    // Room dependencies
-//    implementation("androidx.room:room-runtime:2.5.0")  // Room runtime
-//    kapt("androidx.room:room-compiler:2.5.0")           // Room compiler for annotation processing
-
-    // SQLite JDBC driver
+    implementation("com.zaxxer:HikariCP:5.0.1")
     implementation("org.xerial:sqlite-jdbc:3.42.0.1")
 
-    // Coroutines for asynchronous Room operations
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.0")
-
-    implementation ("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.9.0")
-    implementation ("org.jetbrains.kotlinx:kotlinx-coroutines-swing:1.9.0")
 }
 
 
-val targetJavaVersion = 21
+val targetJavaVersion = 17
 kotlin {
     jvmToolchain(targetJavaVersion)
+}
+tasks.shadowJar {
 }
 
 tasks.build {

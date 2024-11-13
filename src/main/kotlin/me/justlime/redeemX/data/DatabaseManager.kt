@@ -1,23 +1,56 @@
 package me.justlime.redeemX.data
 
+import com.zaxxer.hikari.HikariConfig
+import com.zaxxer.hikari.HikariDataSource
+import me.justlime.redeemX.RedeemX
+import me.justlime.redeemX.data.dao.RedeemCodeDaoImpl
 import java.io.File
 import java.sql.Connection
-import java.sql.DriverManager
 import java.sql.SQLException
 
-class DatabaseManager(databaseFile: File) {
-    private val url = "jdbc:sqlite:$databaseFile"
+class DatabaseManager(private val plugin: RedeemX) {
+
+    private val databaseFile = File(plugin.dataFolder, "redeemx.db")
+    private val hikariDataSource: HikariDataSource
+
+    init {
+        val config = HikariConfig().apply {
+            jdbcUrl = "jdbc:sqlite:${databaseFile.absolutePath}"
+            maximumPoolSize = 5  // Adjust the pool size as necessary for your server load
+            isAutoCommit = true
+            connectionTestQuery = "SELECT 1"
+        }
+
+        hikariDataSource = HikariDataSource(config)
+
+        // Initialize tables or any required setup here
+        getRedeemCodeDao().createTable()
+    }
+
+    companion object {
+        private var instance: DatabaseManager? = null
+
+        fun getInstance(plugin: RedeemX): DatabaseManager {
+            return instance ?: synchronized(this) {
+                instance ?: DatabaseManager(plugin).also { instance = it }
+            }
+        }
+    }
 
     fun getConnection(): Connection? {
         return try {
-            DriverManager.getConnection(url)
+            hikariDataSource.connection
         } catch (e: SQLException) {
-            println("Failed to connect to the SQLite database: ${e.message}")
+            plugin.logger.info("Failed to get a connection from the pool: ${e.message}")
             null
         }
     }
 
-    fun close() {
-        getConnection()?.close()
+    fun closePool() {
+        hikariDataSource.close()
+    }
+
+    fun getRedeemCodeDao(): RedeemCodeDaoImpl {
+        return RedeemCodeDaoImpl(this)
     }
 }

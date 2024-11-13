@@ -2,15 +2,22 @@ package me.justlime.redeemX.data.dao
 
 import me.justlime.redeemX.data.DatabaseManager
 import me.justlime.redeemX.data.models.RedeemCode
-import java.sql.*
+import java.sql.Connection
+import java.sql.PreparedStatement
+import java.sql.ResultSet
+import java.sql.Statement
+import java.sql.Timestamp
 import java.time.LocalDateTime
 import java.time.ZoneId
 import java.time.ZonedDateTime
 
 class RedeemCodeDaoImpl(private val dbManager: DatabaseManager) : RedeemCodeDao {
+    lateinit var getFetchCodes: List<String>
+
+    fun fetchCodes() {
+     getFetchCodes = getAllCodes().map { it.code }
+    }
     private val timeZoneId: ZoneId = ZoneId.of("Asia/Kolkata")
-    private val timeZone: ZonedDateTime = ZonedDateTime.now(timeZoneId)
-    private val currenTime: LocalDateTime = timeZone.toLocalDateTime()
 
     override fun createTable() {
         dbManager.getConnection()?.use { conn: Connection ->
@@ -36,17 +43,33 @@ class RedeemCodeDaoImpl(private val dbManager: DatabaseManager) : RedeemCodeDao 
         }
     }
 
-    override fun insert(redeemCode: RedeemCode): Boolean {
-        var isInserted = false
+    override fun upsert(redeemCode: RedeemCode): Boolean {
+        var isSuccess = false
+        val code = redeemCode.code
         val commandsString = redeemCode.commands.entries.joinToString(",") { "${it.key}:${it.value}" }
         val usageString = redeemCode.usage.entries.joinToString(",") { "${it.key}:${it.value}" }
         val stamp = redeemCode.storedTime?.let { Timestamp.valueOf(it) }
 
-        dbManager.getConnection()?.use { conn: Connection ->
+        dbManager.getConnection()?.use { conn ->
             conn.prepareStatement(
-                "INSERT INTO redeem_codes (code, commands, storedTime, duration, isEnabled, max_redeems, max_player, permission, pin, target, usedBy) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?,?,?)"
+                """
+            INSERT INTO redeem_codes (code, commands, storedTime, duration, isEnabled, max_redeems, max_player, permission, pin, target, usedBy)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ON CONFLICT(code) DO UPDATE SET 
+                commands = EXCLUDED.commands,
+                storedTime = EXCLUDED.storedTime,
+                duration = EXCLUDED.duration,
+                isEnabled = EXCLUDED.isEnabled,
+                max_redeems = EXCLUDED.max_redeems,
+                max_player = EXCLUDED.max_player,
+                permission = EXCLUDED.permission,
+                pin = EXCLUDED.pin,
+                target = EXCLUDED.target,
+                usedBy = EXCLUDED.usedBy
+            """
             ).use { statement ->
-                statement.setString(1, redeemCode.code)
+                // Set parameters, starting with code, which we assume is non-null at this point
+                statement.setString(1, code)
                 statement.setString(2, commandsString)
                 statement.setTimestamp(3, stamp)
                 statement.setString(4, redeemCode.duration)
@@ -58,18 +81,12 @@ class RedeemCodeDaoImpl(private val dbManager: DatabaseManager) : RedeemCodeDao 
                 statement.setString(10, redeemCode.target)
                 statement.setString(11, usageString)
 
-                try {
-                    isInserted = statement.executeUpdate() > 0
-                } catch (e: SQLException) {
-                    if (e.message?.contains("UNIQUE constraint failed") == true) {
-                        return false
-                    } else {
-                        throw e
-                    }
-                }
+                isSuccess = statement.executeUpdate() > 0
             }
         }
-        return isInserted
+        if (isSuccess) getFetchCodes = getAllCodes().map { it.code }
+
+        return isSuccess
     }
 
     override fun get(code: String): RedeemCode? {
@@ -95,31 +112,6 @@ class RedeemCodeDaoImpl(private val dbManager: DatabaseManager) : RedeemCodeDao 
             }
         }
         return isDeleted
-    }
-
-    override fun update(redeemCode: RedeemCode): Boolean {
-        var isUpdated = false
-        val commandsString = redeemCode.commands.entries.joinToString(",") { "${it.key}:${it.value}" }
-        val usageString = redeemCode.usage.entries.joinToString(",") { "${it.key}:${it.value}" }
-        dbManager.getConnection()?.use { conn ->
-            conn.prepareStatement(
-                "UPDATE redeem_codes SET commands = ?, storedTime = ?, duration = ?, isEnabled = ?, max_redeems = ?, max_player = ?, permission = ?, pin = ?, target = ?, usedBy = ? WHERE code = ?"
-            ).use { statement ->
-                statement.setString(1, commandsString)
-                statement.setTimestamp(2, redeemCode.storedTime?.let { Timestamp.valueOf(it) })
-                statement.setString(3, redeemCode.duration)
-                statement.setBoolean(4, redeemCode.isEnabled)
-                statement.setInt(5, redeemCode.maxRedeems)
-                statement.setInt(6, redeemCode.maxPlayers)
-                statement.setString(7, redeemCode.permission)
-                statement.setInt(8, redeemCode.pin)
-                statement.setString(9, redeemCode.target)
-                statement.setString(10, usageString)
-                statement.setString(11, redeemCode.code)
-                isUpdated = statement.executeUpdate() > 0
-            }
-        }
-        return isUpdated
     }
 
     override fun deleteAll(): Boolean {

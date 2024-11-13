@@ -1,126 +1,70 @@
 package me.justlime.redeemX.commands
 
 import me.justlime.redeemX.RedeemX
-import org.bukkit.Bukkit
 import org.bukkit.command.Command
 import org.bukkit.command.CommandSender
 import org.bukkit.command.TabCompleter
 
+class TabCompleterList(plugin: RedeemX) : TabCompleter {
 
-class TabCompleterList(private val plugin: RedeemX) : TabCompleter {
-    override fun onTabComplete(
-        sender: CommandSender, command: Command, label: String, args: Array<out String>
+    // Predefined common completions for each command type
+    private val commonCompletions = listOf(
+        "gen", "modify", "delete", "delete_all", "info","renew"
+    )
+
+    private val commonCompletionsTODO = listOf(   //TODO
+        "bulk_gen", "delete_Expired", "renew", "preview", "reload", "help"
+    )
+    private val modifyOptions = listOf(
+        "enabled", "max_redeems", "max_player", "duration", "permission", "set_target", "set_pin", "command", "list"
+    )
+    private val genSubcommands = listOf("CUSTOM", "SIZE")
+    private val durationOptions = listOf("add", "set", "remove")
+    private val permissionOptions = listOf("true", "false", "CUSTOM")
+    private var cachedCodes: List<String>? = plugin.redeemCodeDB.getFetchCodes
+
+    override fun onTabComplete(sender: CommandSender, command: Command, label: String, args: Array<out String>
     ): MutableList<String>? {
-        var completions: MutableList<String> = mutableListOf()
-        Bukkit.getOnlinePlayers()
-            .filter { player -> player.name.startsWith(args[0], true) } // true for case-insensitive matching
+        val completions: MutableList<String> = mutableListOf()
 
-        // Add filtered player names to completions
-        // Collect names of matching players
-
-
+        // Handle argument completions based on argument size
         when (args.size) {
-            1 -> {
-                completions.add("gen")
-                completions.add("bulk_gen")
-                completions.add("modify")
-                completions.add("delete")
-                completions.add("delete_all")
-                completions.add("delete_Expired")
-                completions.add("renew")
-                completions.add("preview")
-                completions.add("reload")
-                completions.add("help")
-            }
-
-            2 -> when (args[0]) {
-                "gen" -> {
-                    completions.add("CUSTOM")
-                    completions.add("SIZE")
-                }
-                "help" -> {}
-                "reload" -> {}
-                else -> completions = tabCodes().toMutableList()
-            }
-
-            3 -> when (args[0]) {
-                "gen" -> {
-                    completions.add("template-1")
-                }
-
-                "modify" -> {
-                    completions.add("enabled")
-                    completions.add("max_redeems")
-                    completions.add("max_player")
-                    completions.add("duration")
-                    completions.add("permission")
-//                    completions.add("change_code") TODO
-                    completions.add("set_target")
-                    completions.add("set_pin")
-                    completions.add("command")
-                    completions.add("list")
-//                    completions.add("rewards") TODO
-                    return completions
-                }
-            }
-
-            4 -> when (args[2]) {
-                "cmd" -> {}
-                "template" -> {}
-                "duration" -> {
-                    completions.add("add")
-                    completions.add("set")
-                    completions.add("remove")
-                }
-
-                "enabled" -> {
-                    completions.add("true")
-                    completions.add("false")
-                }
-
-                "max_redeems" -> {}
-                "max_per_player" -> {}
-                "max_redeems_per_player" -> {}
-                "permission" -> {
-                    completions.add("true")
-                    completions.add("false")
-                    completions.add("CUSTOM")
-                }
-
-//                "change_code" -> {
-//                    completions.add("SIZE")
-//                    completions.add("CUSTOM")
-//                }
-
-                "set_pin" -> {
-                    completions.add("-1")
-                }
-
-                "command" -> {
-                    completions.add("add")
-                    completions.add("set")
-                    completions.add("list")
-                    completions.add("preview")
-                }
-
-                "rewards" -> {
-                    TODO()
-                }
-
-                "set_target" -> {
-                    return null
-                }
-            }
+            1 -> completions.addAll(commonCompletions)
+            2 -> completions.addAll(handleSecondArgument(args[0]))
+            3 -> completions.addAll(handleThirdArgument(args))
+            4 -> handleFourthArgument(args)?.let { completions.addAll(it) }
         }
-        return completions
-            .filter { it.startsWith(args.lastOrNull() ?: "", ignoreCase = true) }
-            .sortedBy { it.lowercase() }
-            .toMutableList()
+
+        // Filter and return completions that match the current input (case-insensitive)
+        return completions.filter { it.startsWith(args.lastOrNull() ?: "", ignoreCase = true) }
+            .sortedBy { it.lowercase() }.toMutableList()
     }
 
-    private fun tabCodes(): Array<String> {
-        val completion: Array<String> = plugin.redeemCodeDao.getAllCodes().map { it.code }.toTypedArray()
-        return completion
+    private fun handleSecondArgument(firstArg: String): List<String> {
+        return when (firstArg) {
+            "gen" -> genSubcommands
+            "delete_all" -> emptyList()
+            else -> cachedCodes ?: emptyList() // Use cached codes
+        }
+    }
+
+    private fun handleThirdArgument(args: Array<out String>): List<String> {
+        return when (args[0]) {
+            "gen" -> listOf("template-1") // Add template subcommand for 'gen'
+            "modify" -> modifyOptions
+            else -> emptyList()
+        }
+    }
+
+    private fun handleFourthArgument(args: Array<out String>): List<String>? {
+        return when (args[2]) {
+            "duration" -> durationOptions
+            "enabled" -> listOf("true", "false")
+            "permission" -> permissionOptions
+            "set_pin" -> listOf("-1")
+            "command" -> listOf("add", "set", "list", "preview")
+            "set_target" -> null
+            else -> emptyList()
+        }
     }
 }
-
