@@ -88,14 +88,13 @@ class RedeemCommand(private val plugin: RedeemX) : CommandExecutor, TabCompleter
         }
 
         code.usage[sender.name] = usageCount + 1
+
         val success = redeemCodeDao.upsert(code)
-
-        if (success) {
-            sender.sendMessage("You have successfully redeemed the code '$senderCode'.")
-        } else {
+        if (!success) {
             sender.sendMessage("Failed to redeem the code. Please try again later.")
-        }
 
+        }
+        sender.sendMessage("You have successfully redeemed the code '$senderCode'.")
         return true
     }
 

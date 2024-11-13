@@ -84,8 +84,8 @@ class RedeemCodeDaoImpl(private val dbManager: DatabaseManager) : RedeemCodeDao 
                 isSuccess = statement.executeUpdate() > 0
             }
         }
-        if (isSuccess) getFetchCodes = getAllCodes().map { it.code }
 
+        if (isSuccess) fetchCodes()
         return isSuccess
     }
 

@@ -20,8 +20,12 @@ repositories {
 dependencies {
     compileOnly("org.spigotmc:spigot-api:1.21.1-R0.1-SNAPSHOT")
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
-    implementation("com.zaxxer:HikariCP:5.0.1")
-    implementation("org.xerial:sqlite-jdbc:3.42.0.1")
+    implementation("com.zaxxer:HikariCP:5.0.1"){
+        exclude(group = "org.xerial", module = "sqlite-jdbc")
+    }
+    compileOnly("org.xerial:sqlite-jdbc:3.42.0.1"){
+        exclude(group = "org.xerial", module = "sqlite-jdbc")
+    }
 
 }
 
@@ -31,6 +35,8 @@ kotlin {
     jvmToolchain(targetJavaVersion)
 }
 tasks.shadowJar {
+    minimize()
+
 }
 
 tasks.build {

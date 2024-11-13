@@ -3,6 +3,7 @@
     public <methods>;
 }
 
+
 # Keep annotations
 -keepattributes *Annotation*
 
