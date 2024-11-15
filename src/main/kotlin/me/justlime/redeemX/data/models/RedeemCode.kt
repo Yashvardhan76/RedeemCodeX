@@ -2,10 +2,6 @@ package me.justlime.redeemX.data.models
 
 import java.time.LocalDateTime
 
-//private val timeZoneId: ZoneId = ZoneId.of("Asia/Kolkata")
-//private val timeZone: ZonedDateTime = ZonedDateTime.now(timeZoneId)
-//private val currenTime: LocalDateTime = timeZone.toLocalDateTime()
-
 data class RedeemCode(
     val code: String,
     var commands: MutableMap<Int, String> ,

@@ -20,13 +20,12 @@ repositories {
 dependencies {
     compileOnly("org.spigotmc:spigot-api:1.21.1-R0.1-SNAPSHOT")
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
-    implementation("com.zaxxer:HikariCP:5.0.1"){
+    implementation("com.zaxxer:HikariCP:4.0.3"){
         exclude(group = "org.xerial", module = "sqlite-jdbc")
     }
-    compileOnly("org.xerial:sqlite-jdbc:3.42.0.1"){
+    compileOnly("org.xerial:sqlite-jdbc:3.47.0.0"){
         exclude(group = "org.xerial", module = "sqlite-jdbc")
     }
-
 }
 
 

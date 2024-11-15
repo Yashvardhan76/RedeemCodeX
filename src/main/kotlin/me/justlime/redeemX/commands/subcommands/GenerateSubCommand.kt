@@ -1,25 +1,33 @@
 package me.justlime.redeemX.commands.subcommands
 
 import me.justlime.redeemX.RedeemX
+import me.justlime.redeemX.config.ConfigManager
 import me.justlime.redeemX.data.models.RedeemCode
 import org.bukkit.command.CommandSender
 
 class GenerateSubCommand(private val plugin: RedeemX) {
- fun execute(sender: CommandSender, args: Array<out String>) {
+    private val config = ConfigManager(plugin)
+
+    fun execute(sender: CommandSender, args: Array<out String>) {
+        config.setState(sender)
+        if (!sender.hasPermission("redeemx.use.gen")) {
+            sender.sendMessage(config.getString("no-permission"))
+            return
+        }
+
         if (args.size <= 1) {
-            sender.sendMessage("Usage: /rxc gen <code> <commands/template> <commands/template_name>")
+            sender.sendMessage(config.getString("commands.gen.invalid-syntax"))
             return
         }
         val code = args[1]
-        val maxAttempts = plugin.config.getInt("max_attempts")
-
+        val maxAttempts = plugin.config.getInt("max-attempts")
         if (code.toIntOrNull() == null) {
             createRedeemCode(sender, code.uppercase())
             return
         }
         generateUniqueCode(code.toInt(), maxAttempts) { uniqueCode ->
             if (uniqueCode == null) {
-                sender.sendMessage("Unable to generate a unique code of length ${code.toInt()}. Please try a different length or name. (Total $maxAttempts attempts)")
+                sender.sendMessage(config.getString("commands.gen.length-error"))
                 return@generateUniqueCode
             }
             createRedeemCode(sender, uniqueCode)
@@ -30,9 +38,12 @@ class GenerateSubCommand(private val plugin: RedeemX) {
 
     private fun createRedeemCode(sender: CommandSender, codeName: String) {
         // Check if code already exists
-        sender.sendMessage("Hello $codeName!")
         if (plugin.redeemCodeDB.get(codeName) != null) {
-            sender.sendMessage("The code '$codeName' already exists. Please choose a unique code.")
+            sender.sendMessage(
+                config.getString(
+                    "commands.gen.code-already-exist"
+                )
+            )
             return
         }
 
@@ -57,15 +68,16 @@ class GenerateSubCommand(private val plugin: RedeemX) {
             // Attempt to insert the code into the database
             val success = plugin.redeemCodeDB.upsert(redeemCode)
             if (success) {
-                sender.sendMessage("Code generated successfully: $codeName")
+                sender.sendMessage(config.getString("commands.gen.success"))
             } else {
-                sender.sendMessage("Failed to generate the code.")
+                sender.sendMessage(config.getString("commands.gen.failed"))
             }
         } catch (e: Exception) {
-            sender.sendMessage("An error occurred while generating the code.")
+            sender.sendMessage(config.getString("commands.gen.error"))
             e.printStackTrace()
         }
     }
+
     private fun generateUniqueCode(length: Int, maxAttempts: Int = 1024, callback: (String?) -> Unit) {
         val charset = ('A'..'Z') + ('0'..'9')
         var code: String

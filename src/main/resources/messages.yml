@@ -1,10 +1,16 @@
 # Plugin message prefix
 prefix: "&6[RCX] &r"
 
-restricted-to-players: "{prefix} >> &cThis command can only be executed by Players in-game."
+restricted-to-players:
+  chat: "{prefix} >> &cThis command can only be executed by Players in-game."
+
+no-permission: "&cYou don't have permission to use this command."
+
 
 # Messages for redeeming codes
 redeemed-message:
+  usage: "Usage: /redeem <code> [pin]"
+
   success:
     chat: "&aYou have successfully redeemed the code: &b{code}"
     title:
@@ -14,31 +20,115 @@ redeemed-message:
       stay: 70
       fade-out: 10
     actionbar: "&aCode &b{code} &ahas been redeemed successfully!"
+  failed:
+    chat: "&cAn error occurred while redeeming your code. Please try again later."
+    actionbar: "&cUnexpected error. Please contact support."
+    title: "&cFailed"
 
-  # Message shown if the code has already been redeemed by the player
-  already-redeemed:
-    chat: "&cYou have already redeemed this code: &b{code}"
-    actionbar: "&cYou have already used this code!"
 
-  # Message shown if the code is invalid
   invalid-code:
     chat: "&cInvalid code. Please try again or contact support."
     actionbar: "&cCode not found. Please enter a valid code."
+
+  no-permission: "&cYou don't have permission to Redeemed this code {code}."
+
+  disabled: "The code {code} is disabled."
+
+  # Message shown if the code is invalid
+
+
 
   # Message shown if the code has expired
   expired-code:
     chat: "&eThe code &b{code} &ehas expired and cannot be redeemed."
     actionbar: "&eThe code &b{code} &eis expired."
 
+  missing-pin:
+    chat: "This code {code} requires a pin. Usage: /redeem <code> <pin>"
+
+  invalid-pin:
+    chat: "&cInvalid pin. Please Try again"
+    actionbar: "&cInvalid pin. Please Try again"
+
+  # Message shown if the code has already been redeemed by the player
+  already-redeemed:
+    chat: "&cYou have already redeemed this code: &b{code}"
+    actionbar: "&cYou have already used this code!"
+
+
+
+
+
+
+
   # Message for when a code has reached its maximum redemption limit
+  max-player-redeemed:
+    chat: "&cYou have already redeemed the maximum amount of code"
+    actionbar: "&cYou have already redeemed the maximum amount of code"
+
   max-redemptions:
     chat: "&cThe code &b{code} &chas reached its maximum redemptions."
     actionbar: "&cThe code &b{code} &chas no remaining uses."
   # General error message in case of any unexpected issue
-  error:
-    chat: "&cAn error occurred while redeeming your code. Please try again later."
-    actionbar: "&cUnexpected error. Please contact support."
 
+
+commands:
+  gen:
+    success: "&aGenerated new code: &e{code}&a."
+    invalid-syntax: "&cUsage: /redeem gen <CUSTOM | SIZE | TEMPLATE> [Template-name]"
+    invalid-options: "&cError: Invalid options for generating a code."
+    no-permission: "&cYou do not have permission to generate codes."
+    missing-parameters: "&cError: Please specify all required parameters for code generation."
+    length-error: "Unable to generate a unique code of length ${code.toInt()}. Please try a different length or name.(Total $maxAttempts attempts)"
+    code-already-exist: "The code '$codeName' already exists. Please choose a unique code."
+    failed: "&cFailed To Generate the code &7[Database Error&7]"
+    error: "&cAn error occurred while generating the code {code}."
+
+  modify:
+    success: "&aCode &e{code}&a was modified successfully."
+    invalid-option: "&cError: Invalid modification option."
+    not-found: "&cError: Code &e{code}&c could not be found for modification."
+    no-permission: "&cYou do not have permission to modify codes."
+    invalid-syntax: "&cUsage: /redeem modify <code> <options>"
+    attribute-locked: "&cThe attribute &e{attribute}&c is locked and cannot be modified."
+
+  delete:
+    success: "&aCode &e{code}&a has been deleted."
+    not-found: "&cError: Code &e{code}&c could not be found for deletion."
+    no-permission: "&cYou do not have permission to delete codes."
+    confirmation-needed: "&cPlease confirm the deletion by adding '-confirm' to the command."
+
+  delete_all:
+    confirmation: "&cAre you sure you want to delete all codes? This action cannot be undone."
+    success: "&aAll codes have been deleted successfully."
+    no-permission: "&cYou do not have permission to delete all codes."
+    cancellation: "&cAction cancelled. No codes were deleted."
+
+  renew:
+    success: "&aCode &e{code}&a has been renewed."
+    invalid-syntax: "&cUsage: /redeem renew <code>"
+    not-found: "&cError: Code &e{code}&c could not be found for renewal."
+    expired-code: "&cError: Code &e{code}&c is expired and cannot be renewed."
+    no-permission: "&cYou do not have permission to renew codes."
+
+  info:
+    details: "&aCode Details: &e{code}&a. Expiry: &e{expiry}&a."
+    not-found: "&cError: Code &e{code}&c could not be found."
+    no-permission: "&cYou do not have permission to view code details."
+    additional-info: "&aMax Redeems: &e{max_redeems}&a, Redeemed By: &e{redeemed_by}/{max_player}"
+
+  help:
+    header: "&aAvailable Commands: /redeem <gen|modify|delete|delete_all|info|renew|help>"
+    command-detail:
+      gen: "&e/gen <CUSTOM | SIZE> [options] &f- Generates a new redeemable code."
+      modify: "&e/modify <code> <options> &f- Modifies an existing code with new attributes."
+      delete: "&e/delete <code> &f- Deletes a specific code."
+      delete_all: "&e/delete_all &f- Deletes all codes with a confirmation."
+      renew: "&e/renew <code> &f- Renews an expired code."
+      info: "&e/info <code> &f- Displays information about a specific code."
+    footer: "&aUse &e/redeem help <command>&a for more details on each command."
+
+  unknown-command: "&cUnknown SubCommand. Please try again."
 
 
 # Placeholder variables to be used within messages

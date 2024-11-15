@@ -6,13 +6,14 @@ import me.justlime.redeemX.commands.subcommands.GenerateSubCommand
 import me.justlime.redeemX.commands.subcommands.InfoSubCommand
 import me.justlime.redeemX.commands.subcommands.ModifySubCommand
 import me.justlime.redeemX.commands.subcommands.RenewSubCommand
+import me.justlime.redeemX.config.ConfigManager
 import org.bukkit.ChatColor
 import org.bukkit.command.Command
 import org.bukkit.command.CommandExecutor
 import org.bukkit.command.CommandSender
 
 class RCXCommand(private val plugin: RedeemX) : CommandExecutor {
-
+    val config = ConfigManager(plugin)
     override fun onCommand(sender: CommandSender, command: Command, label: String, args: Array<out String>): Boolean {
         if (args.isEmpty()) {
             sender.sendMessage("Usage: /rxc <gen|delete|modify|info>")
@@ -25,22 +26,19 @@ class RCXCommand(private val plugin: RedeemX) : CommandExecutor {
                 "delete" -> DeleteSubCommand(plugin).execute(sender, args)
                 "delete_all" -> DeleteSubCommand(plugin).execute(sender, args)
                 "info" -> InfoSubCommand(plugin).execute(sender)
-                "renew" -> RenewSubCommand(plugin).execute(sender,args)
+                "renew" -> RenewSubCommand(plugin).execute(sender, args)
                 "reload" -> {
-                    plugin.configFile.reloadConfig()
+                    plugin.configFile.reloadAllConfigs()
                     sender.sendMessage("Plugin Reloaded")
                     return true
                 }
-                else -> sender.sendMessage("Unknown subcommand. Use 'gen', 'delete','delete_all', 'modify', or 'info'.")
+
+                else -> sender.sendMessage(config.getString("commands.unknown-command"))
             }
             return true
         }
         sender.sendMessage("${ChatColor.RED}You don't have permission to use this command.")
         return true
     }
-
-
-
-
 
 }
