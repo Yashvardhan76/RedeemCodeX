@@ -7,13 +7,14 @@ import me.justlime.redeemX.commands.subcommands.InfoSubCommand
 import me.justlime.redeemX.commands.subcommands.ModifySubCommand
 import me.justlime.redeemX.commands.subcommands.RenewSubCommand
 import me.justlime.redeemX.config.ConfigManager
+import me.justlime.redeemX.state.StateManager
 import org.bukkit.ChatColor
 import org.bukkit.command.Command
 import org.bukkit.command.CommandExecutor
 import org.bukkit.command.CommandSender
 
-class RCXCommand(private val plugin: RedeemX) : CommandExecutor {
-    val config = ConfigManager(plugin)
+class RCXCommand(private val plugin: RedeemX, private val stateManager: StateManager) : CommandExecutor {
+    private val config = ConfigManager(plugin, stateManager = stateManager)
     override fun onCommand(sender: CommandSender, command: Command, label: String, args: Array<out String>): Boolean {
         if (args.isEmpty()) {
             sender.sendMessage("Usage: /rxc <gen|delete|modify|info>")
@@ -21,8 +22,8 @@ class RCXCommand(private val plugin: RedeemX) : CommandExecutor {
         }
         if (sender.hasPermission("redeemx.admin")) {
             when (args[0].lowercase()) {
-                "gen" -> GenerateSubCommand(plugin).execute(sender, args)
-                "modify" -> ModifySubCommand(plugin).execute(sender, args)
+                "gen" -> GenerateSubCommand(plugin,stateManager).execute(sender, args)
+                "modify" -> ModifySubCommand(plugin,stateManager).execute(sender, args)
                 "delete" -> DeleteSubCommand(plugin).execute(sender, args)
                 "delete_all" -> DeleteSubCommand(plugin).execute(sender, args)
                 "info" -> InfoSubCommand(plugin).execute(sender)

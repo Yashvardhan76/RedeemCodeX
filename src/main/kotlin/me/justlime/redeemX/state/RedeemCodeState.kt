@@ -1,4 +1,4 @@
-package me.justlime.redeemX.data.state
+package me.justlime.redeemX.state
 
 import org.bukkit.command.CommandSender
 import org.bukkit.entity.Player
@@ -29,7 +29,10 @@ data class RedeemCodeState(
     var target: String? = null,
     var inputTarget: String = "",
     var usage: MutableMap<String, Int> = mutableMapOf(),
-    var usageCount: Int = 0
+    var usageCount: Int = 0,
+    var property: String = "",
+    var value: String=""
+
 ) {
     private val senderName: String = if (sender is Player) sender.name else "console"
 

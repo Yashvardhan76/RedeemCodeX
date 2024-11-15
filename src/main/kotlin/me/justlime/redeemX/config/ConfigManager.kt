@@ -1,8 +1,8 @@
 package me.justlime.redeemX.config
 
 import me.justlime.redeemX.RedeemX
-import me.justlime.redeemX.data.models.RedeemCode
-import me.justlime.redeemX.data.state.RedeemCodeState
+import me.justlime.redeemX.state.RedeemCodeState
+import me.justlime.redeemX.state.StateManager
 import net.md_5.bungee.api.ChatMessageType
 import net.md_5.bungee.api.chat.TextComponent
 import org.bukkit.ChatColor
@@ -14,9 +14,8 @@ import java.io.File
 import java.util.logging.Level
 import java.util.regex.Pattern
 
-class ConfigManager(private val plugin: RedeemX) {
+class ConfigManager(private val plugin: RedeemX, private val stateManager: StateManager) {
 
-    lateinit var state: RedeemCodeState
     private val configFiles = mutableMapOf<Files, FileConfiguration>()
 
     companion object {
@@ -30,38 +29,22 @@ class ConfigManager(private val plugin: RedeemX) {
         getConfig(Files.MESSAGES)
     }
 
-    fun setState(sender: CommandSender, codeData: RedeemCode? = null): RedeemCodeState {
-        if (!::state.isInitialized) {
-            state = RedeemCodeState(sender = sender) // Initialize state if not already set
-        }
-
-        codeData?.let {
-            state = state.copy(
-                sender = sender,
-                code = it.code,
-                commands = it.commands,
-                storedTime = it.storedTime ?: state.storedTime,
-                duration = it.duration ?: state.duration,
-                isEnabled = it.isEnabled,
-                maxRedeems = it.maxRedeems,
-                maxPlayers = it.maxPlayers,
-                permission = it.permission ?: state.permission,
-                pin = it.pin,
-                target = it.target ?: state.target,
-                usage = it.usage
-            )
-        }
-
-        return state
+    /**
+     * Updates or initializes the state for a sender, leveraging StateManager.
+     */
+    fun initializeState(sender: CommandSender, code: String? = null): RedeemCodeState {
+        return stateManager.getOrCreateState(sender, code)
     }
 
-
-    fun sendMessage(key: String, state: RedeemCodeState = this.state) {
+    /**
+     * Sends a message to the sender with support for placeholders and multiple message formats.
+     */
+    fun sendMessage(key: String, state: RedeemCodeState) {
         // Placeholder map for message customization
         val placeholders = state.toPlaceholdersMap()
 
         // Fetch different types of messages
-        val chatMessage = getString("$key.chat")?: getString(key)
+        val chatMessage = getString("$key.chat") ?: getString(key)
         val actionBarMessage = getString("$key.actionbar")
         val titleMessage = getString("$key.title.text") ?: getString("$key.title")
         val subtitleMessage = getString("$key.title.subtitle")
@@ -70,39 +53,34 @@ class ConfigManager(private val plugin: RedeemX) {
         val fadeOut = getString("$key.title.fade-out")?.toIntOrNull() ?: DEFAULT_FADE_OUT
 
         // Send action bar message
-        if (actionBarMessage != null) {
-            val filledMessage = placeholders.entries.fold(actionBarMessage) { msg, (placeholder, value) ->
-                msg.replace("{$placeholder}", value)
-            }
+        actionBarMessage?.let {
+            val filledMessage = applyPlaceholders(it, placeholders)
             if (state.sender is Player) {
                 (state.sender as Player).spigot().sendMessage(ChatMessageType.ACTION_BAR, TextComponent(filledMessage))
             }
         }
 
         // Send title message
-        if (titleMessage != null) {
-            val filledTitle = placeholders.entries.fold(titleMessage) { msg, (placeholder, value) ->
-                msg.replace("{$placeholder}", value)
-            }
-            val filledSubtitle = subtitleMessage?.let { msg ->
-                placeholders.entries.fold(msg) { subMsg, (placeholder, value) ->
-                    subMsg.replace("{$placeholder}", value)
-                }
-            }
+        titleMessage?.let {
+            val filledTitle = applyPlaceholders(it, placeholders)
+            val filledSubtitle = subtitleMessage?.let { sub -> applyPlaceholders(sub, placeholders) }
             if (state.sender is Player) {
                 (state.sender as Player).sendTitle(filledTitle, filledSubtitle ?: "", fadeIn, stay, fadeOut)
             }
         }
 
         // Send chat message
-        if (chatMessage != null) {
-            val filledMessage = placeholders.entries.fold(chatMessage) { msg, (placeholder, value) ->
-                msg.replace("{$placeholder}", value)
-            }
+        chatMessage?.let {
+            val filledMessage = applyPlaceholders(it, placeholders)
             state.sender.sendMessage(filledMessage)
         }
     }
 
+    private fun applyPlaceholders(message: String, placeholders: Map<String, String>): String {
+        return placeholders.entries.fold(message) { msg, (placeholder, value) ->
+            msg.replace("{$placeholder}", value)
+        }
+    }
 
     fun getConfig(configFile: Files): FileConfiguration {
         return configFiles.computeIfAbsent(configFile) {
