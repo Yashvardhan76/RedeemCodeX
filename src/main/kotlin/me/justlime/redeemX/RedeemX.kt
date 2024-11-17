@@ -10,22 +10,22 @@ import org.bukkit.plugin.java.JavaPlugin
 class RedeemX : JavaPlugin() {
     lateinit var redeemCodeDB: RedeemCodeDaoImpl
     lateinit var configFile: ConfigManager
-    private lateinit var stateManager: StateManager // Ensure StateManager is initialized before use
+    lateinit var stateManager: StateManager // Ensure StateManager is initialized before use
 
     override fun onEnable() {
-        // Initialize StateManager
-        stateManager = StateManager()
-
-        // Config
-        configFile = ConfigManager(this, stateManager)
-
-        // Register and Initialize
+        // Register and Initialize Database
         redeemCodeDB = DatabaseManager.getInstance(this).getRedeemCodeDao()
         redeemCodeDB.createTable()
         redeemCodeDB.fetchCodes()
 
+        // Initialize StateManager
+        stateManager = StateManager(this)
+
+        // Config
+        configFile = ConfigManager(this)
+
         // Initialize Commands with StateManager
-        CommandManager(this, stateManager)
+        CommandManager(this)
 
         logger.info("RedeemX Plugin has been enabled!")
     }

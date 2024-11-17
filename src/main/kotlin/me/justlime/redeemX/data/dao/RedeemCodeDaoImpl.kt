@@ -2,12 +2,11 @@ package me.justlime.redeemX.data.dao
 
 import me.justlime.redeemX.data.DatabaseManager
 import me.justlime.redeemX.data.models.RedeemCode
+import me.justlime.redeemX.data.service.RedeemCodeService
 import java.sql.Connection
 import java.sql.PreparedStatement
-import java.sql.ResultSet
 import java.sql.Statement
 import java.sql.Timestamp
-import java.time.ZoneId
 
 class RedeemCodeDaoImpl(private val dbManager: DatabaseManager) : RedeemCodeDao {
     lateinit var getFetchCodes: List<String>
@@ -15,7 +14,7 @@ class RedeemCodeDaoImpl(private val dbManager: DatabaseManager) : RedeemCodeDao 
     fun fetchCodes() {
      getFetchCodes = getAllCodes().map { it.code }
     }
-    private val timeZoneId: ZoneId = ZoneId.of("Asia/Kolkata")
+
 
     override fun createTable() {
         dbManager.getConnection()?.use { conn: Connection ->
@@ -94,7 +93,7 @@ class RedeemCodeDaoImpl(private val dbManager: DatabaseManager) : RedeemCodeDao 
                 statement.setString(1, code)
                 val result = statement.executeQuery()
                 if (result.next()) {
-                    redeemCode = mapResultSetToRedeemCode(result)
+                    redeemCode = RedeemCodeService(dbManager.plugin).mapResultSetToRedeemCode(result)
                 }
             }
         }
@@ -112,6 +111,7 @@ class RedeemCodeDaoImpl(private val dbManager: DatabaseManager) : RedeemCodeDao 
         return isDeleted
     }
 
+    @Suppress("SqlWithoutWhere")
     override fun deleteAll(): Boolean {
         var isDeletedAll = false
         dbManager.getConnection()?.use { conn: Connection ->
@@ -133,7 +133,7 @@ class RedeemCodeDaoImpl(private val dbManager: DatabaseManager) : RedeemCodeDao 
             conn.prepareStatement("SELECT * FROM redeem_codes").use { statement: PreparedStatement ->
                 val result = statement.executeQuery()
                 while (result.next()) {
-                    codes.add(mapResultSetToRedeemCode(result))
+                    codes.add(RedeemCodeService(dbManager.plugin).mapResultSetToRedeemCode(result))
                 }
             }
         }
@@ -143,62 +143,6 @@ class RedeemCodeDaoImpl(private val dbManager: DatabaseManager) : RedeemCodeDao 
 
 
 
-    private fun mapResultSetToRedeemCode(result: ResultSet): RedeemCode {
-        val commandsString = result.getString("commands")
-        val usageString = result.getString("usedBy")
-        val storedTime = result.getTimestamp("storedTime")?.toLocalDateTime()
-        val commandMap = parseToMapId(commandsString)
-        val playerUsageMap = parseToMapString(usageString)
 
-        return RedeemCode(
-            code = result.getString("code"),
-            commands = commandMap,
-            storedTime = storedTime,
-            duration = result.getString("duration"),
-            isEnabled = result.getBoolean("isEnabled"),
-            maxRedeems = result.getInt("max_redeems"),
-            maxPlayers = result.getInt("max_player"),
-            permission = result.getString("permission"),
-            pin = result.getInt("pin"),
-            target = result.getString("target"),
-            usage = playerUsageMap,
-        )
-    }
-
-    private fun parseToMapId(input: String?, separator: String = ":"): MutableMap<Int, String> {
-        if (input.isNullOrBlank()) return mutableMapOf()
-        val resultMap = mutableMapOf<Int, String>()
-
-        for (entry in input.split(",")) {
-            val parts = entry.split(separator)
-            if (parts.size == 2) {
-                val key = parts[0].toIntOrNull()
-                val value = parts[1].takeIf { it.isNotBlank() }
-                if (key != null && value != null) {
-                    resultMap[key] = value
-                }
-            }
-        }
-
-        return resultMap
-    }
-
-    private fun parseToMapString(input: String?, separator: String = ":"): MutableMap<String, Int> {
-        if (input.isNullOrBlank()) return mutableMapOf()
-        val resultMap = mutableMapOf<String, Int>()
-
-        for (entry in input.split(",")) {
-            val parts = entry.split(separator)
-            if (parts.size == 2) {
-                val key = parts[0].takeIf { it.isNotBlank() }
-                val value = parts[1].toIntOrNull()
-                if (key != null && value != null) {
-                    resultMap[key] = value
-                }
-            }
-        }
-
-        return resultMap
-    }
 
 }
