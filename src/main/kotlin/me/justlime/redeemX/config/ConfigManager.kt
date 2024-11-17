@@ -2,11 +2,9 @@ package me.justlime.redeemX.config
 
 import me.justlime.redeemX.RedeemX
 import me.justlime.redeemX.state.RedeemCodeState
-import me.justlime.redeemX.state.StateManager
 import net.md_5.bungee.api.ChatMessageType
 import net.md_5.bungee.api.chat.TextComponent
 import org.bukkit.ChatColor
-import org.bukkit.command.CommandSender
 import org.bukkit.configuration.file.FileConfiguration
 import org.bukkit.configuration.file.YamlConfiguration
 import org.bukkit.entity.Player
@@ -14,7 +12,7 @@ import java.io.File
 import java.util.logging.Level
 import java.util.regex.Pattern
 
-class ConfigManager(private val plugin: RedeemX, private val stateManager: StateManager) {
+class ConfigManager(private val plugin: RedeemX) {
 
     private val configFiles = mutableMapOf<Files, FileConfiguration>()
 
@@ -30,13 +28,6 @@ class ConfigManager(private val plugin: RedeemX, private val stateManager: State
     }
 
     /**
-     * Updates or initializes the state for a sender, leveraging StateManager.
-     */
-    fun initializeState(sender: CommandSender, code: String? = null): RedeemCodeState {
-        return stateManager.getOrCreateState(sender, code)
-    }
-
-    /**
      * Sends a message to the sender with support for placeholders and multiple message formats.
      */
     fun sendMessage(key: String, state: RedeemCodeState) {
@@ -44,13 +35,13 @@ class ConfigManager(private val plugin: RedeemX, private val stateManager: State
         val placeholders = state.toPlaceholdersMap()
 
         // Fetch different types of messages
-        val chatMessage = getString("$key.chat") ?: getString(key)
-        val actionBarMessage = getString("$key.actionbar")
-        val titleMessage = getString("$key.title.text") ?: getString("$key.title")
-        val subtitleMessage = getString("$key.title.subtitle")
-        val fadeIn = getString("$key.title.fade-in")?.toIntOrNull() ?: DEFAULT_FADE_IN
-        val stay = getString("$key.title.stay")?.toIntOrNull() ?: DEFAULT_STAY
-        val fadeOut = getString("$key.title.fade-out")?.toIntOrNull() ?: DEFAULT_FADE_OUT
+        val chatMessage = getString("$key.chat",Files.MESSAGES) ?: getString(key,Files.MESSAGES)
+        val actionBarMessage = getString("$key.actionbar",Files.MESSAGES)
+        val titleMessage = getString("$key.title.text",Files.MESSAGES) ?: getString("$key.title",Files.MESSAGES)
+        val subtitleMessage = getString("$key.title.subtitle",Files.MESSAGES)
+        val fadeIn = getString("$key.title.fade-in",Files.MESSAGES)?.toIntOrNull() ?: DEFAULT_FADE_IN
+        val stay = getString("$key.title.stay",Files.MESSAGES)?.toIntOrNull() ?: DEFAULT_STAY
+        val fadeOut = getString("$key.title.fade-out",Files.MESSAGES)?.toIntOrNull() ?: DEFAULT_FADE_OUT
 
         // Send action bar message
         actionBarMessage?.let {
@@ -82,7 +73,7 @@ class ConfigManager(private val plugin: RedeemX, private val stateManager: State
         }
     }
 
-    fun getConfig(configFile: Files): FileConfiguration {
+    private fun getConfig(configFile: Files): FileConfiguration {
         return configFiles.computeIfAbsent(configFile) {
             val file = File(plugin.dataFolder, configFile.filename)
             if (!file.exists()) plugin.saveResource(configFile.filename, false)
@@ -90,7 +81,7 @@ class ConfigManager(private val plugin: RedeemX, private val stateManager: State
         }
     }
 
-    fun saveConfig(configFile: Files) {
+    private fun saveConfig(configFile: Files) {
         try {
             val file = File(plugin.dataFolder, configFile.filename)
             getConfig(configFile).save(file)
@@ -100,7 +91,7 @@ class ConfigManager(private val plugin: RedeemX, private val stateManager: State
         }
     }
 
-    fun reloadConfig(configFile: Files) {
+    private fun reloadConfig(configFile: Files) {
         try {
             configFiles[configFile] = YamlConfiguration.loadConfiguration(File(plugin.dataFolder, configFile.filename))
             plugin.logger.log(Level.INFO, "${configFile.filename} reloaded successfully.")
@@ -109,7 +100,7 @@ class ConfigManager(private val plugin: RedeemX, private val stateManager: State
         }
     }
 
-    fun getString(key: String, configFile: Files = Files.MESSAGES, applyColor: Boolean = true): String? {
+    fun getString(key: String, configFile: Files = Files.CONFIG, applyColor: Boolean = true): String? {
         val fileConfig = getConfig(configFile)
         val message = fileConfig.getString(key) ?: return null
         return if (applyColor) applyColors(message) else message

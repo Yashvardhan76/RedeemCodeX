@@ -1,10 +1,15 @@
 package me.justlime.redeemX.state
 
+import me.justlime.redeemX.RedeemX
 import me.justlime.redeemX.data.models.RedeemCode
+import me.justlime.redeemX.utilities.StateMap
 import org.bukkit.command.CommandSender
 import java.util.concurrent.ConcurrentHashMap
 
-class StateManager {
+class StateManager(val plugin: RedeemX) : StateManagerHandler {
+
+    private val db = plugin.redeemCodeDB
+    override lateinit var redeemCode: RedeemCode
 
     // A thread-safe map to store states for each sender
     private val stateMap: MutableMap<CommandSender, RedeemCodeState> = ConcurrentHashMap()
@@ -16,7 +21,8 @@ class StateManager {
      * @param code Optional redeem code to initialize the state.
      * @return The existing or newly created RedeemCodeState.
      */
-    fun getOrCreateState(sender: CommandSender, code: String? = null): RedeemCodeState {
+    override fun createState(sender: CommandSender, code: String?): RedeemCodeState {
+        clearState(sender)
         return stateMap.computeIfAbsent(sender) {
             RedeemCodeState(sender = sender).apply {
                 if (code != null) {
@@ -30,11 +36,11 @@ class StateManager {
      * Updates a state for a given sender based on a RedeemCode.
      *
      * @param sender The command sender (Player or Console).
-     * @param codeData The RedeemCode data to update the state with.
      */
-    fun updateState(sender: CommandSender, codeData: RedeemCode?) {
+    override fun fetchState(sender: CommandSender,code: String): Boolean {
+        val redeemCode = db.get(code) ?: return false
         stateMap[sender]?.let { state ->
-            codeData?.let {
+            redeemCode.let {
                 state.code = it.code
                 state.commands = it.commands
                 state.storedTime = it.storedTime
@@ -48,6 +54,7 @@ class StateManager {
                 state.usage = it.usage
             }
         }
+        return true
     }
 
     /**
@@ -55,14 +62,29 @@ class StateManager {
      *
      * @param sender The command sender whose state should be cleared.
      */
-    fun clearState(sender: CommandSender) {
+    override fun clearState(sender: CommandSender) {
         stateMap.remove(sender)
     }
 
     /**
      * Clears all states. Useful during plugin reloads or shutdowns.
      */
-    fun clearAllStates() {
+    override fun clearAllStates() {
         stateMap.clear()
+    }
+
+
+    override fun updateDb(sender: CommandSender): Boolean {
+        val state = stateMap[sender] ?: return false
+        val redeemCode = state.let { StateMap.toModel(it) }
+        try {
+            db.upsert(redeemCode)
+            clearState(sender)
+            return true
+        } catch (e: Exception) {
+            plugin.logger.severe("Failed to update database: ${e.message}")
+            clearState(sender)
+            return false
+        }
     }
 }

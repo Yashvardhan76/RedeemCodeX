@@ -40,14 +40,14 @@ object StateMap {
         return RedeemCode(
             code = state.code,
             commands = state.commands,
-            storedTime = state.storedTime, // Use lastAccessed as a substitute for storedTime in this case
-            duration = null, // This is application-dependent; fill in if necessary
-            isEnabled = true, // Set based on your application logic
-            maxRedeems = 0, // Example, set based on application logic
-            maxPlayers = 0, // Example
-            permission = null, // Example
-            pin = 0, // Example
-            target = null, // Example
+            storedTime = state.storedTime,
+            duration = state.duration,
+            isEnabled = state.isEnabled,
+            maxRedeems = state.maxRedeems,
+            maxPlayers = state.maxPlayers,
+            permission = state.permission,
+            pin = state.pin,
+            target = state.target,
             usage = state.usage
         )
     }

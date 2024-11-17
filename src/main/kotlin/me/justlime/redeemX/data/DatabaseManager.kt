@@ -8,7 +8,7 @@ import java.io.File
 import java.sql.Connection
 import java.sql.SQLException
 
-class DatabaseManager(private val plugin: RedeemX) {
+class DatabaseManager(val plugin: RedeemX) {
 
     private val databaseFile = File(plugin.dataFolder, "redeemx.db")
     private val hikariDataSource: HikariDataSource
