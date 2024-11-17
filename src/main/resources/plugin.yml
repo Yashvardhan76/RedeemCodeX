@@ -1,12 +1,63 @@
 name: RedeemX
-version: '1.0-EAP'
+version: 1.0-EAP
 main: me.justlime.redeemX.RedeemX
 api-version: 1.13
+
 commands:
   rcx:
-    usage: "/rcx"
-    description: generate code
-    permission: redeemx.admin
+    usage: "/rcx <subcommand>"
+    description: Main command for managing redeemable codes.
+    permission: redeemx.admin.use
+    aliases: [redeemx]
+
   redeem:
     usage: "/redeem <code>"
-    description: redeem code
+    description: Redeem a code for rewards.
+    permission: redeemx.use
+    aliases: [claim, voucher]
+
+permissions:
+  redeemx.admin.use.*:
+    description: Grants access to all admin commands for RedeemX.
+    default: op
+    children:
+      redeemx.admin.use: true
+      redeemx.admin.use.gen: true
+      redeemx.admin.use.modify: true
+      redeemx.admin.use.delete: true
+      redeemx.admin.use.delete_all: true
+      redeemx.admin.use.info: true
+      redeemx.admin.use.renew: true
+      redeemx.admin.use.reload: true
+
+  redeemx.admin.use.gen:
+    description: Permission to generate redeemable codes.
+    default: op
+
+  redeemx.admin.use.modify:
+    description: Permission to modify redeemable codes.
+    default: op
+
+  redeemx.admin.use.delete:
+    description: Permission to delete a specific redeemable code.
+    default: op
+
+  redeemx.admin.use.delete_all:
+    description: Permission to delete all redeemable codes.
+    default: op
+
+  redeemx.admin.use.info:
+    description: Permission to view plugin information.
+    default: op
+
+  redeemx.admin.use.renew:
+    description: Permission to renew codes.
+    default: op
+
+  redeemx.admin.use.reload:
+    description: Permission to reload the plugin configuration.
+    default: op
+
+  redeemx.use:
+    description: Permission to redeem codes.
+    default: true

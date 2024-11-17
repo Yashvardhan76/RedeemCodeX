@@ -10,7 +10,7 @@ class DeleteSubCommand(private val plugin: RedeemX) {
             sender.sendMessage("Usage: /rxc delete <code>")
             return
         }
-        if (args.size < 2 || args[0].equals("delete_all", ignoreCase = true)) {
+        if (args.size < 2 && args[0].equals("delete_all", ignoreCase = true)) {
             sender.sendMessage("${ChatColor.YELLOW}Usage: /rxc delete_all CONFIRM")
             return
         }
@@ -33,6 +33,10 @@ class DeleteSubCommand(private val plugin: RedeemX) {
             }
 
             "delete_all" -> {
+                if (args[1] != "CONFIRM") {
+                    sender.sendMessage("${ChatColor.YELLOW}Usage: /rxc delete_all CONFIRM")
+                    return
+                }
                 val success = plugin.redeemCodeDB.deleteAll()
                 if (!success) {
                     sender.sendMessage("${ChatColor.RED}Failed to delete all codes from the database.")

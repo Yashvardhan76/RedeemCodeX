@@ -73,14 +73,15 @@ redeemed-message:
 
 
 commands:
+  reload: "&aThe configuration files have been reloaded."
   gen:
     success: "&aGenerated new code: &e{code}&a."
     invalid-syntax: "&cUsage: /redeem gen <CUSTOM | SIZE | TEMPLATE> [Template-name]"
     invalid-options: "&cError: Invalid options for generating a code."
     no-permission: "&cYou do not have permission to generate codes."
     missing-parameters: "&cError: Please specify all required parameters for code generation."
-    length-error: "Unable to generate a unique code of length ${code.toInt()}. Please try a different length or name.(Total $maxAttempts attempts)"
-    code-already-exist: "The code '$codeName' already exists. Please choose a unique code."
+    length-error: "Unable to generate a unique code of length ${code}. Please try a different length or name."
+    code-already-exist: "The code '{code}' already exists. Please choose a unique code."
     failed: "&cFailed To Generate the code &7[Database Error&7]"
     error: "&cAn error occurred while generating the code {code}."
 
