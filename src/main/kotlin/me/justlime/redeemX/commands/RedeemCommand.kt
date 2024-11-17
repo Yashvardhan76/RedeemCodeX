@@ -3,25 +3,21 @@ package me.justlime.redeemX.commands
 import me.justlime.redeemX.RedeemX
 import me.justlime.redeemX.config.ConfigManager
 import me.justlime.redeemX.data.service.RedeemCodeService
-import me.justlime.redeemX.state.StateManager
 import org.bukkit.command.Command
 import org.bukkit.command.CommandExecutor
 import org.bukkit.command.CommandSender
 import org.bukkit.command.TabCompleter
 import org.bukkit.entity.Player
 
-class RedeemCommand(private val plugin: RedeemX, private val stateManager: StateManager
-) : CommandExecutor, TabCompleter {
+class RedeemCommand(private val plugin: RedeemX) : CommandExecutor, TabCompleter {
 
-    private val config = ConfigManager(
-        plugin, stateManager = stateManager
-    )
-
+    private val stateManager = plugin.stateManager
+    private val config = ConfigManager(plugin)
     private val service = RedeemCodeService(plugin)
 
     override fun onCommand(sender: CommandSender, command: Command, label: String, args: Array<out String>): Boolean {
         // Initialize state for the sender
-        val state = stateManager.getOrCreateState(sender)
+        val state = stateManager.createState(sender)
 
         if (sender !is Player) {
             config.sendMessage("restricted-to-players", state)
@@ -37,17 +33,21 @@ class RedeemCommand(private val plugin: RedeemX, private val stateManager: State
         // Update state with input code
         state.inputCode = args[0].uppercase()
 
-        // Retrieve RedeemCode data from the database
-        val redeemCodeDao = plugin.redeemCodeDB
-        val codeData = redeemCodeDao.get(state.inputCode)
-
-        if (codeData == null) {
+        if (!stateManager.fetchState(sender, state.inputCode)) {
             config.sendMessage("redeemed-message.invalid-code", state)
             return true
         }
 
-        // Update state with RedeemCode data
-        stateManager.updateState(sender, codeData)
+        // Redemption usage checks
+        state.usageCount = state.usage[sender.name] ?: 0
+        if (state.usageCount >= state.maxRedeems) {// Max redemptions check
+            config.sendMessage("redeemed-message.already-redeemed", state)
+            return true
+        }
+        if (state.usage.size >= state.maxPlayers) {// Max players check
+            config.sendMessage("redeemed-message.max-redemptions", state)
+            return true
+        }
 
         // Permission check
         if (!state.permission.isNullOrBlank() && !sender.hasPermission(state.permission!!)) {
@@ -67,6 +67,12 @@ class RedeemCommand(private val plugin: RedeemX, private val stateManager: State
             return true
         }
 
+        // Target validation
+        if (!state.target.isNullOrEmpty() && state.target != sender.name) {
+            config.sendMessage("redeemed-message.invalid-target", state)
+            return true
+        }
+
         // PIN validation
         if (state.pin >= 0) {
             if (args.size < 2) {
@@ -81,25 +87,6 @@ class RedeemCommand(private val plugin: RedeemX, private val stateManager: State
             }
         }
 
-        // Redemption usage checks
-        state.usageCount = state.usage[sender.name] ?: 0
-
-        if (state.usageCount >= state.maxRedeems) {
-            config.sendMessage("redeemed-message.already-redeemed", state)
-            return true
-        }
-
-        if (state.usage.size >= state.maxPlayers) {
-            config.sendMessage("redeemed-message.max-redemptions", state)
-            return true
-        }
-
-        // Target validation
-        if (!state.target.isNullOrEmpty() && state.target != sender.name) {
-            config.sendMessage("redeemed-message.invalid-target", state)
-            return true
-        }
-
         // Execute commands
         val console = plugin.server.consoleSender
         state.commands.values.forEach {
@@ -108,10 +95,10 @@ class RedeemCommand(private val plugin: RedeemX, private val stateManager: State
 
         // Update usage
         state.usage[sender.name] = state.usageCount + 1
-        codeData.usage = state.usage
 
         // Save the updated state to the database
-        if (!redeemCodeDao.upsert(codeData)) {
+        val success = stateManager.updateDb(sender)
+        if (!success) {
             config.sendMessage("redeemed-message.failed", state)
             return true
         }
@@ -121,10 +108,7 @@ class RedeemCommand(private val plugin: RedeemX, private val stateManager: State
         return true
     }
 
-    override fun onTabComplete(sender: CommandSender,
-                               command: Command,
-                               label: String,
-                               args: Array<out String>
+    override fun onTabComplete(sender: CommandSender, command: Command, label: String, args: Array<out String>
     ): List<String> {
         return emptyList()
     }
