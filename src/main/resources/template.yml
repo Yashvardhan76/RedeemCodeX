@@ -1,0 +1,18 @@
+template-1:
+  code-generate-digit: 4
+  commands:
+    - "say redeemed"
+  code-expired-duration: "0s"
+  enabled: true
+  max_redeems: 1
+  max_player: 1
+
+template-2:
+  code-generate-digit: 6
+  commands:
+    - "say redeemed from temple 2"
+    - "eco give {player} 100"
+  code-expired-duration: "1h"
+  enabled: true
+  max_redeems: 1
+  max_player: 3

@@ -2,7 +2,6 @@ package me.justlime.redeemX.commands.subcommands
 
 import me.justlime.redeemX.RedeemX
 import me.justlime.redeemX.config.ConfigManager
-import me.justlime.redeemX.data.models.RedeemCode
 import me.justlime.redeemX.data.service.RedeemCodeService
 import me.justlime.redeemX.state.RedeemCodeState
 import org.bukkit.command.CommandSender
@@ -39,31 +38,35 @@ class ModifySubCommand(private val plugin: RedeemX) {
         state.value = args[3]
 
         // Fetch the redeem code
-        val redeemCode = plugin.redeemCodeDB.get(state.inputCode)
-        if (redeemCode == null) {
+        if (!stateManager.fetchState(sender, state.inputCode)) {
             config.sendMessage("commands.modify.not-found", state)
             return
         }
 
         when (state.property) {
-            "max_redeems" -> redeemCode.maxRedeems =
+            "max_redeems" -> state.maxRedeems =
                 state.value.toIntOrNull() ?: return config.sendMessage("commands.modify.invalid-value", state)
 
-            "max_player" -> redeemCode.maxPlayers =
+            "max_player" -> state.maxPlayers =
                 state.value.toIntOrNull() ?: return config.sendMessage("commands.modify.invalid-value", state)
 
-            "duration" -> handleDurationModification(redeemCode, state.value, args.getOrNull(4),state)
+            "duration" -> handleDurationModification(state.value, args.getOrNull(4), state)
 
-            "permission" -> redeemCode.permission = state.value
+            "permission" -> state.permission =
+                if (state.value.equals("true", ignoreCase = true)) config.getString("modify.permission")
+                    ?.replace("{code}", state.inputCode) else if (!state.value.equals(
+                        "false", ignoreCase = true
+                    )
+                ) state.value else null
 
-            "set_target" -> redeemCode.target = state.value
+            "set_target" -> state.target = state.value
 
-            "set_pin" -> redeemCode.pin =
+            "set_pin" -> state.pin =
                 state.value.toIntOrNull() ?: return config.sendMessage("commands.modify.invalid-value", state)
 
-            "enabled" -> redeemCode.isEnabled = state.value.lowercase() == "true"
+            "enabled" -> state.isEnabled = state.value.lowercase() == "true"
 
-            "command" -> handleCommandModification(redeemCode, args, state)
+            "command" -> handleCommandModification(args, state)
 
             else -> {
                 config.sendMessage("commands.modify.unknown-property", state)
@@ -80,28 +83,28 @@ class ModifySubCommand(private val plugin: RedeemX) {
         }
     }
 
-    private fun handleDurationModification(redeemCode: RedeemCode, action: String, adjustmentDuration: String?,state: RedeemCodeState) {
+    private fun handleDurationModification(action: String, adjustmentDuration: String?, state: RedeemCodeState) {
         val service = RedeemCodeService(plugin)
         val timeZoneId: ZoneId = ZoneId.of("Asia/Kolkata")
         val currentTime: LocalDateTime = LocalDateTime.now(timeZoneId)
-        if (redeemCode.storedTime == null) redeemCode.storedTime = currentTime
+        if (state.storedTime == null) state.storedTime = currentTime
 
-        val existingDuration = redeemCode.duration ?: "0s"
+        val existingDuration = state.duration ?: "0s"
         val durationValue = adjustmentDuration ?: "0"
 
         when (action.lowercase()) {
             "set" -> {
-                redeemCode.storedTime = currentTime
-                redeemCode.duration = service.adjustDuration("0s", durationValue, isAdding = true).toString() + 's'
+                state.storedTime = currentTime
+                state.duration = service.adjustDuration("0s", durationValue, isAdding = true).toString() + 's'
             }
 
-            "add" -> redeemCode.duration =
+            "add" -> state.duration =
                 service.adjustDuration(existingDuration, durationValue, isAdding = true).toString() + 's'
 
             "remove" -> {
-                val duration = service.adjustDuration(existingDuration, durationValue, isAdding = false).toString() +
-                        's'
-                redeemCode.duration = if ((duration.dropLast(1).toIntOrNull() ?: -1) < 0) null else duration
+                val duration =
+                    service.adjustDuration(existingDuration, durationValue, isAdding = false).toString() + 's'
+                state.duration = if ((duration.dropLast(1).toIntOrNull() ?: -1) < 0) null else duration
             }
 
             else -> {
@@ -112,9 +115,9 @@ class ModifySubCommand(private val plugin: RedeemX) {
         }
     }
 
-    private fun handleCommandModification(redeemCode: RedeemCode, args: Array<out String>, state: RedeemCodeState) {
+    private fun handleCommandModification(args: Array<out String>, state: RedeemCodeState) {
         val method = args[3].lowercase()
-        val list = redeemCode.commands
+        val list = state.commands
         val console = plugin.server.consoleSender
 
         when (method) {
@@ -152,6 +155,5 @@ class ModifySubCommand(private val plugin: RedeemX) {
             }
         }
     }
-
 
 }

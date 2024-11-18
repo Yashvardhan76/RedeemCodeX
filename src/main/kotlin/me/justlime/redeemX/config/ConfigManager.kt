@@ -122,6 +122,10 @@ class ConfigManager(private val plugin: RedeemX) {
         return "\u00A7x" + hexCode.substring(2).toCharArray().joinToString("") { "\u00A7$it" }
     }
 
+    fun getTemplate(key: String): String?{
+       return getString(key,Files.TEMPLATE)
+    }
+
     fun saveAllConfigs() {
         configFiles.keys.forEach { saveConfig(it) }
     }

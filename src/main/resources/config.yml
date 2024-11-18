@@ -11,15 +11,19 @@ default:
   max_player: 1
   permission:
     required: false
-    value: "redeemx.use.{code}"   #You can customize default permission syntax here.
+    value: "redeemx.use.{code}"   #default Permission Template
   pin: -1                         #set -1 to disabled pin
 
-code-minimum-digit: 4             #The minimum digit of code required to generate
-code-maximum-digit: 16            #The maximum digit of code required to generate
+modify:
+  permission: "redeemx.use.{code}" #You can customize default permission syntax here.
+
+code-minimum-digit: 3             #The minimum digit of code required to generate, default 3 if not specified
+code-maximum-digit: 10            #The maximum digit of code required to generate, default 10 if not specified
 
 auto-delete-expired-codes: true   #It will only done when server got restart as it is a heavy operation
 auto-delete-redeemed-code-: false
 auto-remove-permission-when-redeemed: false
+
 
 #Set cooldown for using /redeem
 

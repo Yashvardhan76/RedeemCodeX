@@ -5,33 +5,36 @@ import org.bukkit.entity.Player
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
-data class RedeemCodeState(
-    var sender: CommandSender,
-    var code: String = "",
-    var inputCode: String = "",
-    var commands: MutableMap<Int, String> = mutableMapOf(),
-    var inputCommand: String = "",
-    var storedTime: LocalDateTime? = null,
-    var inputStoredTime: String = "",
-    var duration: String? = null,
-    var inputDuration: String = "",
-    var isEnabled: Boolean = false,
-    var inputEnabled: String = "",
-    var maxRedeems: Int = -1,
-    var inputMaxRedeems: String = "",
-    var maxPlayers: Int = -1,
-    var inputMaxPlayers: String = "",
-    var permission: String? = null,
-    var inputPermission: String = "",
-    var hasPermission: Boolean = false,
-    var pin: Int = -1,
-    var inputPin: Int? = null,
-    var target: String? = null,
-    var inputTarget: String = "",
-    var usage: MutableMap<String, Int> = mutableMapOf(),
-    var usageCount: Int = 0,
-    var property: String = "",
-    var value: String=""
+data class RedeemCodeState(var sender: CommandSender,
+                           var args: MutableList<String> = mutableListOf(),
+                           var code: String = "",
+                           var inputCode: String = "",
+                           var commands: MutableMap<Int, String> = mutableMapOf(),
+                           var inputCommand: String = "",
+                           var storedTime: LocalDateTime? = null,
+                           var inputStoredTime: String = "",
+                           var duration: String? = null,
+                           var inputDuration: String = "",
+                           var isEnabled: Boolean = false,
+                           var inputEnabled: String = "",
+                           var maxRedeems: Int = -1,
+                           var inputMaxRedeems: String = "",
+                           var maxPlayers: Int = -1,
+                           var inputMaxPlayers: String = "",
+                           var permission: String? = null,
+                           var inputPermission: String = "",
+                           var hasPermission: Boolean = false,
+                           var pin: Int = -1,
+                           var inputPin: Int? = null,
+                           var target: String? = null,
+                           var inputTarget: String = "",
+                           var usage: MutableMap<String, Int> = mutableMapOf(),
+                           var usageCount: Int = 0,
+                           var property: String = "",
+                           var value: String = "",
+                           var minLength: Int = 3,
+                           var maxLength: Int = 10,
+                           var templateName: String = ""
 
 ) {
     private val senderName: String = if (sender is Player) sender.name else "console"
@@ -59,7 +62,12 @@ data class RedeemCodeState(
             "maxPlayers" to maxPlayers.toString(),
             "permission" to (permission ?: ""),
             "pin" to pin.toString(),
-            "target" to (target ?: "Any")
+            "target" to (target ?: "Any"),
+            "usage" to usage.toString(),
+            "usageCount" to usageCount.toString(),
+            "min" to minLength.toString(),
+            "max" to maxLength.toString(),
+            "template" to templateName
         )
     }
 }

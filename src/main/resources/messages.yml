@@ -25,7 +25,6 @@ redeemed-message:
     actionbar: "&cUnexpected error. Please contact support."
     title: "&cFailed"
 
-
   invalid-code:
     chat: "&cInvalid code. Please try again or contact support."
     actionbar: "&cCode not found. Please enter a valid code."
@@ -33,10 +32,6 @@ redeemed-message:
   no-permission: "&cYou don't have permission to Redeemed this code {code}."
 
   disabled: "The code {code} is disabled."
-
-  # Message shown if the code is invalid
-
-
 
   # Message shown if the code has expired
   expired-code:
@@ -78,6 +73,7 @@ commands:
     success: "&aGenerated new code: &e{code}&a."
     invalid-syntax: "&cUsage: /redeem gen <CUSTOM | SIZE | TEMPLATE> [Template-name]"
     invalid-options: "&cError: Invalid options for generating a code."
+    invalid-range: "&cError: Invalid range for generating a code. Range must be between {min} and {max}."
     no-permission: "&cYou do not have permission to generate codes."
     missing-parameters: "&cError: Please specify all required parameters for code generation."
     length-error: "Unable to generate a unique code of length ${code}. Please try a different length or name."
