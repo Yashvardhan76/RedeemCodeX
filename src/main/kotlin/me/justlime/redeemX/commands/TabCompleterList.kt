@@ -1,6 +1,7 @@
 package me.justlime.redeemX.commands
 
 import me.justlime.redeemX.RedeemX
+import me.justlime.redeemX.config.ConfigManager
 import org.bukkit.command.Command
 import org.bukkit.command.CommandSender
 import org.bukkit.command.TabCompleter
@@ -8,6 +9,8 @@ import org.bukkit.command.TabCompleter
 class TabCompleterList(plugin: RedeemX) : TabCompleter {
 
     // Predefined common completions for each command type
+    private val config = ConfigManager(plugin)
+
     private val commonCompletions = listOf(
         "gen", "modify", "delete", "delete_all", "info","renew"
     )
@@ -50,7 +53,7 @@ class TabCompleterList(plugin: RedeemX) : TabCompleter {
 
     private fun handleThirdArgument(args: Array<out String>): List<String> {
         return when (args[0]) {
-            "gen" -> listOf("template-1") // Add template subcommand for 'gen'
+            "gen" -> config.getTemplateNames() // Add template subcommand for 'gen'
             "modify" -> modifyOptions
             else -> emptyList()
         }

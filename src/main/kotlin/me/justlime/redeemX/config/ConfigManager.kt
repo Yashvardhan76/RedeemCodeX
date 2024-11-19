@@ -12,9 +12,10 @@ import java.io.File
 import java.util.logging.Level
 import java.util.regex.Pattern
 
-class ConfigManager(private val plugin: RedeemX) {
+class ConfigManager(val plugin: RedeemX) {
 
     private val configFiles = mutableMapOf<Files, FileConfiguration>()
+    private val templateNames = mutableListOf<String>()
 
     companion object {
         private const val DEFAULT_FADE_IN = 10
@@ -25,6 +26,9 @@ class ConfigManager(private val plugin: RedeemX) {
     init {
         plugin.saveDefaultConfig()
         getConfig(Files.MESSAGES)
+        getConfig(Files.CONFIG)
+        getConfig(Files.TEMPLATE)
+        loadTemplates()
     }
 
     /**
@@ -72,6 +76,17 @@ class ConfigManager(private val plugin: RedeemX) {
             msg.replace("{$placeholder}", value)
         }
     }
+
+    private fun loadTemplates() {
+        val templateFile = File(plugin.dataFolder, "template.yml")
+        if (!templateFile.exists()) return
+
+        val config = YamlConfiguration.loadConfiguration(templateFile)
+        templateNames.clear()
+        templateNames.addAll(config.getKeys(false)) // Load all top-level keys (e.g., "template-1", "template-2")
+    }
+
+    fun getTemplateNames(): List<String> = templateNames
 
     private fun getConfig(configFile: Files): FileConfiguration {
         return configFiles.computeIfAbsent(configFile) {
@@ -131,6 +146,9 @@ class ConfigManager(private val plugin: RedeemX) {
     }
 
     fun reloadAllConfigs() {
-        configFiles.keys.forEach { reloadConfig(it) }
+        getConfig(Files.MESSAGES)
+        getConfig(Files.CONFIG)
+        getConfig(Files.TEMPLATE)
+        loadTemplates()
     }
 }
