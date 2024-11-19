@@ -130,6 +130,14 @@ class ModifySubCommand(private val plugin: RedeemX) {
                 val id = list.keys.maxOrNull() ?: 0
                 list[id + 1] = commandValue
             }
+            "remove" ->{
+                val id = args.getOrNull(4)?.toIntOrNull()
+                if (id == null) {
+                    config.sendMessage("commands.modify.command.invalid-id", state)
+                    return
+                }
+                list.remove(id)
+            }
 
             "list" -> {
                 val commandsList = list.values.joinToString("\n")
