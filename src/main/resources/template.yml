@@ -2,10 +2,14 @@ template-1:
   code-generate-digit: 4
   commands:
     - "say redeemed"
-  code-expired-duration: "0s"
+  code-expired-duration: "30s"
   enabled: true
   max_redeems: 1
   max_player: 1
+  permission:
+    required: true
+    value: "redeemx.use.{code}"
+
 
 template-2:
   code-generate-digit: 6

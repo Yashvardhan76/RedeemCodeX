@@ -69,6 +69,13 @@ class RedeemCodeService(val plugin: RedeemX) {
             usage = playerUsageMap,
         )
     }
+    fun parseToId(string: String?): String {
+        if (string.isNullOrBlank()) return ""
+        return string.trim()
+            .split(",")
+            .mapIndexed { index, entry -> "$index: ${entry.trim()}" }
+            .joinToString(", ")
+    }
 
     fun parseToMapId(string: String?, separator: String = ":"): MutableMap<Int, String> {
         if (string.isNullOrBlank()) return mutableMapOf()
@@ -89,7 +96,7 @@ class RedeemCodeService(val plugin: RedeemX) {
         return resultMap
     }
 
-    fun parseToMapString(input: String?, separator: String = ":"): MutableMap<String, Int> {
+    private fun parseToMapString(input: String?, separator: String = ":"): MutableMap<String, Int> {
         if (input.isNullOrBlank()) return mutableMapOf()
         val resultMap = mutableMapOf<String, Int>()
 

@@ -18,7 +18,7 @@ class TabCompleterList(plugin: RedeemX) : TabCompleter {
     private val modifyOptions = listOf(
         "enabled", "max_redeems", "max_player", "duration", "permission", "set_target", "set_pin", "command", "list"
     )
-    private val genSubcommands = listOf("CUSTOM", "SIZE")
+    private val genSubcommands = listOf("CUSTOM", "SIZE","TEMPLATE")
     private val durationOptions = listOf("add", "set", "remove")
     private val permissionOptions = listOf("true", "false", "CUSTOM")
     private var cachedCodes: List<String>? = plugin.redeemCodeDB.getFetchCodes
