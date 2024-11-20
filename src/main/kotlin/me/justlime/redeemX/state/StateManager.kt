@@ -79,11 +79,10 @@ class StateManager(val plugin: RedeemX) : StateManagerHandler {
         val redeemCode = state.let { StateMap.toModel(it) }
         try {
             db.upsert(redeemCode)
-            clearState(sender)
+
             return true
         } catch (e: Exception) {
             plugin.logger.severe("Failed to update database: ${e.message}")
-            clearState(sender)
             return false
         }
     }

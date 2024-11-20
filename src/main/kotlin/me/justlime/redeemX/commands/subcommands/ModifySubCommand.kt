@@ -59,7 +59,7 @@ class ModifySubCommand(private val plugin: RedeemX) {
                     )
                 ) state.value else null
 
-            "set_target" -> state.target = state.value
+            "set_target" -> handleTargetModification(args, state)
 
             "set_pin" -> state.pin =
                 state.value.toIntOrNull() ?: return config.sendMessage("commands.modify.invalid-value", state)
@@ -130,7 +130,8 @@ class ModifySubCommand(private val plugin: RedeemX) {
                 val id = list.keys.maxOrNull() ?: 0
                 list[id + 1] = commandValue
             }
-            "remove" ->{
+
+            "remove" -> {
                 val id = args.getOrNull(4)?.toIntOrNull()
                 if (id == null) {
                     config.sendMessage("commands.modify.command.invalid-id", state)
@@ -160,6 +161,40 @@ class ModifySubCommand(private val plugin: RedeemX) {
 
             else -> {
                 config.sendMessage("commands.modify.command.unknown-method", state)
+            }
+        }
+    }
+
+    private fun handleTargetModification(args: Array<out String>, state: RedeemCodeState) {
+        val tempList: MutableList<String?> = mutableListOf()
+         state.target.forEach{
+            tempList.add(it?.trim())
+        }
+        state.target = tempList.distinct().toMutableList()
+        when (args[3]) {
+            "add" -> {
+                state.target.add(args.getOrNull(4))
+                state.target = state.target.distinct().toMutableList()
+                config.sendMessage("commands.modify.target.add", state)
+            }
+
+            "set" -> {
+                state.target = mutableListOf(args.getOrNull(4))
+                config.sendMessage("commands.modify.target.set", state)
+            }
+
+            "remove" ->{
+                state.target.remove(args.getOrNull(4))
+
+                config.sendMessage("commands.modify.target.remove", state)
+            }
+
+            "remove_all" ->{
+                state.target = mutableListOf()
+            }
+
+            else -> {
+                config.sendMessage("commands.modify.target.unknown-method", state)
             }
         }
     }

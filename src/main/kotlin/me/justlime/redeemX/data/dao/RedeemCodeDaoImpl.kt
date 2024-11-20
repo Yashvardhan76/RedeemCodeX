@@ -12,9 +12,8 @@ class RedeemCodeDaoImpl(private val dbManager: DatabaseManager) : RedeemCodeDao 
     lateinit var getFetchCodes: List<String>
 
     fun fetchCodes() {
-     getFetchCodes = getAllCodes().map { it.code }
+        getFetchCodes = getAllCodes().map { it.code }
     }
-
 
     override fun createTable() {
         dbManager.getConnection()?.use { conn: Connection ->
@@ -32,7 +31,10 @@ class RedeemCodeDaoImpl(private val dbManager: DatabaseManager) : RedeemCodeDao 
             permission TEXT,
             pin INT,
             target TEXT,
-            usedBy TEXT
+            usedBy TEXT,
+            template TEXT,
+            storedCooldown TIMESTAMP,
+            cooldown TEXT
         )
         """
                 )
@@ -46,12 +48,14 @@ class RedeemCodeDaoImpl(private val dbManager: DatabaseManager) : RedeemCodeDao 
         val commandsString = redeemCode.commands.entries.joinToString(",") { "${it.key}:${it.value}" }
         val usageString = redeemCode.usage.entries.joinToString(",") { "${it.key}:${it.value}" }
         val stamp = redeemCode.storedTime?.let { Timestamp.valueOf(it) }
+        val target = redeemCode.target.toString().replace("[", "").replace("]", "").replace(",null", "")
 
         dbManager.getConnection()?.use { conn ->
             conn.prepareStatement(
                 """
-            INSERT INTO redeem_codes (code, commands, storedTime, duration, isEnabled, max_redeems, max_player, permission, pin, target, usedBy)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            INSERT INTO redeem_codes (code, commands, storedTime, duration, isEnabled, max_redeems, max_player, 
+            permission, pin, target, usedBy, template, storedCooldown, cooldown)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             ON CONFLICT(code) DO UPDATE SET 
                 commands = EXCLUDED.commands,
                 storedTime = EXCLUDED.storedTime,
@@ -62,7 +66,10 @@ class RedeemCodeDaoImpl(private val dbManager: DatabaseManager) : RedeemCodeDao 
                 permission = EXCLUDED.permission,
                 pin = EXCLUDED.pin,
                 target = EXCLUDED.target,
-                usedBy = EXCLUDED.usedBy
+                usedBy = EXCLUDED.usedBy,
+                template = EXCLUDED.template,
+                storedCooldown = EXCLUDED.storedCooldown,
+                cooldown = EXCLUDED.cooldown
             """
             ).use { statement ->
                 // Set parameters, starting with code, which we assume is non-null at this point
@@ -75,8 +82,11 @@ class RedeemCodeDaoImpl(private val dbManager: DatabaseManager) : RedeemCodeDao 
                 statement.setInt(7, redeemCode.maxPlayers)
                 statement.setString(8, redeemCode.permission)
                 statement.setInt(9, redeemCode.pin)
-                statement.setString(10, redeemCode.target)
+                statement.setString(10, target)
                 statement.setString(11, usageString)
+                statement.setString(12, redeemCode.template)
+                statement.setTimestamp(13, redeemCode.storedCooldown?.let { Timestamp.valueOf(it) })
+                statement.setString(14, redeemCode.cooldown)
 
                 isSuccess = statement.executeUpdate() > 0
             }
@@ -139,10 +149,5 @@ class RedeemCodeDaoImpl(private val dbManager: DatabaseManager) : RedeemCodeDao 
         }
         return codes
     }
-
-
-
-
-
 
 }

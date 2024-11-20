@@ -37,23 +37,14 @@ class RedeemCodeService(val plugin: RedeemX) {
         }
     }
 
-    //    fun getAllCommands(code: String): MutableMap<Int, String>? {
-//        val commands = get(code)?.commands ?: return null
-//        if (commands.values.toString().trim().isEmpty()) return null
-//        return commands
-//    }
-//
-//    fun getCommandById(code: String, id: Int): String? {
-//        val commands = get(code)?.commands?.containsKey(id)?.toString() ?: return null
-//        if (commands.trim().isEmpty()) return null
-//        return commands
-//    }
     fun mapResultSetToRedeemCode(result: ResultSet): RedeemCode {
         val commandsString = result.getString("commands")
         val usageString = result.getString("usedBy")
         val storedTime = result.getTimestamp("storedTime")?.toLocalDateTime()
         val commandMap = parseToMapId(commandsString)
         val playerUsageMap = parseToMapString(usageString)
+
+        val targetList: MutableList<String?> = result.getString("target").split(",").toMutableList()
 
         return RedeemCode(
             code = result.getString("code"),
@@ -65,8 +56,11 @@ class RedeemCodeService(val plugin: RedeemX) {
             maxPlayers = result.getInt("max_player"),
             permission = result.getString("permission"),
             pin = result.getInt("pin"),
-            target = result.getString("target"),
+            target = targetList,
             usage = playerUsageMap,
+            template = result.getString("template"),
+            storedCooldown = result.getTimestamp("storedCooldown")?.toLocalDateTime(),
+            cooldown = result.getString("cooldown")
         )
     }
     fun parseToId(string: String?): String {

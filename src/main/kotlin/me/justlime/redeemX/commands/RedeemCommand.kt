@@ -68,7 +68,7 @@ class RedeemCommand(private val plugin: RedeemX) : CommandExecutor, TabCompleter
         }
 
         // Target validation
-        if (!state.target.isNullOrEmpty() && state.target != sender.name) {
+        if (state.target.isNotEmpty() && state.target.contains(sender.name).not()) {
             config.sendMessage("redeemed-message.invalid-target", state)
             return true
         }

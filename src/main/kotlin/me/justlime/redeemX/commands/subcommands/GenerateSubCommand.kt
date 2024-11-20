@@ -22,16 +22,30 @@ class GenerateSubCommand(private val plugin: RedeemX) {
         }
 
         state.inputCode = args[1]
-
-        when {
-            state.inputCode.equals("template", ignoreCase = true) -> handleTemplateGeneration(state)
-            state.inputCode.toIntOrNull() != null -> handleNumericGeneration(state)
-            state.inputCode.matches(Regex("^[A-Z0-9]{3,10}$", RegexOption.IGNORE_CASE)) -> handleCustomCode(state)
-            else -> config.sendMessage("commands.gen.invalid-code", state)
+        val cached = state.inputCode
+        var amount = 1
+        if (args.size > 2 && !args[1].equals("template", ignoreCase = true)) {
+            amount = args[2].toIntOrNull() ?: 1
         }
+        if (args.size > 3 && args[1].equals("template", ignoreCase = true)) {
+            amount = args[3].toIntOrNull() ?: 1
+
+        }
+        while (amount > 0) {
+            when {
+                state.inputCode.equals("template", ignoreCase = true) -> handleTemplateGeneration(state)
+                state.inputCode.toIntOrNull() != null -> handleNumericGeneration(state)
+                state.inputCode.matches(Regex("^[A-Z0-9]{3,10}$", RegexOption.IGNORE_CASE)) -> handleCustomCode(state)
+                else -> config.sendMessage("commands.gen.invalid-code", state)
+            }
+            state.inputCode = cached
+            amount--
+
+        }
+
+        stateManager.clearState(state.sender)
+
     }
-
-
 
     private fun handleTemplateGeneration(state: RedeemCodeState) {
         val templateName = state.args.getOrNull(2)?.lowercase() ?: run {
@@ -43,7 +57,8 @@ class GenerateSubCommand(private val plugin: RedeemX) {
         val templateConfigPath = state.templateName
 
         // Fetch template data
-        val tCommands = config.getString("$templateConfigPath.commands", Files.TEMPLATE)?.removePrefix("[")?.removeSuffix("]")
+        val tCommands =
+            config.getString("$templateConfigPath.commands", Files.TEMPLATE)?.removePrefix("[")?.removeSuffix("]")
         val tDuration = service.adjustDuration(
             "0s",
             config.getString("$templateConfigPath.code-expired-duration", Files.TEMPLATE).orEmpty(),
@@ -75,7 +90,7 @@ class GenerateSubCommand(private val plugin: RedeemX) {
 
             state.apply {
                 this.code = this.inputCode
-                this.commands = service.parseToMapId(service.parseToId(tCommands) )
+                this.commands = service.parseToMapId(service.parseToId(tCommands))
                 this.duration = "${tDuration}s"
                 this.storedTime = if (tDuration > 1) service.currentTime else null
                 this.isEnabled =
@@ -83,8 +98,7 @@ class GenerateSubCommand(private val plugin: RedeemX) {
                         ?: false
                 this.maxRedeems =
                     config.getString("$templateConfigPath.max_redeems", Files.TEMPLATE)?.toIntOrNull() ?: 1
-                this.maxPlayers =
-                    config.getString("$templateConfigPath.max_player", Files.TEMPLATE)?.toIntOrNull() ?: 1
+                this.maxPlayers = config.getString("$templateConfigPath.max_player", Files.TEMPLATE)?.toIntOrNull() ?: 1
                 this.permission = if (tPermissionRequired) {
                     config.getString("$templateConfigPath.permission.value", Files.TEMPLATE)
                         ?.replace("{code}", this.inputCode)
@@ -126,7 +140,7 @@ class GenerateSubCommand(private val plugin: RedeemX) {
     }
 
     private fun createRedeemCode(state: RedeemCodeState) {
-        if (!state.args[1].equals("template",ignoreCase = true)) {
+        if (!state.args[1].equals("template", ignoreCase = true)) {
             // Retrieve defaults from the configuration
             val commands = config.getString("default.commands")?.removePrefix("[")?.removeSuffix("]")
             val defaultDuration = config.getString("default.code-expired-duration") ?: "0s"

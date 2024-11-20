@@ -12,6 +12,9 @@ data class RedeemCode(
     var maxPlayers: Int,
     var permission: String?,
     var pin: Int,
-    var target: String?,
+    var target: MutableList<String?>,
     var usage: MutableMap<String, Int>,
+    var template: String,
+    var storedCooldown: LocalDateTime?,
+    var cooldown: String?
 )

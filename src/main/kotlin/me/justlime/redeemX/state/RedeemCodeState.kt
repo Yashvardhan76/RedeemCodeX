@@ -26,7 +26,7 @@ data class RedeemCodeState(var sender: CommandSender,
                            var hasPermission: Boolean = false,
                            var pin: Int = -1,
                            var inputPin: Int? = null,
-                           var target: String? = null,
+                           var target: MutableList<String?> = mutableListOf(),
                            var inputTarget: String = "",
                            var usage: MutableMap<String, Int> = mutableMapOf(),
                            var usageCount: Int = 0,
@@ -34,7 +34,9 @@ data class RedeemCodeState(var sender: CommandSender,
                            var value: String = "",
                            var minLength: Int = 3,
                            var maxLength: Int = 10,
-                           var templateName: String = ""
+                           var templateName: String = "",
+                           var storedCooldown: LocalDateTime? = null,
+                           var cooldown: String? = null
 
 ) {
     private val senderName: String = if (sender is Player) sender.name else "console"
@@ -62,7 +64,7 @@ data class RedeemCodeState(var sender: CommandSender,
             "maxPlayers" to maxPlayers.toString(),
             "permission" to (permission ?: ""),
             "pin" to pin.toString(),
-            "target" to (target ?: "Any"),
+            "target" to (target.toString()),
             "usage" to usage.toString(),
             "usageCount" to usageCount.toString(),
             "min" to minLength.toString(),

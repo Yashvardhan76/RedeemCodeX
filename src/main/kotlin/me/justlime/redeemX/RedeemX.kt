@@ -13,6 +13,8 @@ class RedeemX : JavaPlugin() {
     lateinit var stateManager: StateManager // Ensure StateManager is initialized before use
 
     override fun onEnable() {
+        if(!this.dataFolder.exists()) this.dataFolder.mkdir()
+
         // Register and Initialize Database
         redeemCodeDB = DatabaseManager.getInstance(this).getRedeemCodeDao()
         redeemCodeDB.createTable()

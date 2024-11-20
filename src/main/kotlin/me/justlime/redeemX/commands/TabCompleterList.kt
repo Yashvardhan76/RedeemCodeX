@@ -12,15 +12,16 @@ class TabCompleterList(plugin: RedeemX) : TabCompleter {
     private val config = ConfigManager(plugin)
 
     private val commonCompletions = listOf(
-        "gen", "modify", "delete", "delete_all", "info","renew"
+        "gen", "modify", "delete", "delete_all", "info","renew", "reload"
     )
 
     private val commonCompletionsTODO = listOf(   //TODO
-        "bulk_gen", "delete_Expired", "renew", "preview", "reload", "help"
+         "delete_Expired",  "preview",  "help"
     )
     private val modifyOptions = listOf(
         "enabled", "max_redeems", "max_player", "duration", "permission", "set_target", "set_pin", "command", "list"
     )
+    private val amount = listOf("AMOUNT")
     private val genSubcommands = listOf("CUSTOM", "SIZE","TEMPLATE")
     private val durationOptions = listOf("add", "set", "remove")
     private val permissionOptions = listOf("true", "false", "CUSTOM")
@@ -35,7 +36,8 @@ class TabCompleterList(plugin: RedeemX) : TabCompleter {
             1 -> completions.addAll(commonCompletions)
             2 -> completions.addAll(handleSecondArgument(args[0]))
             3 -> completions.addAll(handleThirdArgument(args))
-            4 -> handleFourthArgument(args)?.let { completions.addAll(it) }
+            4 -> handleFourthArgument(args)?.let { completions.addAll(it) } ?: return null
+            5 -> if (args[2].equals("set_target",ignoreCase = true)) return null
         }
 
         // Filter and return completions that match the current input (case-insensitive)
@@ -53,7 +55,9 @@ class TabCompleterList(plugin: RedeemX) : TabCompleter {
 
     private fun handleThirdArgument(args: Array<out String>): List<String> {
         return when (args[0]) {
-            "gen" -> config.getTemplateNames() // Add template subcommand for 'gen'
+            "gen" -> if(!args[1].equals("template",ignoreCase = true)) return amount else return config.getTemplateNames()
+            // template
+            // subcommand for 'gen'
             "modify" -> modifyOptions
             else -> emptyList()
         }
@@ -66,8 +70,8 @@ class TabCompleterList(plugin: RedeemX) : TabCompleter {
             "permission" -> permissionOptions
             "set_pin" -> listOf("-1")
             "command" -> listOf("add", "set", "list", "preview")
-            "set_target" -> null
-            else -> emptyList()
+            "set_target" -> listOf("add","remove","set")
+            else -> if(args[1].equals("template",ignoreCase = true)) return amount else return emptyList()
         }
     }
 }

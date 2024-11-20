@@ -31,7 +31,14 @@ object StateMap {
             hasPermission = false,
             inputPin = -1,
             inputTarget = "",
-            usageCount = 0
+            usageCount = 0,
+            property = "",
+            value = "",
+            minLength = 3,
+            maxLength = 10,
+            templateName = redeemCode.template,
+            storedCooldown = redeemCode.storedCooldown,
+            cooldown = redeemCode.cooldown
         )
     }
 
@@ -48,7 +55,10 @@ object StateMap {
             permission = state.permission,
             pin = state.pin,
             target = state.target,
-            usage = state.usage
+            usage = state.usage,
+            template = state.templateName,
+            storedCooldown = state.storedCooldown,
+            cooldown = state.cooldown
         )
     }
 }
