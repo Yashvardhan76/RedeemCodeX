@@ -24,6 +24,7 @@ class ConfigManager(val plugin: RedeemX) {
     }
 
     init {
+
         plugin.saveDefaultConfig()
         getConfig(Files.MESSAGES)
         getConfig(Files.CONFIG)
@@ -49,6 +50,7 @@ class ConfigManager(val plugin: RedeemX) {
 
         // Send action bar message
         actionBarMessage?.let {
+
             val filledMessage = applyPlaceholders(it, placeholders)
             if (state.sender is Player) {
                 (state.sender as Player).spigot().sendMessage(ChatMessageType.ACTION_BAR, TextComponent(filledMessage))

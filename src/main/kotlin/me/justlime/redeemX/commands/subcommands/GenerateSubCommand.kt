@@ -34,6 +34,8 @@ class GenerateSubCommand(private val plugin: RedeemX) {
 
 
     private fun handleTemplateGeneration(state: RedeemCodeState) {
+        var amount = state.args[3].toIntOrNull() ?: 1
+
         val templateName = state.args.getOrNull(2)?.lowercase() ?: run {
             config.sendMessage("commands.gen.invalid-syntax", state)
             return
@@ -65,7 +67,7 @@ class GenerateSubCommand(private val plugin: RedeemX) {
             config.sendMessage("commands.gen.invalid-range", state)
             return
         }
-
+        while (amount>0)
         generateUniqueCode(codeLength) { uniqueCode ->
             if (uniqueCode == null) {
                 config.sendMessage("commands.gen.length-error", state)
@@ -93,11 +95,13 @@ class GenerateSubCommand(private val plugin: RedeemX) {
             }
 
             createRedeemCode(state)
+            amount--
         }
     }
 
     private fun handleNumericGeneration(state: RedeemCodeState) {
         val codeLength = state.inputCode.toIntOrNull() ?: return
+        var amount = state.args[2].toIntOrNull() ?: 1
 
         val minLength = config.getString("code-minimum-digit")?.toIntOrNull() ?: 3
         val maxLength = config.getString("code-maximum-digit")?.toIntOrNull() ?: 10
@@ -107,14 +111,16 @@ class GenerateSubCommand(private val plugin: RedeemX) {
             return
         }
 
-        generateUniqueCode(codeLength) { uniqueCode ->
+        while (amount>0) generateUniqueCode(codeLength) { uniqueCode ->
             if (uniqueCode == null) {
                 config.sendMessage("commands.gen.length-error", state)
                 return@generateUniqueCode
             }
             state.inputCode = uniqueCode
             createRedeemCode(state)
+            amount--
         }
+
     }
 
     private fun handleCustomCode(state: RedeemCodeState) {
