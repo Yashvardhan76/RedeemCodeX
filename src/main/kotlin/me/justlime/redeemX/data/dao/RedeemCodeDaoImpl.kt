@@ -10,10 +10,37 @@ import java.sql.Timestamp
 
 class RedeemCodeDaoImpl(private val dbManager: DatabaseManager) : RedeemCodeDao {
     lateinit var getFetchCodes: List<String>
+    private lateinit var getTargetList: MutableMap<String, MutableList<String>>
 
-    fun fetchCodes() {
+    fun getTargetList(code: String): MutableList<String> {
+        // Return an empty mutable list if the code is not found
+        return getTargetList[code] ?: mutableListOf()
+    }
+
+    fun init() {
+        fetchCodes()
+        fetchTargetList()
+        createTable()
+    }
+
+    private fun fetchCodes() {
+        // Fetch all codes and map to their string values
         getFetchCodes = getAllCodes().map { it.code }
     }
+
+    private fun fetchTargetList() {
+        getTargetList = mutableMapOf()
+
+        getAllCodes().forEach { state ->
+            // Safely handle nullable targets, trim them, and add to the map
+            val targetList = state.target.filterNotNull() // Remove null values from the list
+                .map { it.trim() } // Trim each string
+                .toMutableList() ?: mutableListOf() // Default to an empty list
+
+            getTargetList[state.code] = targetList
+        }
+    }
+
 
     override fun createTable() {
         dbManager.getConnection()?.use { conn: Connection ->
@@ -91,8 +118,7 @@ class RedeemCodeDaoImpl(private val dbManager: DatabaseManager) : RedeemCodeDao 
                 isSuccess = statement.executeUpdate() > 0
             }
         }
-
-        if (isSuccess) fetchCodes()
+        init()
         return isSuccess
     }
 

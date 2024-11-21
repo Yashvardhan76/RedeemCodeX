@@ -59,7 +59,7 @@ class ModifySubCommand(private val plugin: RedeemX) {
                     )
                 ) state.value else null
 
-            "set_target" -> handleTargetModification(args, state)
+            "target" -> if (!handleTargetModification(args, state)) return
 
             "set_pin" -> state.pin =
                 state.value.toIntOrNull() ?: return config.sendMessage("commands.modify.invalid-value", state)
@@ -165,7 +165,7 @@ class ModifySubCommand(private val plugin: RedeemX) {
         }
     }
 
-    private fun handleTargetModification(args: Array<out String>, state: RedeemCodeState) {
+    private fun handleTargetModification(args: Array<out String>, state: RedeemCodeState): Boolean {
         val tempList: MutableList<String?> = mutableListOf()
          state.target.forEach{
             tempList.add(it?.trim())
@@ -193,10 +193,16 @@ class ModifySubCommand(private val plugin: RedeemX) {
                 state.target = mutableListOf()
             }
 
+            "list" ->{
+                state.sender.sendMessage(state.target.joinToString("\n"))
+            }
+
             else -> {
                 config.sendMessage("commands.modify.target.unknown-method", state)
+                return false
             }
         }
+    return true
     }
 
 }

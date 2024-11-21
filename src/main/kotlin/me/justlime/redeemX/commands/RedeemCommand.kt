@@ -68,9 +68,16 @@ class RedeemCommand(private val plugin: RedeemX) : CommandExecutor, TabCompleter
         }
 
         // Target validation
-        if (state.target.isNotEmpty() && state.target.contains(sender.name).not()) {
-            config.sendMessage("redeemed-message.invalid-target", state)
-            return true
+        if (state.target.isNotEmpty()) {
+            val temp: MutableList<String?> = mutableListOf();
+            state.target.filterNotNull().toMutableList().forEach{
+                temp.add(it.trim())
+            }
+            state.target = temp
+            if(!state.target.contains(sender.name)){
+                config.sendMessage("redeemed-message.invalid-target", state)
+                return true
+            }
         }
 
         // PIN validation

@@ -6,26 +6,25 @@ import org.bukkit.command.Command
 import org.bukkit.command.CommandSender
 import org.bukkit.command.TabCompleter
 
-class TabCompleterList(plugin: RedeemX) : TabCompleter {
-
+class TabCompleterList(val plugin: RedeemX) : TabCompleter {
     // Predefined common completions for each command type
     private val config = ConfigManager(plugin)
 
     private val commonCompletions = listOf(
-        "gen", "modify", "delete", "delete_all", "info","renew", "reload"
+        "gen", "modify", "delete", "delete_all", "info", "renew", "reload"
     )
 
     private val commonCompletionsTODO = listOf(   //TODO
-         "delete_Expired",  "preview",  "help"
+        "delete_Expired", "preview", "help"
     )
     private val modifyOptions = listOf(
-        "enabled", "max_redeems", "max_player", "duration", "permission", "set_target", "set_pin", "command", "list"
+        "enabled", "max_redeems", "max_player", "duration", "permission", "target", "set_pin", "command", "list"
     )
     private val amount = listOf("AMOUNT")
-    private val genSubcommands = listOf("CUSTOM", "SIZE","TEMPLATE")
+    private val genSubcommands = listOf("CUSTOM", "SIZE", "TEMPLATE")
     private val durationOptions = listOf("add", "set", "remove")
     private val permissionOptions = listOf("true", "false", "CUSTOM")
-    private var cachedCodes: List<String>? = plugin.redeemCodeDB.getFetchCodes
+    private var cachedCodes = plugin.redeemCodeDB
 
     override fun onTabComplete(sender: CommandSender, command: Command, label: String, args: Array<out String>
     ): MutableList<String>? {
@@ -36,8 +35,21 @@ class TabCompleterList(plugin: RedeemX) : TabCompleter {
             1 -> completions.addAll(commonCompletions)
             2 -> completions.addAll(handleSecondArgument(args[0]))
             3 -> completions.addAll(handleThirdArgument(args))
-            4 -> handleFourthArgument(args)?.let { completions.addAll(it) } ?: return null
-            5 -> if (args[2].equals("set_target",ignoreCase = true)) return null
+            4 -> {
+                handleFourthArgument(args).let { completions.addAll(it) }
+
+            }
+
+            5 -> {
+                handleFifthArgument(args)?.let { completions.addAll(it) }
+                if (args[2].equals("target", ignoreCase = true) && (args[3].equals(
+                        "add",
+                        ignoreCase = true
+                    ) or args[3].equals("set", ignoreCase = true))
+                ) return null
+
+            }
+
         }
 
         // Filter and return completions that match the current input (case-insensitive)
@@ -49,13 +61,16 @@ class TabCompleterList(plugin: RedeemX) : TabCompleter {
         return when (firstArg) {
             "gen" -> genSubcommands
             "delete_all" -> emptyList()
-            else -> cachedCodes ?: emptyList() // Use cached codes
+            else -> cachedCodes.getFetchCodes // Use cached codes
         }
     }
 
     private fun handleThirdArgument(args: Array<out String>): List<String> {
         return when (args[0]) {
-            "gen" -> if(!args[1].equals("template",ignoreCase = true)) return amount else return config.getTemplateNames()
+            "gen" -> if (!args[1].equals(
+                    "template", ignoreCase = true
+                )
+            ) return amount else return config.getTemplateNames()
             // template
             // subcommand for 'gen'
             "modify" -> modifyOptions
@@ -63,15 +78,26 @@ class TabCompleterList(plugin: RedeemX) : TabCompleter {
         }
     }
 
-    private fun handleFourthArgument(args: Array<out String>): List<String>? {
+    private fun handleFourthArgument(args: Array<out String>): List<String> {
         return when (args[2]) {
             "duration" -> durationOptions
             "enabled" -> listOf("true", "false")
             "permission" -> permissionOptions
             "set_pin" -> listOf("-1")
             "command" -> listOf("add", "set", "list", "preview")
-            "set_target" -> listOf("add","remove","set")
-            else -> if(args[1].equals("template",ignoreCase = true)) return amount else return emptyList()
+            "target" -> listOf("add", "remove", "remove_all", "set", "list")
+            else -> if (args[1].equals("template", ignoreCase = true)) return amount else return emptyList()
+        }
+    }
+
+    private fun handleFifthArgument(args: Array<out String>): List<String>? {
+        if (args[2] != "target") {
+            return emptyList()
+        }
+        return when (args[3]) {
+            "remove", "list" -> cachedCodes.getTargetList(code = args[1])
+            "add" -> null
+            else -> emptyList()
         }
     }
 }

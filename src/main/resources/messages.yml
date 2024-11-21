@@ -41,9 +41,13 @@ redeemed-message:
   missing-pin:
     chat: "This code {code} requires a pin. Usage: /redeem <code> <pin>"
 
+  invalid-target: "&c This Code can only redeemed by {target}"
+
   invalid-pin:
     chat: "&cInvalid pin. Please Try again"
     actionbar: "&cInvalid pin. Please Try again"
+
+
 
   # Message shown if the code has already been redeemed by the player
   already-redeemed:
@@ -88,6 +92,8 @@ commands:
     no-permission: "&cYou do not have permission to modify codes."
     invalid-syntax: "&cUsage: /redeem modify <code> <options>"
     attribute-locked: "&cThe attribute &e{attribute}&c is locked and cannot be modified."
+    target:
+      unknown-method: "&cError: Unknown target method. Please use one of the following: set, add, remove, list."
 
   delete:
     success: "&aCode &e{code}&a has been deleted."

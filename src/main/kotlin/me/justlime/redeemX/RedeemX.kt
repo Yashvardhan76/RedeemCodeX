@@ -17,8 +17,7 @@ class RedeemX : JavaPlugin() {
 
         // Register and Initialize Database
         redeemCodeDB = DatabaseManager.getInstance(this).getRedeemCodeDao()
-        redeemCodeDB.createTable()
-        redeemCodeDB.fetchCodes()
+        redeemCodeDB.init()
 
         // Initialize StateManager
         stateManager = StateManager(this)
