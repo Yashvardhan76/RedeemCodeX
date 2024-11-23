@@ -35,6 +35,8 @@ data class RedeemCodeState(var sender: CommandSender,
                            var minLength: Int = 3,
                            var maxLength: Int = 10,
                            var templateName: String = "",
+                           var templateLocked: Boolean = false,
+                           var inputTemplate: String ="",
                            var storedCooldown: LocalDateTime? = null,
                            var cooldown: String? = null
 

@@ -8,6 +8,7 @@ object StateMap {
     // Mapping from RedeemCode to RedeemCodeState
     fun toState(redeemCode: RedeemCode, sender: CommandSender): RedeemCodeState {
         return RedeemCodeState(
+            sender = sender,
             code = redeemCode.code,
             commands = redeemCode.commands,
             storedTime = redeemCode.storedTime,
@@ -19,23 +20,6 @@ object StateMap {
             pin = redeemCode.pin,
             target = redeemCode.target,
             usage = redeemCode.usage,
-            sender = sender,
-            inputCode = "",
-            inputCommand = "",
-            inputStoredTime = "",
-            inputDuration = "",
-            inputEnabled = false.toString(),
-            inputMaxRedeems = "",
-            inputMaxPlayers = "",
-            inputPermission = "",
-            hasPermission = false,
-            inputPin = -1,
-            inputTarget = "",
-            usageCount = 0,
-            property = "",
-            value = "",
-            minLength = 3,
-            maxLength = 10,
             templateName = redeemCode.template,
             storedCooldown = redeemCode.storedCooldown,
             cooldown = redeemCode.cooldown
@@ -58,7 +42,8 @@ object StateMap {
             usage = state.usage,
             template = state.templateName,
             storedCooldown = state.storedCooldown,
-            cooldown = state.cooldown
+            cooldown = state.cooldown,
+            templateLocked = state.templateLocked
         )
     }
 }

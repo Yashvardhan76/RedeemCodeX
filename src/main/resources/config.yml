@@ -36,7 +36,9 @@ renew:
   clear-commands: false
   remove-permission-required: false
 
-
+bot:
+  enabled: false
+  token: "YOUR_BOT_TOKEN_HERE"
 
 maximum-pool-size: 5  # Adjust the pool size as necessary for your server load
 

@@ -15,6 +15,9 @@ data class RedeemCode(
     var target: MutableList<String?>,
     var usage: MutableMap<String, Int>,
     var template: String,
+    var templateLocked: Boolean,
     var storedCooldown: LocalDateTime?,
     var cooldown: String?
-)
+) {
+
+}

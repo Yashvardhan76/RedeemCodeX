@@ -26,6 +26,7 @@ dependencies {
     compileOnly("org.xerial:sqlite-jdbc:3.47.0.0"){
         exclude(group = "org.xerial", module = "sqlite-jdbc")
     }
+    implementation("net.dv8tion:JDA:5.2.1")
 }
 
 

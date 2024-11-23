@@ -2,76 +2,70 @@ package me.justlime.redeemX.commands.subcommands
 
 import me.justlime.redeemX.RedeemX
 import me.justlime.redeemX.config.ConfigManager
-import me.justlime.redeemX.data.service.RedeemCodeService
 import me.justlime.redeemX.state.RedeemCodeState
+import me.justlime.redeemX.utilities.RedeemCodeService
 import org.bukkit.command.CommandSender
-import java.time.LocalDateTime
-import java.time.ZoneId
 
 class ModifySubCommand(private val plugin: RedeemX) {
     private val config: ConfigManager = ConfigManager(plugin)
     private val stateManager = plugin.stateManager
+    private val service = RedeemCodeService(plugin)
 
     fun execute(sender: CommandSender, args: Array<out String>) {
+
         val state = stateManager.createState(sender)
 
-        // Validate arguments
-        if (args.size < 3) {
-            config.sendMessage("commands.modify.invalid-syntax", state)
-            return
-        }
+        if (args.size < 3) return config.sendMessage("commands.modify.invalid-syntax", state)
 
         state.inputCode = args[1]
+        state.inputTemplate = args[1]
+        if (!stateManager.fetchState(sender, state.inputCode)) {
+        } else if (state.templateName == state.inputTemplate) {
+        } else return config.sendMessage(
+            "commands.modify" + ".not-found", state
+        )
+
         state.property = args[2].lowercase()
+        when (state.property) {
+            "list" -> {
+                val codeInfo = plugin.redeemCodeDB.get(state.inputCode)?.toString() ?: "Code not found."
+                sender.sendMessage(codeInfo)
+                return
+            }
 
-        if (state.property == "list") {
-            val codeInfo = plugin.redeemCodeDB.get(state.inputCode)?.toString() ?: "Code not found."
-            sender.sendMessage(codeInfo)
-            return
+            "enabled" -> {
+                state.isEnabled = !state.isEnabled
+                return
+            }
         }
 
-        if (args.size < 4) {
-            config.sendMessage("commands.modify.invalid-syntax", state)
-            return
-        }
+        if (args.size < 4) return config.sendMessage("commands.modify.invalid-syntax", state)
+
 
         state.value = args[3]
-
-        // Fetch the redeem code
-        if (!stateManager.fetchState(sender, state.inputCode)) {
-            config.sendMessage("commands.modify.not-found", state)
-            return
-        }
-
         when (state.property) {
+            "command" -> handleCommandModification(args, state)
+
+            "duration" -> service.handleDurationModification(state.value, args.getOrNull(4), state, config)
+
             "max_redeems" -> state.maxRedeems =
                 state.value.toIntOrNull() ?: return config.sendMessage("commands.modify.invalid-value", state)
 
             "max_player" -> state.maxPlayers =
                 state.value.toIntOrNull() ?: return config.sendMessage("commands.modify.invalid-value", state)
 
-            "duration" -> handleDurationModification(state.value, args.getOrNull(4), state)
-
             "permission" -> state.permission =
                 if (state.value.equals("true", ignoreCase = true)) config.getString("modify.permission")
-                    ?.replace("{code}", state.inputCode) else if (!state.value.equals(
-                        "false", ignoreCase = true
-                    )
-                ) state.value else null
-
-            "target" -> if (!handleTargetModification(args, state)) return
+                    ?.replace("{code}", state.inputCode)
+                else if (!state.value.equals("false", ignoreCase = true)) state.value else null
 
             "set_pin" -> state.pin =
                 state.value.toIntOrNull() ?: return config.sendMessage("commands.modify.invalid-value", state)
 
-            "enabled" -> state.isEnabled = state.value.lowercase() == "true"
+            "target" -> if (!handleTargetModification(args, state)) return
 
-            "command" -> handleCommandModification(args, state)
+            else -> return config.sendMessage("commands.modify.unknown-property", state)
 
-            else -> {
-                config.sendMessage("commands.modify.unknown-property", state)
-                return
-            }
         }
 
         // Save updated redeem code
@@ -80,38 +74,6 @@ class ModifySubCommand(private val plugin: RedeemX) {
             config.sendMessage("commands.modify.success", state)
         } else {
             config.sendMessage("commands.modify.failed", state)
-        }
-    }
-
-    private fun handleDurationModification(action: String, adjustmentDuration: String?, state: RedeemCodeState) {
-        val service = RedeemCodeService(plugin)
-        val timeZoneId: ZoneId = ZoneId.of("Asia/Kolkata")
-        val currentTime: LocalDateTime = LocalDateTime.now(timeZoneId)
-        if (state.storedTime == null) state.storedTime = currentTime
-
-        val existingDuration = state.duration ?: "0s"
-        val durationValue = adjustmentDuration ?: "0"
-
-        when (action.lowercase()) {
-            "set" -> {
-                state.storedTime = currentTime
-                state.duration = service.adjustDuration("0s", durationValue, isAdding = true).toString() + 's'
-            }
-
-            "add" -> state.duration =
-                service.adjustDuration(existingDuration, durationValue, isAdding = true).toString() + 's'
-
-            "remove" -> {
-                val duration =
-                    service.adjustDuration(existingDuration, durationValue, isAdding = false).toString() + 's'
-                state.duration = if ((duration.dropLast(1).toIntOrNull() ?: -1) < 0) null else duration
-            }
-
-            else -> {
-                config.sendMessage(
-                    "commands.modify.duration-invalid", state = state
-                )
-            }
         }
     }
 
@@ -167,7 +129,7 @@ class ModifySubCommand(private val plugin: RedeemX) {
 
     private fun handleTargetModification(args: Array<out String>, state: RedeemCodeState): Boolean {
         val tempList: MutableList<String?> = mutableListOf()
-         state.target.forEach{
+        state.target.forEach {
             tempList.add(it?.trim())
         }
         state.target = tempList.distinct().toMutableList()
@@ -183,17 +145,17 @@ class ModifySubCommand(private val plugin: RedeemX) {
                 config.sendMessage("commands.modify.target.set", state)
             }
 
-            "remove" ->{
+            "remove" -> {
                 state.target.remove(args.getOrNull(4))
 
                 config.sendMessage("commands.modify.target.remove", state)
             }
 
-            "remove_all" ->{
+            "remove_all" -> {
                 state.target = mutableListOf()
             }
 
-            "list" ->{
+            "list" -> {
                 state.sender.sendMessage(state.target.joinToString("\n"))
             }
 
@@ -202,7 +164,7 @@ class ModifySubCommand(private val plugin: RedeemX) {
                 return false
             }
         }
-    return true
+        return true
     }
 
 }

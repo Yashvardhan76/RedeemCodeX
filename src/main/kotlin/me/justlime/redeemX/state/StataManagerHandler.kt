@@ -3,7 +3,7 @@ package me.justlime.redeemX.state
 import me.justlime.redeemX.data.models.RedeemCode
 import org.bukkit.command.CommandSender
 
-interface StateManagerHandler {
+interface StateHandler {
     /**
      * The current redeem code being managed.
      */
@@ -26,6 +26,7 @@ interface StateManagerHandler {
      */
     fun fetchState(sender: CommandSender,code: String): Boolean
 
+    fun fetchStateByTemplate(sender: CommandSender,template: String): Boolean
     /**
      * Clears the state associated with the specified sender.
      *

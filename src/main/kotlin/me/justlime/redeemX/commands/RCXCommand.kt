@@ -28,22 +28,16 @@ class RCXCommand(private val plugin: RedeemX) : CommandExecutor {
                     GenerateSubCommand(plugin).execute(sender, args)
                 } else config.sendMessage("no-permission", state)
 
-                "modify" -> if (sender.hasPermission("redeemx.admin.use.modify")) {
+                "modify", "modify_template" -> if (sender.hasPermission("redeemx.admin.use.modify")) {
                     ModifySubCommand(plugin).execute(sender, args)
                 } else config.sendMessage("no-permission", state)
 
-                "delete" -> if (sender.hasPermission("redeemx.admin.use.delete")) {
-                    DeleteSubCommand(plugin).execute(sender, args)
-                } else config.sendMessage("no-permission", state)
-
-                "delete_all" -> if (sender.hasPermission("redeemx.admin.use.delete")) {
+                "delete", "delete_all", "delete_template", "delete_all_template" -> if (sender.hasPermission("redeemx" + ".admin.use" + ".delete")) {
                     DeleteSubCommand(plugin).execute(sender, args)
                 } else config.sendMessage("no-permission", state)
 
                 "info" -> if (sender.hasPermission("redeemx.admin.use.info")) InfoSubCommand(plugin).execute(sender)
-                else config.sendMessage(
-                    key = "no-permission", state
-                )
+                else config.sendMessage(key = "no-permission", state)
 
                 "renew" -> if (sender.hasPermission("redeemx.admin.use.renew")) {
                     RenewSubCommand(plugin).execute(sender, args)

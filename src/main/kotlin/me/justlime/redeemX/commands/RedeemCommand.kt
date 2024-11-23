@@ -2,7 +2,7 @@ package me.justlime.redeemX.commands
 
 import me.justlime.redeemX.RedeemX
 import me.justlime.redeemX.config.ConfigManager
-import me.justlime.redeemX.data.service.RedeemCodeService
+import me.justlime.redeemX.utilities.RedeemCodeService
 import org.bukkit.command.Command
 import org.bukkit.command.CommandExecutor
 import org.bukkit.command.CommandSender
@@ -31,56 +31,53 @@ class RedeemCommand(private val plugin: RedeemX) : CommandExecutor, TabCompleter
         }
 
         // Update state with input code
-        state.inputCode = args[0].uppercase()
+        state.inputTemplate = args[0].uppercase()
 
-        if (!stateManager.fetchState(sender, state.inputCode)) {
+        if (!stateManager.fetchState(sender, state.inputTemplate)) {
             config.sendMessage("redeemed-message.invalid-code", state)
             return true
         }
 
-        // Redemption usage checks
         state.usageCount = state.usage[sender.name] ?: 0
-        if (state.usageCount >= state.maxRedeems) {// Max redemptions check
+        if (state.usageCount >= state.maxRedeems) {
             config.sendMessage("redeemed-message.already-redeemed", state)
             return true
         }
-        if (state.usage.size >= state.maxPlayers) {// Max players check
+
+        if (state.usage.size > state.maxPlayers) {// Max players check
             config.sendMessage("redeemed-message.max-redemptions", state)
             return true
         }
 
-        // Permission check
         if (!state.permission.isNullOrBlank() && !sender.hasPermission(state.permission!!)) {
             config.sendMessage("redeemed-message.no-permission", state)
             return true
         }
 
-        // Enabled check
         if (!state.isEnabled) {
             config.sendMessage("redeemed-message.disabled", state)
             return true
         }
 
-        // Expiry check
-        if (service.isExpired(state.inputCode)) {
+        if (service.isExpired(state.inputTemplate)) {
             config.sendMessage("redeemed-message.expired-code", state)
             return true
         }
 
         // Target validation
-        if (state.target.isNotEmpty()) {
+        val tempString = state.target.toString().removeSurrounding("[", "]").trim()
+        if (tempString.isNotBlank()) {
             val temp: MutableList<String?> = mutableListOf();
-            state.target.filterNotNull().toMutableList().forEach{
+            state.target.filterNotNull().toMutableList().forEach {
                 temp.add(it.trim())
             }
             state.target = temp
-            if(!state.target.contains(sender.name)){
+            if (!state.target.contains(sender.name)) {
                 config.sendMessage("redeemed-message.invalid-target", state)
                 return true
             }
         }
 
-        // PIN validation
         if (state.pin >= 0) {
             if (args.size < 2) {
                 config.sendMessage("redeemed-message.missing-pin", state)
@@ -100,10 +97,7 @@ class RedeemCommand(private val plugin: RedeemX) : CommandExecutor, TabCompleter
             plugin.server.dispatchCommand(console, it)
         }
 
-        // Update usage
         state.usage[sender.name] = state.usageCount + 1
-
-        // Save the updated state to the database
         val success = stateManager.updateDb(sender)
         if (!success) {
             config.sendMessage("redeemed-message.failed", state)
@@ -119,4 +113,5 @@ class RedeemCommand(private val plugin: RedeemX) : CommandExecutor, TabCompleter
     ): List<String> {
         return emptyList()
     }
+
 }

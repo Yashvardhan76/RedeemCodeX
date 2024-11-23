@@ -11,7 +11,7 @@ class TabCompleterList(val plugin: RedeemX) : TabCompleter {
     private val config = ConfigManager(plugin)
 
     private val commonCompletions = listOf(
-        "gen", "modify", "delete", "delete_all", "info", "renew", "reload"
+        "gen", "modify","modify_template","delete", "delete_all", "info", "renew", "reload"
     )
 
     private val commonCompletionsTODO = listOf(   //TODO
@@ -19,6 +19,9 @@ class TabCompleterList(val plugin: RedeemX) : TabCompleter {
     )
     private val modifyOptions = listOf(
         "enabled", "max_redeems", "max_player", "duration", "permission", "target", "set_pin", "command", "list"
+    )
+    private val modifyTemplateOptions = listOf(
+        "enabled", "max_redeems", "max_player", "duration", "permission", "set_pin", "command", "list"
     )
     private val amount = listOf("AMOUNT")
     private val genSubcommands = listOf("CUSTOM", "SIZE", "TEMPLATE")
@@ -61,7 +64,13 @@ class TabCompleterList(val plugin: RedeemX) : TabCompleter {
         return when (firstArg) {
             "gen" -> genSubcommands
             "delete_all" -> emptyList()
-            else -> cachedCodes.getFetchCodes // Use cached codes
+            "delete" -> cachedCodes.getFetchCodes
+            "info" -> emptyList()
+            "renew" -> cachedCodes.getFetchCodes
+            "modify" -> cachedCodes.getFetchCodes
+            "modify_template" -> config.getTemplateNames()
+            "reload" -> emptyList()
+            else -> emptyList()
         }
     }
 
@@ -74,6 +83,7 @@ class TabCompleterList(val plugin: RedeemX) : TabCompleter {
             // template
             // subcommand for 'gen'
             "modify" -> modifyOptions
+            "modify_template" -> modifyTemplateOptions
             else -> emptyList()
         }
     }
@@ -85,7 +95,8 @@ class TabCompleterList(val plugin: RedeemX) : TabCompleter {
             "permission" -> permissionOptions
             "set_pin" -> listOf("-1")
             "command" -> listOf("add", "set", "list", "preview")
-            "target" -> listOf("add", "remove", "remove_all", "set", "list")
+            "target" -> if (args[0].equals("modify", ignoreCase = true)) listOf("add", "remove", "remove_all", "set",
+                "list") else emptyList()
             else -> if (args[1].equals("template", ignoreCase = true)) return amount else return emptyList()
         }
     }
