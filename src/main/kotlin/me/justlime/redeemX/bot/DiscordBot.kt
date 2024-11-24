@@ -1,7 +1,10 @@
 package me.justlime.redeemX.bot
 
 import me.justlime.redeemX.RedeemX
+import me.justlime.redeemX
 import me.justlime.redeemX.config.ConfigManager
+
+\.config.ConfigManager
 import net.dv8tion.jda.api.JDA
 import net.dv8tion.jda.api.JDABuilder
 import net.dv8tion.jda.api.interactions.commands.OptionType
