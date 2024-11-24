@@ -16,10 +16,6 @@ class DiscordBot(val plugin: RedeemX) {
     fun startBot() {
         jda = JDABuilder.createDefault(botToken).build()
         jda?.addEventListener(DiscordCommandListener(plugin))
-
-        // Delete all existing commands
-
-        // Re-register the updated commands
         jda?.updateCommands()?.addCommands(
             Commands.slash("generate", "Generate redeem codes")
                 .addOption(OptionType.STRING, "template", "Template Name", false, true)
