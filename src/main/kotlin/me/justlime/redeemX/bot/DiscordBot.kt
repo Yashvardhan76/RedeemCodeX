@@ -20,7 +20,9 @@ class DiscordBot(val plugin: RedeemX) {
             Commands.slash("generate", "Generate redeem codes")
                 .addOption(OptionType.STRING, "template", "Template Name", false, true)
                 .addOption(OptionType.INTEGER, "length", "Length of each code", false)
-                .addOption(OptionType.INTEGER, "amount", "Number of codes to generate", false)
+                .addOption(OptionType.INTEGER, "amount", "Number of codes to generate", false),
+            Commands.slash("delete", "Delete codes")
+                .addOption(OptionType.STRING, "code", "Code to delete", true,true)
         )?.queue()
     }
 

@@ -151,7 +151,7 @@ class RedeemCodeService(val plugin: RedeemX) {
             }
 
             else -> {
-                config.sendMessage(
+                config.dm(
                     "commands.modify.duration-invalid", state = state
                 )
             }

@@ -6,13 +6,15 @@ import me.justlime.redeemX.config.ConfigManager
 import me.justlime.redeemX.data.DatabaseManager
 import me.justlime.redeemX.data.dao.RedeemCodeDaoImpl
 import me.justlime.redeemX.state.StateManager
+import me.justlime.redeemX.utilities.RedeemCodeService
 import org.bukkit.plugin.java.JavaPlugin
 
 class RedeemX : JavaPlugin() {
     lateinit var redeemCodeDB: RedeemCodeDaoImpl
-    private lateinit var configFile: ConfigManager
-    val bot = DiscordBot(this)
+    lateinit var configFile: ConfigManager
     lateinit var stateManager: StateManager // Ensure StateManager is initialized before use
+    lateinit var service: RedeemCodeService
+    private lateinit var bot: DiscordBot
 
     override fun onEnable() {
         if (!this.dataFolder.exists()) this.dataFolder.mkdir()
@@ -21,15 +23,13 @@ class RedeemX : JavaPlugin() {
         redeemCodeDB = DatabaseManager.getInstance(this).getRedeemCodeDao()
         redeemCodeDB.init()
 
-        // Initialize StateManager
+        service = RedeemCodeService(this)
         stateManager = StateManager(this)
-
-        // Config
         configFile = ConfigManager(this)
 
-        // Initialize Commands with StateManager
         CommandManager(this)
 
+        bot = DiscordBot(this)
         val isBotEnabled = configFile.getString("bot.enabled").equals("true", true)
         if (isBotEnabled)bot.startBot()
 
