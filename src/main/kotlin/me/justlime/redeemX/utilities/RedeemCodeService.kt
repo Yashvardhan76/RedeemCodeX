@@ -1,7 +1,9 @@
-package me.justlime.redeemX.data.service
+package me.justlime.redeemX.utilities
 
 import me.justlime.redeemX.RedeemX
+import me.justlime.redeemX.config.ConfigManager
 import me.justlime.redeemX.data.models.RedeemCode
+import me.justlime.redeemX.state.RedeemCodeState
 import java.sql.ResultSet
 import java.time.LocalDateTime
 import java.time.ZoneId
@@ -37,23 +39,14 @@ class RedeemCodeService(val plugin: RedeemX) {
         }
     }
 
-    //    fun getAllCommands(code: String): MutableMap<Int, String>? {
-//        val commands = get(code)?.commands ?: return null
-//        if (commands.values.toString().trim().isEmpty()) return null
-//        return commands
-//    }
-//
-//    fun getCommandById(code: String, id: Int): String? {
-//        val commands = get(code)?.commands?.containsKey(id)?.toString() ?: return null
-//        if (commands.trim().isEmpty()) return null
-//        return commands
-//    }
     fun mapResultSetToRedeemCode(result: ResultSet): RedeemCode {
         val commandsString = result.getString("commands")
         val usageString = result.getString("usedBy")
         val storedTime = result.getTimestamp("storedTime")?.toLocalDateTime()
         val commandMap = parseToMapId(commandsString)
         val playerUsageMap = parseToMapString(usageString)
+
+        val targetList: MutableList<String?> = result.getString("target").split(",").toMutableList()
 
         return RedeemCode(
             code = result.getString("code"),
@@ -65,8 +58,12 @@ class RedeemCodeService(val plugin: RedeemX) {
             maxPlayers = result.getInt("max_player"),
             permission = result.getString("permission"),
             pin = result.getInt("pin"),
-            target = result.getString("target"),
+            target = targetList,
             usage = playerUsageMap,
+            template = result.getString("template"),
+            storedCooldown = result.getTimestamp("storedCooldown")?.toLocalDateTime(),
+            cooldown = result.getString("cooldown"),
+            templateLocked = result.getBoolean("templateLocked")
         )
     }
     fun parseToId(string: String?): String {
@@ -127,5 +124,37 @@ class RedeemCodeService(val plugin: RedeemX) {
         val adjustmentSeconds = adjustmentAmount * (timeUnitToSeconds[adjustmentUnit] ?: return 0L)
 
         return if (isAdding) existingSeconds + adjustmentSeconds else existingSeconds - adjustmentSeconds
+    }
+
+    fun handleDurationModification(action: String, adjustmentDuration: String?, state: RedeemCodeState,config: ConfigManager) {
+        val service = RedeemCodeService(plugin)
+        val timeZoneId: ZoneId = ZoneId.of("Asia/Kolkata")
+        val currentTime: LocalDateTime = LocalDateTime.now(timeZoneId)
+        if (state.storedTime == null) state.storedTime = currentTime
+
+        val existingDuration = state.duration ?: "0s"
+        val durationValue = adjustmentDuration ?: "0"
+
+        when (action.lowercase()) {
+            "set" -> {
+                state.storedTime = currentTime
+                state.duration = service.adjustDuration("0s", durationValue, isAdding = true).toString() + 's'
+            }
+
+            "add" -> state.duration =
+                service.adjustDuration(existingDuration, durationValue, isAdding = true).toString() + 's'
+
+            "remove" -> {
+                val duration =
+                    service.adjustDuration(existingDuration, durationValue, isAdding = false).toString() + 's'
+                state.duration = if ((duration.dropLast(1).toIntOrNull() ?: -1) < 0) null else duration
+            }
+
+            else -> {
+                config.dm(
+                    "commands.modify.duration-invalid", state = state
+                )
+            }
+        }
     }
 }

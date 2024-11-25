@@ -6,7 +6,7 @@ import me.justlime.redeemX.utilities.StateMap
 import org.bukkit.command.CommandSender
 import java.util.concurrent.ConcurrentHashMap
 
-class StateManager(val plugin: RedeemX) : StateManagerHandler {
+class StateManager(val plugin: RedeemX) : StateHandler {
 
     private val db = plugin.redeemCodeDB
     override lateinit var redeemCode: RedeemCode
@@ -37,23 +37,15 @@ class StateManager(val plugin: RedeemX) : StateManagerHandler {
      *
      * @param sender The command sender (Player or Console).
      */
-    override fun fetchState(sender: CommandSender,code: String): Boolean {
+    override fun fetchState(sender: CommandSender, code: String): Boolean {
         val redeemCode = db.get(code) ?: return false
-        stateMap[sender]?.let { state ->
-            redeemCode.let {
-                state.code = it.code
-                state.commands = it.commands
-                state.storedTime = it.storedTime
-                state.duration = it.duration
-                state.isEnabled = it.isEnabled
-                state.maxRedeems = it.maxRedeems
-                state.maxPlayers = it.maxPlayers
-                state.permission = it.permission
-                state.pin = it.pin
-                state.target = it.target
-                state.usage = it.usage
-            }
-        }
+        stateMap[sender]?.let { redeemCode.let { StateMap.toState(it, sender) } }
+        return true
+    }
+
+    override fun fetchStateByTemplate(sender: CommandSender, template: String): Boolean {
+        val redeemCode = db.getTemplateCodes(template) ?: return false
+//        stateMap[sender]?.let { redeemCode.let { StateMap.toState(it, sender) } }
         return true
     }
 
@@ -73,17 +65,15 @@ class StateManager(val plugin: RedeemX) : StateManagerHandler {
         stateMap.clear()
     }
 
-
     override fun updateDb(sender: CommandSender): Boolean {
         val state = stateMap[sender] ?: return false
         val redeemCode = state.let { StateMap.toModel(it) }
         try {
             db.upsert(redeemCode)
-            clearState(sender)
+
             return true
         } catch (e: Exception) {
             plugin.logger.severe("Failed to update database: ${e.message}")
-            clearState(sender)
             return false
         }
     }

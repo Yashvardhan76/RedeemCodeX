@@ -1,8 +1,7 @@
 # Plugin message prefix
-prefix: "&6[RCX] &r"
+prefix: "&6[RCX] &r>> "
 
-restricted-to-players:
-  chat: "{prefix} >> &cThis command can only be executed by Players in-game."
+restricted-to-players: "&cThis command can only be executed by Players in-game."
 
 no-permission: "&cYou don't have permission to use this command."
 
@@ -41,9 +40,13 @@ redeemed-message:
   missing-pin:
     chat: "This code {code} requires a pin. Usage: /redeem <code> <pin>"
 
+  invalid-target: "&c This Code can only redeemed by {target}"
+
   invalid-pin:
     chat: "&cInvalid pin. Please Try again"
     actionbar: "&cInvalid pin. Please Try again"
+
+
 
   # Message shown if the code has already been redeemed by the player
   already-redeemed:
@@ -68,7 +71,9 @@ redeemed-message:
 
 
 commands:
-  reload: "&aThe configuration files have been reloaded."
+
+
+
   gen:
     success: "&aGenerated new code: &e{code}&a."
     invalid-syntax: "&cUsage: /redeem gen <CUSTOM | SIZE | TEMPLATE> [Template-name]"
@@ -82,24 +87,43 @@ commands:
     error: "&cAn error occurred while generating the code {code}."
 
   modify:
-    success: "&aCode &e{code}&a was modified successfully."
-    invalid-option: "&cError: Invalid modification option."
-    not-found: "&cError: Code &e{code}&c could not be found for modification."
+    success: "&aCode &e{code}&a has been modified successfully."
+    failed: "&cAn error occurred while modifying the code &e{code}&c. Please try again later."
+    invalid-syntax: "&cUsage: /redeem modify <code> <property> <value> [additional values]"
+    invalid-value: "&cInvalid value provided for property &e{property}&c. Please check the documentation."
+    not-found: "&cCode &e{code}&c not found."
     no-permission: "&cYou do not have permission to modify codes."
-    invalid-syntax: "&cUsage: /redeem modify <code> <options>"
-    attribute-locked: "&cThe attribute &e{attribute}&c is locked and cannot be modified."
+    unknown-property: "&cUnknown property &e{property}&c. Please check the documentation."
+    invalid-command: "&cInvalid command provided. Please provide a valid command."
+    invalid-id: "&cInvalid ID provided. Please provide a valid ID."
+    list: "&aCommands List:\n{commands}"
+    invalid-set: "&cInvalid set command. Please provide a valid ID and command."
+    unknown-method: "&cUnknown method. Please check the documentation."
+    set_pin: "&aPin for code &e{code} &ahas been set to &e{pin}&a."
+    target:
+      add: "&aTarget &e{target}&a added to code &e{code}&a."
+      set: "&aTarget for code &e{code}&a has been set to &e{target}&a."
+      remove: "&aTarget &e{target}&a removed from code &e{code}&a."
+      remove_all: "&aAll targets removed from code &e{code}&a."
+      list: "&aTargets for code &e{code}&a:\n{targets}"
+      unknown-method: "&cUnknown target method. Please check the documentation."
 
   delete:
+    usage: "/rxc delete <code>"
     success: "&aCode &e{code}&a has been deleted."
     not-found: "&cError: Code &e{code}&c could not be found for deletion."
     no-permission: "&cYou do not have permission to delete codes."
     confirmation-needed: "&cPlease confirm the deletion by adding '-confirm' to the command."
+    cancellation: "&cAction cancelled. No codes were deleted."
+    invalid-syntax: "&cUsage: /redeem delete <code>"
 
   delete_all:
+    usage: "/rxc delete_all CONFIRM"
     confirmation: "&cAre you sure you want to delete all codes? This action cannot be undone."
     success: "&aAll codes have been deleted successfully."
     no-permission: "&cYou do not have permission to delete all codes."
     cancellation: "&cAction cancelled. No codes were deleted."
+    invalid-syntax: "&cUsage: /redeem delete_all CONFIRM"
 
   renew:
     success: "&aCode &e{code}&a has been renewed."
@@ -125,12 +149,39 @@ commands:
       info: "&e/info <code> &f- Displays information about a specific code."
     footer: "&aUse &e/redeem help <command>&a for more details on each command."
 
+  reload:
+    success: "&aThe configuration files have been reloaded."
+    failed: "&cAn error occurred while reloading the configuration files."
+    no-permission: "&cYou do not have permission to delete codes."
   unknown-command: "&cUnknown SubCommand. Please try again."
 
 
-# Placeholder variables to be used within messages
+# Placeholder variables to be used within messages [Note: It cannot be changed only for view purpose :D]
 placeholders:
-  # {code} will be replaced by the actual code used
   code: "{code}"
-  # {player} will be replaced by the player's name who is redeeming the code
   player: "{player}"
+  pin: "{pin}"
+  target: "{target}"
+  max_redeems: "{max_redeems}"
+  max_players: "{max_players}"
+  permission: "{permission}"
+  duration: "{duration}"
+  enabled: "{enabled}"
+  commands: "{commands}"
+  expiry: "{expiry}"
+  redeemed_by: "{redeemed_by}"
+  min: "{min}"
+  max: "{max}"
+  template: "{template}"
+  storedTime: "{storedTime}"
+  usage: "{usage}"
+  usageCount: "{usageCount}"
+
+  bot:
+    enabled: "{enabled}"
+    token: "{token}"
+    channel: "{channel}"
+    message: "{message}"
+
+
+

@@ -35,7 +35,7 @@ class ConfigManager(val plugin: RedeemX) {
     /**
      * Sends a message to the sender with support for placeholders and multiple message formats.
      */
-    fun sendMessage(key: String, state: RedeemCodeState) {
+    fun dm(key: String, state: RedeemCodeState) {
         // Placeholder map for message customization
         val placeholders = state.toPlaceholdersMap()
 

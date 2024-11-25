@@ -3,41 +3,56 @@ package me.justlime.redeemX.commands.subcommands
 import me.justlime.redeemX.RedeemX
 import me.justlime.redeemX.config.ConfigManager
 import me.justlime.redeemX.config.Files
-import me.justlime.redeemX.data.service.RedeemCodeService
 import me.justlime.redeemX.state.RedeemCodeState
+import me.justlime.redeemX.state.StateManager
 import org.bukkit.command.CommandSender
 
 class GenerateSubCommand(private val plugin: RedeemX) {
-    private val config = ConfigManager(plugin)
-    private val stateManager = plugin.stateManager
-    private val service = RedeemCodeService(plugin)
+    private val config: ConfigManager = plugin.configFile
+    private val stateManager: StateManager = plugin.stateManager
+    private val service = plugin.service
+    var generatedSubCommand = mutableListOf<String>()
+
 
     fun execute(sender: CommandSender, args: Array<out String>) {
         val state = stateManager.createState(sender).apply { this.args = args.toMutableList() }
 
         // Validate minimum arguments
         if (state.args.size < 2) {
-            config.sendMessage("commands.gen.invalid-syntax", state)
+            config.dm("commands.gen.invalid-syntax", state)
             return
         }
 
-        state.inputCode = args[1]
-
-        when {
-            state.inputCode.equals("template", ignoreCase = true) -> handleTemplateGeneration(state)
-            state.inputCode.toIntOrNull() != null -> handleNumericGeneration(state)
-            state.inputCode.matches(Regex("^[A-Z0-9]{3,10}$", RegexOption.IGNORE_CASE)) -> handleCustomCode(state)
-            else -> config.sendMessage("commands.gen.invalid-code", state)
+        state.inputTemplate = args[1]
+        val cached = state.inputTemplate
+        var amount = 1
+        if (args.size > 2 && !args[1].equals("template", ignoreCase = true)) {
+            amount = args[2].toIntOrNull() ?: 1
         }
+
+        if (args.size > 3 && args[1].equals("template", ignoreCase = true)) {
+            amount = args[3].toIntOrNull() ?: 1
+
+        }
+        while (amount > 0) {
+            when {
+                state.inputTemplate.equals("template", ignoreCase = true) -> handleTemplateGeneration(state)
+                state.inputTemplate.toIntOrNull() != null -> handleNumericGeneration(state)
+                state.inputTemplate.matches(Regex("^[A-Z0-9]{3,10}$", RegexOption.IGNORE_CASE)) -> handleCustomCode(state)
+                else -> config.dm("commands.gen.invalid-code", state)
+            }
+            state.inputTemplate = cached
+            amount--
+
+        }
+
+        stateManager.clearState(state.sender)
+
     }
 
-
-
     private fun handleTemplateGeneration(state: RedeemCodeState) {
-        var amount = state.args[3].toIntOrNull() ?: 1
-
         val templateName = state.args.getOrNull(2)?.lowercase() ?: run {
-            config.sendMessage("commands.gen.invalid-syntax", state)
+            config.dm("commands.gen.invalid-syntax", state)
             return
         }
 
@@ -45,7 +60,8 @@ class GenerateSubCommand(private val plugin: RedeemX) {
         val templateConfigPath = state.templateName
 
         // Fetch template data
-        val tCommands = config.getString("$templateConfigPath.commands", Files.TEMPLATE)?.removePrefix("[")?.removeSuffix("]")
+        val tCommands =
+            config.getString("$templateConfigPath.commands", Files.TEMPLATE)?.removePrefix("[")?.removeSuffix("]")
         val tDuration = service.adjustDuration(
             "0s",
             config.getString("$templateConfigPath.code-expired-duration", Files.TEMPLATE).orEmpty(),
@@ -56,28 +72,30 @@ class GenerateSubCommand(private val plugin: RedeemX) {
 
         state.minLength = config.getString("code-minimum-digit")?.toIntOrNull() ?: 3
         state.maxLength = config.getString("code-maximum-digit")?.toIntOrNull() ?: 10
-        state.inputCode = config.getString("$templateConfigPath.code-generate-digit", Files.TEMPLATE) ?: "5"
+        state.inputTemplate = config.getString("$templateConfigPath.code-generate-digit", Files.TEMPLATE) ?: "5"
 
-        val codeLength = state.inputCode.toIntOrNull() ?: run {
-            config.sendMessage("commands.gen.invalid-range", state)
+        val codeLength = state.inputTemplate.toIntOrNull() ?: run {
+            config.dm("commands.gen.invalid-range", state)
             return
         }
 
         if (codeLength !in state.minLength..state.maxLength) {
-            config.sendMessage("commands.gen.invalid-range", state)
+            config.dm("commands.gen.invalid-range", state)
             return
         }
-        while (amount>0)
+
         generateUniqueCode(codeLength) { uniqueCode ->
             if (uniqueCode == null) {
-                config.sendMessage("commands.gen.length-error", state)
+                config.dm("commands.gen.length-error", state)
                 return@generateUniqueCode
             }
-            state.inputCode = uniqueCode
+            state.inputTemplate = uniqueCode
 
             state.apply {
-                this.code = this.inputCode
-                this.commands = service.parseToMapId(service.parseToId(tCommands) )
+                this.inputCode = this.inputTemplate
+                this.code = this.inputTemplate
+                this.templateName = templateName
+                this.commands = service.parseToMapId(service.parseToId(tCommands))
                 this.duration = "${tDuration}s"
                 this.storedTime = if (tDuration > 1) service.currentTime else null
                 this.isEnabled =
@@ -85,54 +103,49 @@ class GenerateSubCommand(private val plugin: RedeemX) {
                         ?: false
                 this.maxRedeems =
                     config.getString("$templateConfigPath.max_redeems", Files.TEMPLATE)?.toIntOrNull() ?: 1
-                this.maxPlayers =
-                    config.getString("$templateConfigPath.max_player", Files.TEMPLATE)?.toIntOrNull() ?: 1
+                this.maxPlayers = config.getString("$templateConfigPath.max_player", Files.TEMPLATE)?.toIntOrNull() ?: 1
                 this.permission = if (tPermissionRequired) {
                     config.getString("$templateConfigPath.permission.value", Files.TEMPLATE)
-                        ?.replace("{code}", this.inputCode)
+                        ?.replace("{code}", this.inputTemplate)
                 } else null
                 this.pin = config.getString("$templateConfigPath.pin", Files.TEMPLATE)?.toIntOrNull() ?: -1
             }
 
             createRedeemCode(state)
-            amount--
         }
     }
 
     private fun handleNumericGeneration(state: RedeemCodeState) {
-        val codeLength = state.inputCode.toIntOrNull() ?: return
-        var amount = state.args[2].toIntOrNull() ?: 1
+        val codeLength = state.inputTemplate.toIntOrNull() ?: return
 
         val minLength = config.getString("code-minimum-digit")?.toIntOrNull() ?: 3
         val maxLength = config.getString("code-maximum-digit")?.toIntOrNull() ?: 10
 
         if (codeLength !in minLength..maxLength) {
-            config.sendMessage("commands.gen.invalid-range", state)
+            config.dm("commands.gen.invalid-range", state)
             return
         }
 
-        while (amount>0) generateUniqueCode(codeLength) { uniqueCode ->
+        generateUniqueCode(codeLength) { uniqueCode ->
             if (uniqueCode == null) {
-                config.sendMessage("commands.gen.length-error", state)
+                config.dm("commands.gen.length-error", state)
                 return@generateUniqueCode
             }
-            state.inputCode = uniqueCode
+            state.inputTemplate = uniqueCode
             createRedeemCode(state)
-            amount--
         }
-
     }
 
     private fun handleCustomCode(state: RedeemCodeState) {
-        if (stateManager.fetchState(state.sender, state.inputCode)) {
-            config.sendMessage("commands.gen.code-already-exist", state)
+        if (stateManager.fetchState(state.sender, state.inputTemplate)) {
+            config.dm("commands.gen.code-already-exist", state)
             return
         }
         createRedeemCode(state)
     }
 
     private fun createRedeemCode(state: RedeemCodeState) {
-        if (!state.args[1].equals("template",ignoreCase = true)) {
+        if (!state.args[1].equals("template", ignoreCase = true)) {
             // Retrieve defaults from the configuration
             val commands = config.getString("default.commands")?.removePrefix("[")?.removeSuffix("]")
             val defaultDuration = config.getString("default.code-expired-duration") ?: "0s"
@@ -146,6 +159,7 @@ class GenerateSubCommand(private val plugin: RedeemX) {
             // Populate state with default values
 
             state.apply {
+                this.inputCode = this.inputTemplate
                 this.commands = service.parseToMapId(service.parseToId(commands))
                 this.duration = "${service.adjustDuration("0s", defaultDuration, true)}s"
                 this.storedTime = if (defaultDuration != "0s") service.currentTime else null
@@ -153,7 +167,7 @@ class GenerateSubCommand(private val plugin: RedeemX) {
                 this.maxRedeems = defaultMaxRedeems
                 this.maxPlayers = defaultMaxPlayers
                 this.permission = if (permissionRequired) {
-                    defaultPermissionValue.replace("{code}", inputCode)
+                    defaultPermissionValue.replace("{code}", inputTemplate)
                 } else null
                 this.pin = defaultPin
             }
@@ -161,15 +175,18 @@ class GenerateSubCommand(private val plugin: RedeemX) {
 
         try {
             // Insert the redeem code into the database
-            state.code = state.inputCode
+            state.code = state.inputTemplate
+            state.inputCode = state.inputTemplate
             val success = stateManager.updateDb(state.sender)
             if (!success) {
-                config.sendMessage("commands.gen.failed", state)
+                config.dm("commands.gen.failed", state)
                 return
             }
-            config.sendMessage("commands.gen.success", state)
+            config.dm("commands.gen.success", state)
+            generatedSubCommand.add(state.inputTemplate)
+
         } catch (e: Exception) {
-            config.sendMessage("commands.gen.error", state)
+            config.dm("commands.gen.error", state)
             e.printStackTrace()
         }
     }
