@@ -2,14 +2,16 @@ package me.justlime.redeemX.commands.subcommands
 
 import me.justlime.redeemX.RedeemX
 import me.justlime.redeemX.config.JMessage
-import org.bukkit.command.CommandSender
+import me.justlime.redeemX.state.RedeemCodeState
 
 class DeleteSubCommand(private val plugin: RedeemX) : JSubCommand {
     private val config = plugin.configFile
     private val stateManager = plugin.stateManager
 
-    override fun execute(sender: CommandSender, args: Array<out String>): Boolean {
-        val state = stateManager.createState(sender)
+    override fun execute(state: RedeemCodeState): Boolean {
+       val args = state.args
+
+
         if (args.size < 2 && args[0].equals("delete", ignoreCase = true)) {
             config.dm(JMessage.Commands.Delete.INVALID_SYNTAX, state)
             return false

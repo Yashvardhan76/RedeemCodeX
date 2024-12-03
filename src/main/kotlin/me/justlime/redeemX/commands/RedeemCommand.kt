@@ -17,7 +17,7 @@ class RedeemCommand(private val plugin: RedeemX) : CommandExecutor, TabCompleter
     private val service = RedeemCodeService(plugin)
 
     override fun onCommand(sender: CommandSender, command: Command, label: String, args: Array<out String>): Boolean {
-        val state = stateManager.createState(sender)
+        var state = stateManager.getState(sender)
         if (sender !is Player) {
             config.dm(JMessage.RESTRICTED_TO_PLAYERS, state)
             return true
@@ -28,10 +28,11 @@ class RedeemCommand(private val plugin: RedeemX) : CommandExecutor, TabCompleter
         }
 
         state.inputCode = args[0].uppercase()
-        if (!stateManager.fetchState(sender, state.inputCode)) {
+        if (!stateManager.fetchState(state)) {
             config.dm(JMessage.Redeemed.INVALID_CODE, state)
             return true
         }
+        plugin.logger.info("RedeemCommand state: $state")
 
         state.usageCount = state.usage[sender.name] ?: 0
         if (state.usageCount >= state.maxRedeems) {

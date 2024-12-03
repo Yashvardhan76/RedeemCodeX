@@ -56,8 +56,8 @@ class GenerateSubCommand(private val plugin: RedeemX) {
             return
         }
 
-        state.templateName = templateName
-        val templateConfigPath = state.templateName
+        state.template = templateName
+        val templateConfigPath = state.template
 
         // Fetch template data
         val tCommands =
@@ -94,7 +94,7 @@ class GenerateSubCommand(private val plugin: RedeemX) {
             state.apply {
                 this.inputCode = this.inputTemplate
                 this.code = this.inputTemplate
-                this.templateName = templateName
+                this.template = templateName
                 this.commands = service.parseToMapId(service.parseToId(tCommands))
                 this.duration = "${tDuration}s"
                 this.storedTime = if (tDuration > 1) service.currentTime else null
@@ -137,7 +137,7 @@ class GenerateSubCommand(private val plugin: RedeemX) {
     }
 
     private fun handleCustomCode(state: RedeemCodeState) {
-        if (stateManager.fetchState(state.sender, state.inputTemplate)) {
+        if (stateManager.fetchState(state)) {
             config.dm("commands.gen.code-already-exist", state)
             return
         }

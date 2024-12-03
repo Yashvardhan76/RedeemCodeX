@@ -1,5 +1,7 @@
 package me.justlime.redeemX.commands.subcommands
 
+import me.justlime.redeemX.state.RedeemCodeState
+
 interface JSubCommand {
-    fun execute(sender: org.bukkit.command.CommandSender, args: Array<out String>): Boolean
+    fun execute(state: RedeemCodeState): Boolean
 }

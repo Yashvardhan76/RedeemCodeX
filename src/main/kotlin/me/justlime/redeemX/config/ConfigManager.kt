@@ -40,6 +40,9 @@ class ConfigManager(val plugin: RedeemX) {
 
         // Fetch different types of messages
         val chatMessage = getString("$key.chat",Files.MESSAGES) ?: getString(key,Files.MESSAGES)
+        val chatMessageList = chatMessage?.split(",")
+
+
         val actionBarMessage = getString("$key.actionbar",Files.MESSAGES)
         val titleMessage = getString("$key.title.text",Files.MESSAGES) ?: getString("$key.title",Files.MESSAGES)
         val subtitleMessage = getString("$key.title.subtitle",Files.MESSAGES)
@@ -66,8 +69,8 @@ class ConfigManager(val plugin: RedeemX) {
 
         // Send chat message
         chatMessage?.let {
-            val filledMessage = applyPlaceholders(it, placeholders)
-            state.sender.sendMessage(filledMessage)
+            val filledChatMessage = chatMessageList?.map { applyPlaceholders(it, placeholders) }
+            filledChatMessage?.forEach { state.sender.sendMessage(it) }
         }
     }
 
