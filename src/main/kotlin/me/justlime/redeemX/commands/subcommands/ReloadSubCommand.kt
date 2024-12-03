@@ -17,6 +17,5 @@ class ReloadSubCommand(val plugin: me.justlime.redeemX.RedeemX) : JSubCommand {
             config.dm(me.justlime.redeemX.config.JMessage.Commands.Reload.FAILED, state)
             return false
         }
-
     }
 }
