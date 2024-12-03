@@ -22,7 +22,11 @@ class DiscordBot(val plugin: RedeemX) {
                 .addOption(OptionType.INTEGER, "length", "Length of each code", false)
                 .addOption(OptionType.INTEGER, "amount", "Number of codes to generate", false),
             Commands.slash("delete", "Delete codes")
-                .addOption(OptionType.STRING, "code", "Code to delete", true,true)
+                .addOption(OptionType.STRING, "code", "Code to delete", true,true),
+            Commands.slash("modify","Modify a code")
+                .addOption(OptionType.STRING,"code","Code to modify",true,true)
+                .addOption(OptionType.STRING,"property","Property to modify",true,true)
+                .addOption(OptionType.STRING,"value","New value",true,true)
         )?.queue()
     }
 
