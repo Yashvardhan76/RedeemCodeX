@@ -2,7 +2,6 @@ package me.justlime.redeemX.commands.subcommands
 
 class ReloadSubCommand(val plugin: me.justlime.redeemX.RedeemX) : JSubCommand {
     private val config = plugin.configFile
-    private val stateManager = plugin.stateManager
     private val db = plugin.redeemCodeDB
 
     override fun execute(sender: org.bukkit.command.CommandSender, args: Array<out String>): Boolean {
