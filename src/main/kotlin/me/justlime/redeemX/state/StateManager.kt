@@ -6,6 +6,7 @@ import me.justlime.redeemX.utilities.StateMap
 import org.bukkit.command.CommandSender
 import java.util.concurrent.ConcurrentHashMap
 
+
 class StateManager(val plugin: RedeemX) : StateHandler {
 
     private val db = plugin.redeemCodeDB

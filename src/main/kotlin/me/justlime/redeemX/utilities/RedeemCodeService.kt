@@ -1,13 +1,15 @@
 package me.justlime.redeemX.utilities
 
 import me.justlime.redeemX.RedeemX
-import me.justlime.redeemX.config.ConfigManager
+import me.justlime.redeemX.data.config.ConfigManager
 import me.justlime.redeemX.data.models.RedeemCode
 import me.justlime.redeemX.state.RedeemCodeState
+import org.bukkit.ChatColor
 import java.sql.ResultSet
 import java.time.LocalDateTime
 import java.time.ZoneId
 import java.time.ZonedDateTime
+import java.util.regex.Pattern
 
 class RedeemCodeService(val plugin: RedeemX) {
     private val timeZoneId: ZoneId = ZoneId.of("Asia/Kolkata")
@@ -151,10 +153,22 @@ class RedeemCodeService(val plugin: RedeemX) {
             }
 
             else -> {
-                config.dm(
+                config.sendMsg(
                     "commands.modify.duration-invalid", state = state
                 )
             }
         }
+    }
+
+    fun applyColors(message: String): String {
+        var coloredMessage = ChatColor.translateAlternateColorCodes('&', message)
+        val hexPattern = Pattern.compile("&#[a-fA-F0-9]{6}")
+        val matcher = hexPattern.matcher(coloredMessage)
+        while (matcher.find()) {
+            val hexCode = matcher.group()
+            val bukkitHexCode = "\u00A7x" + hexCode.substring(2).toCharArray().joinToString("") { "\u00A7$it" }
+            coloredMessage = coloredMessage.replace(hexCode, bukkitHexCode)
+        }
+        return coloredMessage
     }
 }

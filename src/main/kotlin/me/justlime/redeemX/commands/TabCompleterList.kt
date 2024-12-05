@@ -1,7 +1,7 @@
 package me.justlime.redeemX.commands
 
 import me.justlime.redeemX.RedeemX
-import me.justlime.redeemX.config.ConfigManager
+import me.justlime.redeemX.data.config.ConfigManager
 import org.bukkit.command.Command
 import org.bukkit.command.CommandSender
 import org.bukkit.command.TabCompleter
