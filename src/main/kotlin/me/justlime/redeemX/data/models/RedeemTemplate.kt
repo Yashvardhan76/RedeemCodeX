@@ -12,5 +12,4 @@ data class RedeemTemplate(
     val pin: Int,
     val codeGenerateDigit: Int,
     val codeExpiredDuration: String,
-
     )

@@ -5,40 +5,49 @@ import me.justlime.redeemX.data.config.JFiles
 import me.justlime.redeemX.data.models.RedeemTemplate
 import org.bukkit.configuration.file.FileConfiguration
 
-class ConfigRepositoryDao(private val jConfig: ConfigDao) : ConfigRepositoryHandler {
-    override fun getMessage(message: String): String {
+class ConfigRepositoryDao(private val jConfig: ConfigDao) {
+
+    fun getConfigValue(key: String): String{
+        return jConfig.getString(key, JFiles.CONFIG, applyColor = false) ?: ""
+    }
+
+    fun getMessage(message: String): String {
         return jConfig.getMessage(message)
     }
 
-    override fun getFormattedMessage(message: String, placeholders: Map<String, String>): String {
+    fun getFormattedMessage(message: String, placeholders: Map<String, String>): String {
         return jConfig.getFormattedMessage(message, placeholders)
     }
 
-    override fun getTemplate(template: String): RedeemTemplate {
+    fun getTemplate(template: String): RedeemTemplate {
         return jConfig.getTemplate(template)
     }
 
-    override fun getEntireTemplates(): List<RedeemTemplate> {
+    fun getTemplateValue(template: String,property: String): String{
+        return jConfig.getString("$template.$property",JFiles.TEMPLATE,false) ?: ""
+    }
+
+    fun getEntireTemplates(): List<RedeemTemplate> {
         return jConfig.getEntireTemplates()
     }
 
-    override fun upsertTemplate(template: RedeemTemplate): Boolean {
-        return jConfig.upsertTemplate(template)
+    fun modifyTemplate(template: RedeemTemplate){
+        jConfig.upsertTemplate(template = template)
     }
 
-    override fun deleteTemplate(name: String): Boolean {
+    fun deleteTemplate(name: String): Boolean {
         return jConfig.deleteTemplate(name)
     }
 
-    override fun deleteEntireTemplates(): Boolean {
+    fun deleteEntireTemplates(): Boolean {
         return jConfig.deleteEntireTemplates()
     }
 
-    override fun getConfig(config: JFiles): FileConfiguration {
+    fun getConfig(config: JFiles): FileConfiguration {
         return jConfig.getConfig(JFiles.CONFIG)
     }
 
-    override fun reloadConfig(): Boolean {
+    fun reloadConfig(): Boolean {
         return jConfig.reloadAllConfigs()
     }
 
