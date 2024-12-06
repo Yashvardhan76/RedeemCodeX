@@ -3,7 +3,7 @@ package me.justlime.redeemX.data.config
 import org.bukkit.configuration.file.FileConfiguration
 
 interface ConfigDao {
-    fun getString(key: String, configFile: JFiles, applyColor: Boolean): String?
+    fun getString(path: String, configFile: JFiles, applyColor: Boolean): String?
     fun getMessage(message: String): String
     fun getFormattedMessage(message: String, placeholders: Map<String, String>): String
 
@@ -14,7 +14,7 @@ interface ConfigDao {
     fun deleteEntireTemplates(): Boolean
 
     fun getConfig(configFile: JFiles): FileConfiguration
-    fun upsertConfig(configFile: JFiles, content: String): Boolean
+    fun upsertConfig(configFile: JFiles, path: String,value: String): Boolean
     fun saveAllConfigs(): Boolean
     fun reloadConfig(configFile: JFiles): Boolean
     fun reloadAllConfigs(): Boolean

@@ -8,8 +8,8 @@ import me.justlime.redeemX.commands.subcommands.ModifySubCommand
 import me.justlime.redeemX.commands.subcommands.ReloadSubCommand
 import me.justlime.redeemX.commands.subcommands.RenewSubCommand
 import me.justlime.redeemX.data.config.ConfigManager
-import me.justlime.redeemX.data.config.raw.JMessage
-import me.justlime.redeemX.data.config.raw.JPermission
+import me.justlime.redeemX.data.config.yml.JMessage
+import me.justlime.redeemX.data.config.yml.JPermission
 import org.bukkit.command.Command
 import org.bukkit.command.CommandExecutor
 import org.bukkit.command.CommandSender

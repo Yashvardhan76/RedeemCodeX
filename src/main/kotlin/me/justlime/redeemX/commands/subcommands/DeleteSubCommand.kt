@@ -1,7 +1,7 @@
 package me.justlime.redeemX.commands.subcommands
 
 import me.justlime.redeemX.RedeemX
-import me.justlime.redeemX.data.config.raw.JMessage
+import me.justlime.redeemX.data.config.yml.JMessage
 import me.justlime.redeemX.state.RedeemCodeState
 
 class DeleteSubCommand(private val plugin: RedeemX) : JSubCommand {

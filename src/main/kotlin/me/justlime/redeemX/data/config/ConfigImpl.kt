@@ -20,14 +20,14 @@ class ConfigImpl(private val plugin: RedeemX, private val configManager: ConfigM
         private const val DEFAULT_FADE_OUT = 10
     }
 
-    override fun getString(key: String, configFile: JFiles, applyColor: Boolean): String? {
+    override fun getString(path: String, configFile: JFiles, applyColor: Boolean): String? {
         val fileConfig = getConfig(configFile)
-        val message = fileConfig.getString(key) ?: return null
+        val message = fileConfig.getString(path) ?: return null
         return if (applyColor) service.applyColors(message) else message
     }
 
     override fun getMessage(message: String): String {
-        return getString(key = message,configFile=JFiles.MESSAGES,applyColor = false) ?: return ""
+        return getString(path = message,configFile=JFiles.MESSAGES,applyColor = false) ?: return ""
     }
 
     override fun getFormattedMessage(message: String, placeholders: Map<String, String>): String {
@@ -117,7 +117,16 @@ class ConfigImpl(private val plugin: RedeemX, private val configManager: ConfigM
     }
 
     override fun upsertConfig(configFile: JFiles, content: String): Boolean {
-        TODO()
+        return try {
+            val file = File(plugin.dataFolder, configFile.filename)
+            val config = YamlConfiguration.loadConfiguration(file)
+            config.loadFromString(content)
+            config.save(file)
+            true
+        } catch (e: Exception) {
+            plugin.logger.log(Level.SEVERE, "Could not upsert config: ${e.message}")
+            false
+        }
     }
 
     override fun reloadConfig(configFile: JFiles): Boolean {
