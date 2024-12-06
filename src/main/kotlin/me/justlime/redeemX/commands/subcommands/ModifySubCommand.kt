@@ -1,12 +1,11 @@
 package me.justlime.redeemX.commands.subcommands
 
 import me.justlime.redeemX.RedeemX
-import me.justlime.redeemX.config.ConfigManager
-import me.justlime.redeemX.config.JMessage
+import me.justlime.redeemX.data.config.ConfigManager
+import me.justlime.redeemX.data.config.raw.JMessage
 import me.justlime.redeemX.state.RedeemCodeState
 import me.justlime.redeemX.state.StateManager
 import me.justlime.redeemX.utilities.RedeemCodeService
-import org.bukkit.command.CommandSender
 
 class ModifySubCommand(private val plugin: RedeemX) : JSubCommand {
     private val config: ConfigManager = plugin.configFile
@@ -14,28 +13,28 @@ class ModifySubCommand(private val plugin: RedeemX) : JSubCommand {
     private val service: RedeemCodeService = plugin.service
     private val db = plugin.redeemCodeDB
 
-    override fun execute(sender: CommandSender, args: Array<out String>): Boolean {
+    override fun execute(state: RedeemCodeState): Boolean{
+        val sender = state.sender
+        val args = state.args
+        if (args.size < 3) return config.sendMsg(JMessage.Commands.Modify.INVALID_SYNTAX, state) != Unit
 
-        val state = stateManager.createState(sender)
-
-        if (args.size < 3) return config.dm(JMessage.Commands.Modify.INVALID_SYNTAX, state) != Unit
 
         state.inputCode = args[1]
         state.inputTemplate = args[1]
-        if (!stateManager.fetchState(sender, state.inputCode)) {
-            config.dm(JMessage.Commands.Modify.NOT_FOUND, state)
+        if (!stateManager.fetchState(state)) {
+            config.sendMsg(JMessage.Commands.Modify.NOT_FOUND, state)
             return false
         }
-
+        state.template = state.inputTemplate
         state.property = args[2].lowercase()
         when (state.property) {
             "list" -> {
-                sender.sendMessage(state.toString())
+                config.sendMsg(JMessage.Commands.Modify.LIST, state)
                 return true
             }
 
             "info" -> {
-                val codeInfo = db.get(state.inputCode)?.toString() ?: return config.dm(JMessage.Commands.Modify.NOT_FOUND, state) != Unit
+                val codeInfo = db.get(state.code)?.toString() ?: return config.sendMsg(JMessage.Commands.Modify.NOT_FOUND, state) != Unit
                 sender.sendMessage(codeInfo)
                 return true
             }
@@ -46,7 +45,7 @@ class ModifySubCommand(private val plugin: RedeemX) : JSubCommand {
             }
         }
 
-        if (args.size < 4) return config.dm(JMessage.Commands.Modify.INVALID_SYNTAX, state) != Unit
+        if (args.size < 4) return config.sendMsg(JMessage.Commands.Modify.INVALID_SYNTAX, state) != Unit
 
 
         state.value = args[3]
@@ -55,40 +54,43 @@ class ModifySubCommand(private val plugin: RedeemX) : JSubCommand {
 
             "duration" -> service.handleDurationModification(state.value, args.getOrNull(4), state, config)
 
-            "max_redeems" -> state.maxRedeems = state.value.toIntOrNull() ?: return config.dm(JMessage.Commands.Modify.INVALID_VALUE, state) != Unit
+            "max_redeems" -> state.maxRedeems = state.value.toIntOrNull() ?: return config.sendMsg(JMessage.Commands.Modify.INVALID_VALUE, state) != Unit
 
-            "max_player" -> state.maxPlayers = state.value.toIntOrNull() ?: return config.dm(JMessage.Commands.Modify.INVALID_VALUE, state) != Unit
+            "max_player" -> state.maxPlayers = state.value.toIntOrNull() ?: return config.sendMsg(JMessage.Commands.Modify.INVALID_VALUE, state) != Unit
 
-            "permission" -> state.permission = if (state.value.equals("true", ignoreCase = true)) config.getString("modify.permission")?.replace("{code}", state.inputCode)
+            "permission" -> state.permission = if (state.value.equals("true", ignoreCase = true)) config.getString("modify.permission")?.replace("{code}", state.code)
             else if (!state.value.equals("false", ignoreCase = true)) state.value else null
 
-            "set_pin" -> {
-                state.pin = state.value.toIntOrNull() ?: return config.dm(JMessage.Commands.Modify.INVALID_VALUE, state) != Unit
-                config.dm(JMessage.Commands.Modify.SET_PIN, state)
-                return true
+            "pin" -> {
+                state.pin = state.value.toIntOrNull() ?: return config.sendMsg(JMessage.Commands.Modify.INVALID_VALUE, state) != Unit
+                config.sendMsg(JMessage.Commands.Modify.PIN, state)
             }
 
             "target" -> if (!handleTargetModification(args, state)) return false
 
             else -> {
-                config.dm(JMessage.Commands.Modify.UNKNOWN_PROPERTY, state)
+                config.sendMsg(JMessage.Commands.Modify.UNKNOWN_PROPERTY, state)
                 return false
             }
 
         }
+        state.sender.sendMessage(state.pin.toString())
+
+        stateManager.updateState(state)
+
 
         // Save updated redeem code
         val success = stateManager.updateDb(sender)
         if (success) {
-            config.dm(JMessage.Commands.Modify.SUCCESS, state)
+            config.sendMsg(JMessage.Commands.Modify.SUCCESS, state)
             return true
         } else {
-            config.dm(JMessage.Commands.Modify.FAILED, state)
+            config.sendMsg(JMessage.Commands.Modify.FAILED, state)
             return false
         }
     }
 
-    private fun handleCommandModification(args: Array<out String>, state: RedeemCodeState) {
+    private fun handleCommandModification(args: MutableList<String>, state: RedeemCodeState) {
         val method = args[3].lowercase()
         val list = state.commands
         val console = plugin.server.consoleSender
@@ -97,7 +99,7 @@ class ModifySubCommand(private val plugin: RedeemX) : JSubCommand {
             "add" -> {
                 val commandValue = args.drop(4).joinToString(" ")
                 if (commandValue.isBlank()) {
-                    config.dm(JMessage.Commands.Modify.INVALID_COMMAND, state)
+                    config.sendMsg(JMessage.Commands.Modify.INVALID_COMMAND, state)
                     return
                 }
                 val id = list.keys.maxOrNull() ?: 0
@@ -107,7 +109,7 @@ class ModifySubCommand(private val plugin: RedeemX) : JSubCommand {
             "remove" -> {
                 val id = args.getOrNull(4)?.toIntOrNull()
                 if (id == null) {
-                    config.dm(JMessage.Commands.Modify.INVALID_ID, state)
+                    config.sendMsg(JMessage.Commands.Modify.INVALID_ID, state)
                     return
                 }
                 list.remove(id)
@@ -116,7 +118,7 @@ class ModifySubCommand(private val plugin: RedeemX) : JSubCommand {
             "list" -> {
                 val commandsList = list.values.joinToString("\n")
                 state.sender.sendMessage(commandsList)
-                config.dm(JMessage.Commands.Modify.LIST, state)
+                config.sendMsg(JMessage.Commands.Modify.LIST, state)
                 return
             }
 
@@ -124,7 +126,7 @@ class ModifySubCommand(private val plugin: RedeemX) : JSubCommand {
                 val id = args.getOrNull(4)?.toIntOrNull()
                 val commandValue = args.drop(5).joinToString(" ")
                 if (id == null || commandValue.isBlank()) {
-                    config.dm(JMessage.Commands.Modify.INVALID_SET, state)
+                    config.sendMsg(JMessage.Commands.Modify.INVALID_SET, state)
                     return
                 }
                 list[id] = commandValue
@@ -133,12 +135,12 @@ class ModifySubCommand(private val plugin: RedeemX) : JSubCommand {
             "preview" -> list.values.forEach { plugin.server.dispatchCommand(console, it) }
 
             else -> {
-                config.dm(JMessage.Commands.Modify.UNKNOWN_METHOD, state)
+                config.sendMsg(JMessage.Commands.Modify.UNKNOWN_METHOD, state)
             }
         }
     }
 
-    private fun handleTargetModification(args: Array<out String>, state: RedeemCodeState): Boolean {
+    private fun handleTargetModification(args: MutableList<String>, state: RedeemCodeState): Boolean {
         val tempList: MutableList<String?> = mutableListOf()
         state.target.forEach {
             tempList.add(it?.trim())
@@ -148,18 +150,18 @@ class ModifySubCommand(private val plugin: RedeemX) : JSubCommand {
             "add" -> {
                 state.target.add(args.getOrNull(4))
                 state.target = state.target.distinct().toMutableList()
-                config.dm(JMessage.Commands.Modify.Target.ADD, state)
+                config.sendMsg(JMessage.Commands.Modify.Target.ADD, state)
             }
 
             "set" -> {
                 state.target = mutableListOf(args.getOrNull(4))
-                config.dm(JMessage.Commands.Modify.Target.SET, state)
+                config.sendMsg(JMessage.Commands.Modify.Target.SET, state)
             }
 
             "remove" -> {
                 state.target.remove(args.getOrNull(4))
 
-                config.dm(JMessage.Commands.Modify.Target.REMOVE, state)
+                config.sendMsg(JMessage.Commands.Modify.Target.REMOVE, state)
             }
 
             "remove_all" -> {
@@ -171,7 +173,7 @@ class ModifySubCommand(private val plugin: RedeemX) : JSubCommand {
             }
 
             else -> {
-                config.dm(JMessage.Commands.Modify.Target.UNKNOWN_METHOD, state)
+                config.sendMsg(JMessage.Commands.Modify.Target.UNKNOWN_METHOD, state)
                 return false
             }
         }

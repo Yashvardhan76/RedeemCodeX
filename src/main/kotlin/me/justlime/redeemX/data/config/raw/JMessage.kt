@@ -1,4 +1,4 @@
-package me.justlime.redeemX.config
+package me.justlime.redeemX.data.config.raw
 
 sealed interface JMessage {
 
@@ -68,7 +68,7 @@ sealed interface JMessage {
                 const val LIST = "$TARGET.list"
                 const val UNKNOWN_METHOD = "$TARGET.unknown-method"
             }
-            const val SET_PIN = "$MODIFY.set_pin"
+            const val PIN = "$MODIFY.set_pin"
         }
 
 

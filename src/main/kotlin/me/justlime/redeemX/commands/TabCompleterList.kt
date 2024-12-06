@@ -1,7 +1,7 @@
 package me.justlime.redeemX.commands
 
 import me.justlime.redeemX.RedeemX
-import me.justlime.redeemX.config.ConfigManager
+import me.justlime.redeemX.data.config.ConfigManager
 import org.bukkit.command.Command
 import org.bukkit.command.CommandSender
 import org.bukkit.command.TabCompleter
@@ -93,7 +93,7 @@ class TabCompleterList(val plugin: RedeemX) : TabCompleter {
             "duration" -> durationOptions
             "enabled" -> listOf("true", "false")
             "permission" -> permissionOptions
-            "set_pin" -> listOf("-1")
+            "pin" -> listOf("-1")
             "command" -> listOf("add", "set", "list", "preview")
             "target" -> if (args[0].equals("modify", ignoreCase = true)) listOf("add", "remove", "remove_all", "set",
                 "list") else emptyList()

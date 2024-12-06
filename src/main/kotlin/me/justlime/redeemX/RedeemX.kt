@@ -2,9 +2,9 @@ package me.justlime.redeemX
 
 import me.justlime.redeemX.bot.DiscordBot
 import me.justlime.redeemX.commands.CommandManager
-import me.justlime.redeemX.config.ConfigManager
-import me.justlime.redeemX.data.DatabaseManager
-import me.justlime.redeemX.data.dao.RedeemCodeDaoImpl
+import me.justlime.redeemX.data.config.ConfigManager
+import me.justlime.redeemX.data.local.DatabaseManager
+import me.justlime.redeemX.data.local.RedeemCodeDaoImpl
 import me.justlime.redeemX.state.StateManager
 import me.justlime.redeemX.utilities.RedeemCodeService
 import org.bukkit.plugin.java.JavaPlugin

@@ -6,6 +6,7 @@ import me.justlime.redeemX.utilities.StateMap
 import org.bukkit.command.CommandSender
 import java.util.concurrent.ConcurrentHashMap
 
+
 class StateManager(val plugin: RedeemX) : StateHandler {
 
     private val db = plugin.redeemCodeDB
@@ -32,14 +33,21 @@ class StateManager(val plugin: RedeemX) : StateHandler {
         }
     }
 
+    override fun getState(sender: CommandSender): RedeemCodeState {
+        return stateMap[sender] ?: createState(sender)
+    }
+
     /**
      * Updates a state for a given sender based on a RedeemCode.
      *
      * @param sender The command sender (Player or Console).
      */
-    override fun fetchState(sender: CommandSender, code: String): Boolean {
+    override fun fetchState(state: RedeemCodeState): Boolean {
+        val sender = state.sender
+        val code = state.inputCode
         val redeemCode = db.get(code) ?: return false
-        stateMap[sender]?.let { redeemCode.let { StateMap.toState(it, sender) } }
+        stateMap[sender] = StateMap.toState(redeemCode, sender)
+        StateMap.fetchState(state, redeemCode)
         return true
     }
 
@@ -65,9 +73,15 @@ class StateManager(val plugin: RedeemX) : StateHandler {
         stateMap.clear()
     }
 
+    override fun updateState(state: RedeemCodeState): Boolean {
+        val sender = state.sender
+        stateMap[sender] = state
+        return true
+    }
+
     override fun updateDb(sender: CommandSender): Boolean {
         val state = stateMap[sender] ?: return false
-        val redeemCode = state.let { StateMap.toModel(it) }
+        val redeemCode = StateMap.toModel(state)
         try {
             db.upsert(redeemCode)
 

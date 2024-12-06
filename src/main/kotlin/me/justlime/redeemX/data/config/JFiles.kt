@@ -1,6 +1,6 @@
-package me.justlime.redeemX.config
+package me.justlime.redeemX.data.config
 
-enum class Files(val filename: String) {
+enum class JFiles(val filename: String) {
     CONFIG("config.yml"),
     MESSAGES("messages.yml"),
     TEMPLATE("template.yml")

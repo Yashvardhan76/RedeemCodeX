@@ -1,4 +1,4 @@
-package me.justlime.redeemX.config
+package me.justlime.redeemX.data.config.raw
 
 sealed interface JPermission {
     data object Admin : JPermission {

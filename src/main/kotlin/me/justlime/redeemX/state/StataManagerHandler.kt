@@ -18,13 +18,16 @@ interface StateHandler {
      */
     fun createState(sender: CommandSender, code: String? = null): RedeemCodeState
 
+    fun getState(sender: CommandSender): RedeemCodeState
+
+
     /**
      * Updates the state for the sender with the provided redeem code data.
      *
      * @param sender The command sender associated with the state.
      * @param codeData The redeem code data to update the state with. Defaults to the current [redeemCode].
      */
-    fun fetchState(sender: CommandSender,code: String): Boolean
+    fun fetchState(state: RedeemCodeState): Boolean
 
     fun fetchStateByTemplate(sender: CommandSender,template: String): Boolean
     /**
@@ -39,6 +42,7 @@ interface StateHandler {
      */
     fun clearAllStates()
 
+    fun updateState(state: RedeemCodeState): Boolean
     /**
      * Updates the underlying database to reflect the current state.
      */

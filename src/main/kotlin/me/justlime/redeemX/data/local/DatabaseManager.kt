@@ -1,9 +1,8 @@
-package me.justlime.redeemX.data
+package me.justlime.redeemX.data.local
 
 import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource
 import me.justlime.redeemX.RedeemX
-import me.justlime.redeemX.data.dao.RedeemCodeDaoImpl
 import java.io.File
 import java.sql.Connection
 import java.sql.SQLException

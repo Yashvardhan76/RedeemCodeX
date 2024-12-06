@@ -1,6 +1,5 @@
-package me.justlime.redeemX.data.dao
+package me.justlime.redeemX.data.local
 
-import me.justlime.redeemX.data.DatabaseManager
 import me.justlime.redeemX.data.models.RedeemCode
 import me.justlime.redeemX.utilities.RedeemCodeService
 import java.sql.Connection
@@ -25,13 +24,13 @@ class RedeemCodeDaoImpl(private val dbManager: DatabaseManager) : RedeemCodeDao 
 
     private fun fetchCodes() {
         // Fetch all codes and map to their string values
-        getFetchCodes = getAllCodes().map { it.code }
+        getFetchCodes = getEntireCodes().map { it.code }
     }
 
     private fun fetchTargetList() {
         getTargetList = mutableMapOf()
 
-        getAllCodes().forEach { state ->
+        getEntireCodes().forEach { state ->
             // Safely handle nullable targets, trim them, and add to the map
             val targetList = state.target.filterNotNull() // Remove null values from the list
                 .map { it.trim() } // Trim each string
@@ -40,7 +39,6 @@ class RedeemCodeDaoImpl(private val dbManager: DatabaseManager) : RedeemCodeDao 
             getTargetList[state.code] = targetList
         }
     }
-
 
     override fun createTable() {
         dbManager.getConnection()?.use { conn: Connection ->
@@ -140,17 +138,17 @@ class RedeemCodeDaoImpl(private val dbManager: DatabaseManager) : RedeemCodeDao 
     }
 
     override fun getTemplate(template: String): RedeemCode? {
-        var templateRedeemCode: RedeemCode? = null
+        var redeemCode: RedeemCode? = null
         dbManager.getConnection()?.use { conn ->
-            conn.prepareStatement("SELECT * FROM redeem_codes WHERE template = ?").use { statement ->
+            conn.prepareStatement("SELECT * FROM redeem_codes WHERE template = ? LIMIT 1").use { statement ->
                 statement.setString(1, template)
                 val result = statement.executeQuery()
                 if (result.next()) {
-                    templateRedeemCode = RedeemCodeService(dbManager.plugin).mapResultSetToRedeemCode(result)
+                    redeemCode = RedeemCodeService(dbManager.plugin).mapResultSetToRedeemCode(result)
                 }
             }
         }
-        return templateRedeemCode
+        return redeemCode
     }
 
     override fun deleteByCode(code: String): Boolean {
@@ -165,7 +163,7 @@ class RedeemCodeDaoImpl(private val dbManager: DatabaseManager) : RedeemCodeDao 
     }
 
     @Suppress("SqlWithoutWhere")
-    override fun deleteAll(): Boolean {
+    override fun deleteEntireCodes(): Boolean {
         var isDeletedAll = false
         dbManager.getConnection()?.use { conn: Connection ->
             val sql = "delete from redeem_codes"
@@ -180,7 +178,7 @@ class RedeemCodeDaoImpl(private val dbManager: DatabaseManager) : RedeemCodeDao 
         return isDeletedAll
     }
 
-    override fun getAllCodes(): List<RedeemCode> {
+    override fun getEntireCodes(): List<RedeemCode> {
         val codes = mutableListOf<RedeemCode>()
         dbManager.getConnection()?.use { conn: Connection ->
             conn.prepareStatement("SELECT * FROM redeem_codes").use { statement: PreparedStatement ->

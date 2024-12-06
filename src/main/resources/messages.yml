@@ -96,7 +96,21 @@ commands:
     unknown-property: "&cUnknown property &e{property}&c. Please check the documentation."
     invalid-command: "&cInvalid command provided. Please provide a valid command."
     invalid-id: "&cInvalid ID provided. Please provide a valid ID."
-    list: "&aCommands List:\n{commands}"
+    list:
+      - "&a{code} Properties"
+      - "&aEnabled: &b{is_enabled}"
+      - "&aMax Redeems: &b{max_redeems}"
+      - "&aMax Players: &b{max_players}"
+      - "&aPermission: &b{permission}"
+      - "&aDuration: &b{duration}"
+      - "&aCommands: &b{commands}"
+      - "&aTarget: &b{target}"
+      - "&aPin: &b{pin}"
+      - "&aTemplate: &b{template}"
+      - "&aTemplate Locked: &b{templateLocked}"
+      - "&aCooldown: &b{cooldown}"
+
+
     invalid-set: "&cInvalid set command. Please provide a valid ID and command."
     unknown-method: "&cUnknown method. Please check the documentation."
     set_pin: "&aPin for code &e{code} &ahas been set to &e{pin}&a."
