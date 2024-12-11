@@ -36,7 +36,7 @@ data class RedeemCodeState(var sender: CommandSender,
                            var maxLength: Int = 10,
                            var template: String = "",
                            var isTemplateLocked: Boolean = false,
-                           var inputTemplate: String ="",
+                           var inputTemplate: String = "",
                            var storedCooldown: LocalDateTime? = null,
                            var cooldown: String? = null
 
@@ -89,6 +89,6 @@ data class RedeemCodeState(var sender: CommandSender,
             "cooldown" to (cooldown ?: ""),
             "template_locked" to if (isTemplateLocked) "Locked" else "Unlocked",
             "commands" to commands.map { (id, command) -> "\n[$id] $command" }.joinToString()
-)
+        )
     }
 }

@@ -128,6 +128,14 @@ class RedeemCodeService(val plugin: RedeemX) {
         return if (isAdding) existingSeconds + adjustmentSeconds else existingSeconds - adjustmentSeconds
     }
 
+    fun convertDurationToSeconds(duration: String): String {
+        val timeUnitToSeconds = mapOf("s" to 1L, "m" to 60L, "h" to 3600L, "d" to 86400L, "mo" to 2592000L, "y" to 31536000L)
+        val amount = duration.dropLast(1).toLongOrNull() ?: return "0s"
+        val unit = duration.takeLast(1)
+        return (amount * (timeUnitToSeconds[unit] ?: 1L)).toString() + "s"
+    }
+
+
     fun handleDurationModification(action: String, adjustmentDuration: String?, state: RedeemCodeState,config: ConfigManager) {
         val service = RedeemCodeService(plugin)
         val timeZoneId: ZoneId = ZoneId.of("Asia/Kolkata")

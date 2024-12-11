@@ -3,6 +3,7 @@ package me.justlime.redeemX.commands
 import me.justlime.redeemX.RedeemX
 import me.justlime.redeemX.commands.subcommands.DeleteSubCommand
 import me.justlime.redeemX.commands.subcommands.GenerateSubCommand
+import me.justlime.redeemX.commands.subcommands.GenerateTemplateSubCommand
 import me.justlime.redeemX.commands.subcommands.InfoSubCommand
 import me.justlime.redeemX.commands.subcommands.ModifySubCommand
 import me.justlime.redeemX.commands.subcommands.ReloadSubCommand
@@ -30,7 +31,10 @@ class RCXCommand(private val plugin: RedeemX) : CommandExecutor {
                 "gen" -> if (sender.hasPermission(JPermission.Admin.GEN)) GenerateSubCommand(plugin).execute(sender, args)
                 else config.sendMsg(JMessage.Commands.Gen.NO_PERMISSION, state)
 
-                "gen_template" -> {}
+                "gen_template" -> {
+                    if (sender.hasPermission(JPermission.Admin.GEN_TEMPLATE)) GenerateTemplateSubCommand(plugin).execute(state)
+                    else config.sendMsg(JMessage.Commands.Gen_Template.NO_PERMISSION, state)
+                }
 
                 "modify", "modify_template" -> if (sender.hasPermission(JPermission.Admin.MODIFY)) ModifySubCommand(plugin).execute(state)
                 else config.sendMsg(JMessage.Commands.Modify.NO_PERMISSION, state)

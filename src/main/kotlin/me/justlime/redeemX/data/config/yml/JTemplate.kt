@@ -1,11 +1,6 @@
 package me.justlime.redeemX.data.config.yml
 
 interface JTemplate {
-    data object Default : JTemplate{
-        const val NAME = "default"
-        const val COMMANDS = "$NAME.commands"
-
-    }
     companion object {
         const val COMMANDS = "commands"
         const val DURATION = "duration"

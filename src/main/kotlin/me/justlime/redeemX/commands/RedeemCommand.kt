@@ -3,6 +3,7 @@ package me.justlime.redeemX.commands
 import me.justlime.redeemX.RedeemX
 import me.justlime.redeemX.data.config.ConfigManager
 import me.justlime.redeemX.data.config.yml.JMessage
+import me.justlime.redeemX.state.RedeemCodeState
 import me.justlime.redeemX.utilities.RedeemCodeService
 import org.bukkit.command.Command
 import org.bukkit.command.CommandExecutor
@@ -17,7 +18,7 @@ class RedeemCommand(private val plugin: RedeemX) : CommandExecutor, TabCompleter
     private val service = RedeemCodeService(plugin)
 
     override fun onCommand(sender: CommandSender, command: Command, label: String, args: Array<out String>): Boolean {
-        var state = stateManager.getState(sender)
+        val state: RedeemCodeState = stateManager.getState(sender)
         if (sender !is Player) {
             config.sendMsg(JMessage.RESTRICTED_TO_PLAYERS, state)
             return true
@@ -26,6 +27,7 @@ class RedeemCommand(private val plugin: RedeemX) : CommandExecutor, TabCompleter
             config.sendMsg(JMessage.Redeemed.USAGE, state)
             return true
         }
+
 
         state.inputCode = args[0].uppercase()
         if (!stateManager.fetchState(state)) {
@@ -104,10 +106,6 @@ class RedeemCommand(private val plugin: RedeemX) : CommandExecutor, TabCompleter
         config.sendMsg(JMessage.Redeemed.SUCCESS, state)
         return true
     }
-
-
-
-
 
     override fun onTabComplete(sender: CommandSender, command: Command, label: String, args: Array<out String>
     ): List<String> {

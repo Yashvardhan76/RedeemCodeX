@@ -46,18 +46,10 @@ redeemed-message:
     chat: "&cInvalid pin. Please Try again"
     actionbar: "&cInvalid pin. Please Try again"
 
-
-
   # Message shown if the code has already been redeemed by the player
   already-redeemed:
     chat: "&cYou have already redeemed this code: &b{code}"
     actionbar: "&cYou have already used this code!"
-
-
-
-
-
-
 
   # Message for when a code has reached its maximum redemption limit
   max-player-redeemed:
@@ -72,8 +64,6 @@ redeemed-message:
 
 commands:
 
-
-
   gen:
     success: "&aGenerated new code: &e{code}&a."
     invalid-syntax: "&cUsage: /redeem gen <CUSTOM | SIZE | TEMPLATE> [Template-name]"
@@ -85,6 +75,16 @@ commands:
     code-already-exist: "The code '{code}' already exists. Please choose a unique code."
     failed: "&cFailed To Generate the code &7[Database Error&7]"
     error: "&cAn error occurred while generating the code {code}."
+  gen_template:
+    success: "&aGenerated new template: &e{template}&a."
+    invalid-syntax: "&cUsage: /redeem gen_template <template-name>"
+    no-permission: "&cYou do not have permission to generate templates."
+    code-already-exist: "The template '{template}' already exists. Please choose a unique template name."
+    failed: "&cFailed To Generate the template &7[Database Error&7]"
+    length-error: "Unable to generate a unique template {template}. Please try a different length or name."
+    invalid-range: "&cError: Invalid range for generating a template. Range must be between {min} and {max}."
+    missing-parameters: "&cError: Please specify all required parameters for template generation."
+    error: "&cAn error occurred while generating the template {template}."
 
   modify:
     success: "&aCode &e{code}&a has been modified successfully."

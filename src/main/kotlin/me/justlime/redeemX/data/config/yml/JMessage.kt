@@ -45,6 +45,20 @@ sealed interface JMessage {
             const val ERROR = "$GEN.error"
         }
 
+        data object Gen_Template: Commands(){
+            private const val GEN_TEMPLATE = "commands.gen_template"
+            const val SUCCESS = "$GEN_TEMPLATE.success"
+            const val INVALID_SYNTAX = "$GEN_TEMPLATE.invalid-syntax"
+            const val INVALID_OPTIONS = "$GEN_TEMPLATE.invalid-options"
+            const val INVALID_RANGE = "$GEN_TEMPLATE.invalid-range"
+            const val NO_PERMISSION = "$GEN_TEMPLATE.no-permission"
+            const val MISSING_PARAMETERS = "$GEN_TEMPLATE.missing-parameters"
+            const val LENGTH_ERROR = "$GEN_TEMPLATE.length-error"
+            const val CODE_ALREADY_EXIST = "$GEN_TEMPLATE.code-already-exist"
+            const val FAILED = "$GEN_TEMPLATE.failed"
+            const val ERROR = "$GEN_TEMPLATE.error"
+        }
+
         data object Modify : Commands() {
             private const val MODIFY = "commands.modify"
             const val SUCCESS = "$MODIFY.success"

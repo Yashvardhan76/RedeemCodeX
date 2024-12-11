@@ -26,6 +26,7 @@ class ConfigImpl(private val plugin: RedeemX, private val configManager: ConfigM
         return if (applyColor) service.applyColors(message) else message
     }
 
+    //TODO Implement the method which remove the colored tags like '&'
     override fun getMessage(message: String): String {
         return getString(path = message,configFile=JFiles.MESSAGES,applyColor = false) ?: return ""
     }
@@ -116,16 +117,14 @@ class ConfigImpl(private val plugin: RedeemX, private val configManager: ConfigM
         }
     }
 
-    override fun upsertConfig(configFile: JFiles, content: String): Boolean {
-        return try {
-            val file = File(plugin.dataFolder, configFile.filename)
-            val config = YamlConfiguration.loadConfiguration(file)
-            config.loadFromString(content)
-            config.save(file)
-            true
+    override fun upsertConfig(configFile: JFiles, path: String, value: String): Boolean {
+        try {
+            getConfig(configFile).set(path, value)
+            getConfig(configFile).save(File(plugin.dataFolder, configFile.filename))
+            return true
         } catch (e: Exception) {
-            plugin.logger.log(Level.SEVERE, "Could not upsert config: ${e.message}")
-            false
+            plugin.logger.log(Level.SEVERE, "Could not modify config: ${e.message}")
+            return false
         }
     }
 
