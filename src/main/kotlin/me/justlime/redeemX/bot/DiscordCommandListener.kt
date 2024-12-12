@@ -3,8 +3,9 @@ package me.justlime.redeemX.bot
 import me.justlime.redeemX.RedeemX
 import me.justlime.redeemX.commands.subcommands.GenerateSubCommand
 import me.justlime.redeemX.commands.subcommands.ModifySubCommand
-import me.justlime.redeemX.data.config.ConfigManager
-import me.justlime.redeemX.data.config.JFiles
+import me.justlime.redeemX.data.repository.ConfigRepository
+import me.justlime.redeemX.data.repository.RedeemCodeRepository
+import me.justlime.redeemX.models.CodePlaceHolder
 import net.dv8tion.jda.api.events.interaction.command.CommandAutoCompleteInteractionEvent
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent
 import net.dv8tion.jda.api.hooks.ListenerAdapter
@@ -14,32 +15,32 @@ import org.bukkit.Bukkit
 class DiscordCommandListener(val plugin: RedeemX) : ListenerAdapter() {
     private val generateSubCommand = GenerateSubCommand(plugin)
     private val sender = Bukkit.getConsoleSender()
-    private val db = plugin.redeemCodeDB
-    val config: ConfigManager = ConfigManager(plugin)
+    val config = ConfigRepository(plugin)
+    private val codeRepo = RedeemCodeRepository(plugin)
     override fun onSlashCommandInteraction(event: SlashCommandInteractionEvent) {
+        val placeHolder: CodePlaceHolder
         if (event.name == "generate") return handleGenerateCommand(event)
         if (event.name == "delete") {
             val code = event.getOption("code").toString()
-            val cachedCodes = db.getFetchCodes
+            val cachedCodes = codeRepo.getCachedCode()
             if (code.isEmpty() || code.isBlank() || cachedCodes.contains(code)) return
 
-
+            placeHolder = CodePlaceHolder.fetchByDB(plugin,code,sender)
             Bukkit.getScheduler().runTask(plugin, Runnable {
                 try {
-                    val delMessage = config.getString("commands.delete.success", JFiles.MESSAGES)?.replace("{code}", code) ?: ""
+                    val delMessage = config.getMessage("commands.delete.success",placeHolder)
                     event.reply("Deleting code...").setEphemeral(false).queue()
-                    val success = db.deleteByCode(code)
+                    val success = codeRepo.deleteCode(code)
 
-                    if (success) config.getString("commands.delete.success", JFiles.MESSAGES)?.let {
-                        event.reply(it).setEphemeral(false).queue() { _ ->
-                            db.deleteByCode(code)
+                    if (success) config.getMessage("commands.delete.success",placeHolder).let {
+                        event.reply(it).setEphemeral(false).queue { _ ->
                             event.hook.editOriginal(delMessage).queue()
                         }
                     }
-                    else config.getString("commands.delete.failed", JFiles.MESSAGES)?.let { event.reply(it) }
+                    else config.getMessage("commands.delete.failed",placeHolder).let { event.reply(it) }
 
                 } catch (_: Exception) {
-
+                    event.reply(config.getMessage("commands.delete.failed",placeHolder)).setEphemeral(true).queue()
                 }
             })
 
@@ -53,7 +54,11 @@ class DiscordCommandListener(val plugin: RedeemX) : ListenerAdapter() {
         val choices = when (event.name) {
             "generate" -> {
                 if (focusedOption.name == "template") {
-                    config.getTemplateNames().filter { it.isNotBlank() && it.startsWith(focusedOption.value, ignoreCase = true) }.map { Command.Choice(it, it) }
+                    config.getEntireTemplates()
+                        .asSequence() // Use sequence for efficiency with larger data sets.
+                        .filter { it.name.isNotBlank() && it.name.startsWith(focusedOption.value, ignoreCase = true) }
+                        .map { Command.Choice(it.name, it.name) }
+                        .toList() // Convert the sequence back to a list, if necessary.
                 } else {
                     emptyList() // Handle cases where the focused option is not "template"
                 }
@@ -61,7 +66,7 @@ class DiscordCommandListener(val plugin: RedeemX) : ListenerAdapter() {
 
             "delete" -> {
                 if (focusedOption.name == "code") {
-                    plugin.redeemCodeDB.getFetchCodes.filter { it.isNotBlank() && it.startsWith(focusedOption.value, ignoreCase = true) }.map { Command.Choice(it, it) }
+                    codeRepo.getCachedCode().filter { it.isNotBlank() && it.startsWith(focusedOption.value, ignoreCase = true) }.map { Command.Choice(it, it) }
 
                 } else {
                     emptyList()
@@ -71,12 +76,12 @@ class DiscordCommandListener(val plugin: RedeemX) : ListenerAdapter() {
             "modify" -> {
                 when (focusedOption.name) {
                     "code" -> {
-                        plugin.redeemCodeDB.getFetchCodes.filter { it.isNotBlank() && it.startsWith(focusedOption.value, ignoreCase = true) }.map { Command.Choice(it, it) }
+                        codeRepo.getCachedCode().filter { it.isNotBlank() && it.startsWith(focusedOption.value, ignoreCase = true) }.map { Command.Choice(it, it) }
                     }
 
                     "property" -> {
                         listOf(
-                            "enabled", "max_redeems", "max_player", "setDuration", "unsetDuration", "addDuration", "removeDuration", "permission", "pin", "addTarget","removeTarget", "addCommand", "removeCommand", "setCommand","list"
+                            "enabled", "max_redeems", "max_player", "setDuration", "unsetDuration", "addDuration", "removeDuration", "permission", "pin", "addTarget", "removeTarget", "addCommand", "removeCommand", "setCommand", "list"
 
                         ).filter { it.isNotBlank() && it.startsWith(focusedOption.value, ignoreCase = true) }.map { Command.Choice(it, it) }
                     }
@@ -97,12 +102,12 @@ class DiscordCommandListener(val plugin: RedeemX) : ListenerAdapter() {
 
     private fun handleGenerateCommand(event: SlashCommandInteractionEvent) {
         val template = event.getOption("template")
-        val length = event.getOption("length")?.asInt ?: config.getString("code-minimum-digit")?.toIntOrNull() ?: 5
+        val length = event.getOption("length")?.asInt ?: config.getConfigValue("code-minimum-digit").toIntOrNull() ?: 5
         val amount = event.getOption("amount")?.asInt ?: 1
 
         // Arguments to pass to GenerateSubCommand
-        var args = arrayOf("generate", length.toString(), amount.toString())
-        if (template != null) args = arrayOf("generate", "template", template.asString)
+        var args = mutableListOf("generate", length.toString(), amount.toString())
+        if (template != null) args = mutableListOf("generate", "template", template.asString)
 
         // Schedule task to execute on Bukkit's main thread
         Bukkit.getScheduler().runTask(plugin, Runnable {
@@ -111,7 +116,7 @@ class DiscordCommandListener(val plugin: RedeemX) : ListenerAdapter() {
                 event.reply("Generating codes...").setEphemeral(false).queue { _ ->
                     generateSubCommand.execute(sender, args)
 
-                    val generatedCodes = generateSubCommand.generatedSubCommand
+                    val generatedCodes = generateSubCommand.generatedCodesList
                     if (generatedCodes.isEmpty()) {
                         event.hook.editOriginal("No codes were generated. Please check your input.").queue()
                         return@queue
@@ -123,7 +128,7 @@ class DiscordCommandListener(val plugin: RedeemX) : ListenerAdapter() {
                     }
 
                     event.hook.editOriginal(response).queue()
-                    generateSubCommand.generatedSubCommand.clear()
+                    generateSubCommand.generatedCodesList.clear()
                 }
             } catch (e: Exception) {
                 event.reply("Failed to generate codes due to an error: ${e.message}").setEphemeral(true).queue()
@@ -148,8 +153,8 @@ class DiscordCommandListener(val plugin: RedeemX) : ListenerAdapter() {
         Bukkit.getScheduler().runTask(plugin, Runnable {
             try {
                 val args = mutableListOf("modify", code)
-                when (property) {
-                    "addtarget" -> {
+                when {
+                    property.equals("addTarget",ignoreCase = true)  -> {
                         val target = event.getOption("value")?.asString
                         if (target.isNullOrEmpty()) return@Runnable event.reply(invalidInputMsg).setEphemeral(true).queue()
                         args.add("target")
@@ -157,7 +162,7 @@ class DiscordCommandListener(val plugin: RedeemX) : ListenerAdapter() {
                         args.add(value)
                     }
 
-                    "removetarget" -> {
+                    property.equals("removeTarget",ignoreCase = true) -> {
                         val target = event.getOption("value")?.asString
                         if (target.isNullOrEmpty()) return@Runnable event.reply(invalidInputMsg).setEphemeral(true).queue()
                         args.add("target")
@@ -166,12 +171,12 @@ class DiscordCommandListener(val plugin: RedeemX) : ListenerAdapter() {
 
                     }
 
-                    "removealltarget" ->{
+                    property.equals("removeAllTarget",ignoreCase = true) -> {
                         args.add("target")
                         args.add("remove_all")
                     }
 
-                    "addcommand" -> {
+                    property.equals("addCommand",ignoreCase = true) -> {
                         val command = event.getOption("value")?.asString
                         if (command.isNullOrEmpty()) return@Runnable event.reply(invalidInputMsg).setEphemeral(true).queue()
                         args.add("command")
@@ -179,7 +184,7 @@ class DiscordCommandListener(val plugin: RedeemX) : ListenerAdapter() {
                         args.add(command)
                     }
 
-                    "removecommand" -> {
+                    property.equals("removeCommand",ignoreCase = true) -> {
                         val command = event.getOption("value")?.asString
                         if (command.isNullOrEmpty()) return@Runnable event.reply("Invalid input. Please provide all required parameters.").setEphemeral(true).queue()
                         args.add("command")
@@ -187,7 +192,7 @@ class DiscordCommandListener(val plugin: RedeemX) : ListenerAdapter() {
                         args.add(command)
                     }
 
-                    "setcommand" -> {
+                    property.equals("setCommand",ignoreCase = true) -> {
                         val command = event.getOption("value")?.asString
                         if (command.isNullOrEmpty()) return@Runnable event.reply("Invalid input. Please provide all required parameters.").setEphemeral(true).queue()
                         args.add("command")
@@ -195,19 +200,19 @@ class DiscordCommandListener(val plugin: RedeemX) : ListenerAdapter() {
                         args.add(command)
                     }
 
-                    "setduration" -> {
+                    property.equals("setDuration",ignoreCase = true) -> {
                         args.add("duration")
                         args.add("set")
                         args.add(value)
                     }
 
-                    "unsetduration" -> {
+                    property.equals("unsetDuration",ignoreCase = true) -> {
                         args.add("duration")
                         args.add("set")
                         args.add("0s")
                     }
 
-                    "addduration" -> {
+                    property.equals("addDuration",ignoreCase = true) -> {
                         val duration = event.getOption("value")?.asString
                         if (duration.isNullOrEmpty()) return@Runnable event.reply(invalidInputMsg).setEphemeral(true).queue()
                         args.add("duration")
@@ -215,7 +220,7 @@ class DiscordCommandListener(val plugin: RedeemX) : ListenerAdapter() {
                         args.add(duration)
                     }
 
-                    "removeduration" -> {
+                    property.equals("removeDuration",ignoreCase = true) -> {
                         val duration = event.getOption("value")?.asString
                         if (duration.isNullOrEmpty()) return@Runnable event.reply(invalidInputMsg).setEphemeral(true).queue()
                         args.add("duration")
@@ -230,9 +235,7 @@ class DiscordCommandListener(val plugin: RedeemX) : ListenerAdapter() {
                 //send msg args
                 plugin.logger.info("Discord Modify Command Args: $args")
 
-                val state = plugin.stateManager.createState(sender, code)
-                state.args = args
-                val success = ModifySubCommand(plugin).execute(state)
+                val success = ModifySubCommand(plugin).execute(sender, args)
 
                 if (success) {
                     event.reply("Code '${code}' modified successfully.").setEphemeral(false).queue()

@@ -8,7 +8,7 @@ default:
   code-expired-duration: "0s"
   enabled: true
   max_redeems: 1
-  max_player: 1
+  max_players_can_redeem: 1
   permission:
     required: false
     value: "redeemx.use.{code}"   #default Permission Template
@@ -31,8 +31,9 @@ cooldown: 3s
 
 renew:
   reset-expired: true
+  reset-delay: true #TODO
   clear-usage: true
-  clear-rewards: false
+  clear-rewards: false #TODO
   clear-commands: false
   remove-permission-required: false
 

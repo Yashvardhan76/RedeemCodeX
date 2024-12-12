@@ -1,6 +1,6 @@
 package me.justlime.redeemX.data.local
 
-import me.justlime.redeemX.data.models.RedeemCode
+import me.justlime.redeemX.models.RedeemCode
 import me.justlime.redeemX.utilities.RedeemCodeService
 import java.sql.Connection
 import java.sql.PreparedStatement
@@ -16,7 +16,11 @@ class RedeemCodeDaoImpl(private val dbManager: DatabaseManager) : RedeemCodeDao 
         return getTargetList[code] ?: mutableListOf()
     }
 
-    fun init() {
+    init {
+        fetch()
+    }
+
+    fun fetch() {
         fetchCodes()
         fetchTargetList()
         createTable()
@@ -34,7 +38,7 @@ class RedeemCodeDaoImpl(private val dbManager: DatabaseManager) : RedeemCodeDao 
             // Safely handle nullable targets, trim them, and add to the map
             val targetList = state.target.filterNotNull() // Remove null values from the list
                 .map { it.trim() } // Trim each string
-                .toMutableList() ?: mutableListOf() // Default to an empty list
+                .toMutableList() // Default to an empty list
 
             getTargetList[state.code] = targetList
         }
@@ -119,7 +123,7 @@ class RedeemCodeDaoImpl(private val dbManager: DatabaseManager) : RedeemCodeDao 
                 isSuccess = statement.executeUpdate() > 0
             }
         }
-        init()
+        fetch()
         return isSuccess
     }
 
@@ -135,6 +139,10 @@ class RedeemCodeDaoImpl(private val dbManager: DatabaseManager) : RedeemCodeDao 
             }
         }
         return redeemCode
+    }
+
+    override fun getCachedCodes(): List<String> {
+        return getFetchCodes
     }
 
     override fun getTemplate(template: String): RedeemCode? {

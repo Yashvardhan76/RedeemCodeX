@@ -2,57 +2,61 @@ package me.justlime.redeemX.commands.subcommands
 
 import me.justlime.redeemX.RedeemX
 import me.justlime.redeemX.data.config.yml.JMessage
-import me.justlime.redeemX.state.RedeemCodeState
+import me.justlime.redeemX.data.repository.ConfigRepository
+import me.justlime.redeemX.data.repository.RedeemCodeRepository
+import me.justlime.redeemX.models.CodePlaceHolder
+import org.bukkit.command.CommandSender
 
 class DeleteSubCommand(private val plugin: RedeemX) : JSubCommand {
-    private val config = plugin.configFile
-    private val stateManager = plugin.stateManager
+    private val config = ConfigRepository(plugin)
+    private val codeRepo = RedeemCodeRepository(plugin)
 
-    override fun execute(state: RedeemCodeState): Boolean {
-       val args = state.args
-
+    override fun execute(sender: CommandSender, args: MutableList<String>): Boolean {
+        val placeHolder = CodePlaceHolder(sender)
 
         if (args.size < 2 && args[0].equals("delete", ignoreCase = true)) {
-            config.sendMsg(JMessage.Commands.Delete.INVALID_SYNTAX, state)
+            config.sendMsg(JMessage.Commands.Delete.INVALID_SYNTAX, placeHolder)
             return false
         }
         if (args.size < 2 && args[0].equals("delete_all", ignoreCase = true)) {
-            config.sendMsg(JMessage.Commands.DeleteAll.INVALID_SYNTAX, state)
+            config.sendMsg(JMessage.Commands.DeleteAll.INVALID_SYNTAX, placeHolder)
             return false
         }
         when (args[0].lowercase()) {
             "delete" -> {
-                state.inputCode = args[1]
-                val redeemCode = plugin.redeemCodeDB.get(state.inputCode)
+                val code = args[1]
+                placeHolder.code = code
+                val redeemCode = codeRepo.getCode(code)
 
                 if (redeemCode == null) {
-                    config.sendMsg(JMessage.Commands.Delete.NOT_FOUND, state)
+                    config.sendMsg(JMessage.Commands.Delete.NOT_FOUND, placeHolder)
                     return false
                 }
-                val success = plugin.redeemCodeDB.deleteByCode(state.inputCode)
+                val success = codeRepo.deleteCode(code)
                 if (!success) {
-                    config.sendMsg(JMessage.Commands.Delete.FAILED, state)
+                    config.sendMsg(JMessage.Commands.Delete.FAILED, placeHolder)
                     return false
                 }
-                config.sendMsg(JMessage.Commands.Delete.SUCCESS, state)
+                config.sendMsg(JMessage.Commands.Delete.SUCCESS, placeHolder)
                 return true
             }
 
             "delete_all" -> {
+
                 if (args[1] != "CONFIRM") {
-                    config.sendMsg(JMessage.Commands.DeleteAll.CONFIRMATION, state)
+                    config.sendMsg(JMessage.Commands.DeleteAll.CONFIRMATION, placeHolder)
                     return false
                 }
-                val success = plugin.redeemCodeDB.deleteEntireCodes()
+                val success = codeRepo.deleteEntireCodes()
                 if (!success) {
-                    config.sendMsg(JMessage.Commands.DeleteAll.FAILED, state)
+                    config.sendMsg(JMessage.Commands.DeleteAll.FAILED, placeHolder)
                     return false
                 }
-                config.sendMsg(JMessage.Commands.DeleteAll.SUCCESS, state)
+                config.sendMsg(JMessage.Commands.DeleteAll.SUCCESS, placeHolder)
                 return true
             }
 
-            else -> config.sendMsg(JMessage.Commands.Delete.INVALID_SYNTAX, state)
+            else -> config.sendMsg(JMessage.Commands.UNKNOWN_COMMAND, placeHolder)
         }
         return false
     }

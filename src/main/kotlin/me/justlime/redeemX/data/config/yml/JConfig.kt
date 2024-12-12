@@ -6,8 +6,11 @@ sealed interface JConfig {
         const val CODE_EXPIRED_DURATION = "code-expired-duration"
         const val ENABLED = "enabled"
         const val MAX_REDEEMS = "max_redeems"
-        const val MAX_PLAYER = "max_player"
-        const val PERMISSION = "permission"
+        const val MAX_PLAYERS_CAN_REDEEM = "max_players_can_redeem"
+        data object PERMISSION : JConfig{
+            const val REQUIRED = "required"
+            const val VALUE = "value"
+        }
         const val PIN = "pin"
         const val COMMANDS = "commands"
     }
@@ -33,6 +36,7 @@ sealed interface JConfig {
 
     data object Renew : JConfig {
         const val RESET_EXPIRED = "reset-expired"
+        const val RESET_DELAY = "reset-delay"
         const val CLEAR_USAGE = "clear-usage"
         const val CLEAR_REWARDS = "clear-rewards"
         const val CLEAR_COMMANDS = "clear-commands"

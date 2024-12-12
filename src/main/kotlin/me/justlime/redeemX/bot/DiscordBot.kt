@@ -1,7 +1,7 @@
 package me.justlime.redeemX.bot
 
 import me.justlime.redeemX.RedeemX
-import me.justlime.redeemX.data.config.ConfigManager
+import me.justlime.redeemX.data.repository.ConfigRepository
 import net.dv8tion.jda.api.JDA
 import net.dv8tion.jda.api.JDABuilder
 import net.dv8tion.jda.api.interactions.commands.OptionType
@@ -9,8 +9,8 @@ import net.dv8tion.jda.api.interactions.commands.build.Commands
 
 class DiscordBot(val plugin: RedeemX) {
 
-    private val configManager = ConfigManager(plugin)
-    private val botToken = configManager.getString("bot.token")
+    private val config = ConfigRepository(plugin)
+    private val botToken = config.getConfigValue("bot.token")
     private var jda: JDA? = null
 
     fun startBot() {

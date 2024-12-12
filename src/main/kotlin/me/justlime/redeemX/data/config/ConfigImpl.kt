@@ -1,18 +1,22 @@
 package me.justlime.redeemX.data.config
 
 import me.justlime.redeemX.RedeemX
-import me.justlime.redeemX.data.models.RedeemTemplate
+import me.justlime.redeemX.data.config.yml.JMessage
+import me.justlime.redeemX.models.CodePlaceHolder
+import me.justlime.redeemX.models.RedeemTemplate
 import me.justlime.redeemX.utilities.RedeemCodeService
+import net.md_5.bungee.api.ChatMessageType
+import net.md_5.bungee.api.chat.TextComponent
 import org.bukkit.configuration.file.FileConfiguration
 import org.bukkit.configuration.file.YamlConfiguration
+import org.bukkit.entity.Player
 import java.io.File
 import java.util.logging.Level
 
-class ConfigImpl(private val plugin: RedeemX, private val configManager: ConfigManager): ConfigDao {
+class ConfigImpl(private val plugin: RedeemX) : ConfigDao {
     private val configFiles = mutableMapOf<JFiles, FileConfiguration>()
-    private val templateNames = mutableListOf<String>()
+    private val configManager = plugin.configManager
     private val service = RedeemCodeService(plugin)
-
 
     companion object {
         private const val DEFAULT_FADE_IN = 10
@@ -21,23 +25,59 @@ class ConfigImpl(private val plugin: RedeemX, private val configManager: ConfigM
     }
 
     override fun getString(path: String, configFile: JFiles, applyColor: Boolean): String? {
-        val fileConfig = getConfig(configFile)
+        val fileConfig = configManager.getConfig(configFile)
         val message = fileConfig.getString(path) ?: return null
         return if (applyColor) service.applyColors(message) else message
     }
 
-    //TODO Implement the method which remove the colored tags like '&'
-    override fun getMessage(message: String): String {
-        return getString(path = message,configFile=JFiles.MESSAGES,applyColor = false) ?: return ""
+    //TODO Implement the method which remove the 'HEX' color code from the message
+    override fun getMessage(message: String, placeholders: CodePlaceHolder): String {
+        //I have used formatted Message cause of redundant.
+        return service.removeColors(getFormattedMessage(message, placeholders))
     }
 
-    override fun getFormattedMessage(message: String, placeholders: Map<String, String>): String {
-        return configManager.getString(key = message,configFile=JFiles.MESSAGES,applyColor = true) ?: return ""
+    override fun getFormattedMessage(message: String, placeholders: CodePlaceHolder): String {
+        return service.applyPlaceholders(getString(message, JFiles.MESSAGES, true) ?: return "", placeholders)
+    }
+
+    override fun sendMsg(key: String, placeHolder: CodePlaceHolder) {
+
+        // Fetch different types of messagesa
+        var message = getFormattedMessage("$key.chat", placeHolder).removeSurrounding("[", "]")
+        if (message.isEmpty()) message = getFormattedMessage(key, placeHolder).removeSurrounding("[", "]")
+        val chatMessage: MutableList<String> = message.split(",").toMutableList()
+        val actionBarMessage = getFormattedMessage("$key.actionbar", placeHolder)
+        val titleMessage = getFormattedMessage("$key.title.main", placeHolder)
+        val subtitleMessage = getFormattedMessage("$key.title.sub", placeHolder)
+        val fadeIn = getFormattedMessage("$key.title.fadeIn", placeHolder).toIntOrNull() ?: DEFAULT_FADE_IN
+        val stay = getFormattedMessage("$key.title.stay", placeHolder).toIntOrNull() ?: DEFAULT_STAY
+        val fadeOut = getFormattedMessage("$key.title.fadeOut", placeHolder).toIntOrNull() ?: DEFAULT_FADE_OUT
+
+        // Send action bar message
+        actionBarMessage.let {
+            if (placeHolder.sender is Player && actionBarMessage.isNotEmpty()) {
+                placeHolder.sender.spigot().sendMessage(ChatMessageType.ACTION_BAR, TextComponent(it))
+            }
+        }
+
+        // Send title message
+        titleMessage.let {
+            if (placeHolder.sender is Player && it.isNotEmpty()) {
+                placeHolder.sender.sendTitle(it, subtitleMessage, fadeIn, stay, fadeOut)
+            }
+        }
+
+        // Send chat message
+        chatMessage.let {
+            if (chatMessage.isNotEmpty()) {
+                chatMessage.forEach { placeHolder.sender.sendMessage(it.trim()) }
+            }
+        }
     }
 
     override fun getTemplate(template: String): RedeemTemplate {
         val config = configManager.getConfig(JFiles.TEMPLATE)
-        val templateSection = config.getConfigurationSection(template) ?: throw Exception("Template not found")
+        val templateSection = config.getConfigurationSection(template) ?: throw Exception(JMessage.Commands.ModifyTemplate.NOT_FOUND)
         return RedeemTemplate(
             name = template,
             commands = templateSection.getString("commands") ?: "",
@@ -54,14 +94,14 @@ class ConfigImpl(private val plugin: RedeemX, private val configManager: ConfigM
     }
 
     override fun getEntireTemplates(): List<RedeemTemplate> {
-        val config = getConfig(JFiles.TEMPLATE)
+        val config = configManager.getConfig(JFiles.TEMPLATE)
         return config.getKeys(false).map { getTemplate(it) }
     }
 
     override fun upsertTemplate(template: RedeemTemplate): Boolean {
 
         try {
-            val config = getConfig(JFiles.TEMPLATE)
+            val config = configManager.getConfig(JFiles.TEMPLATE)
             config.createSection(template.name)
             val section = config.getConfigurationSection(template.name)
             section?.set("commands", template.commands)
@@ -77,28 +117,25 @@ class ConfigImpl(private val plugin: RedeemX, private val configManager: ConfigM
             config.save(File(plugin.dataFolder, JFiles.TEMPLATE.filename))
             return true
         } catch (e: Exception) {
-            plugin.logger.log(Level.SEVERE, "Could not modify template: ${e.message}")
             return false
         }
     }
 
     override fun deleteTemplate(name: String): Boolean {
         try {
-            val config = getConfig(JFiles.TEMPLATE)
+            val config = configManager.getConfig(JFiles.TEMPLATE)
             config.set(name, null)
             config.save(File(plugin.dataFolder, JFiles.TEMPLATE.filename))
             return true
         } catch (e: Exception) {
-            plugin.logger.log(Level.SEVERE, "Could not delete template: ${e.message}")
             return false
         }
     }
 
     override fun deleteEntireTemplates(): Boolean {
-        if((getConfig(JFiles.TEMPLATE).getKeys(false).isEmpty())) return true
-
+        val config = configManager.getConfig(JFiles.TEMPLATE)
+        if (config.getKeys(false).isEmpty()) return true
         try {
-            val config = getConfig(JFiles.TEMPLATE)
             config.getKeys(false).forEach { config.set(it, null) }
             config.save(File(plugin.dataFolder, JFiles.TEMPLATE.filename))
             return true
@@ -109,21 +146,13 @@ class ConfigImpl(private val plugin: RedeemX, private val configManager: ConfigM
 
     }
 
-    override fun getConfig(configFile: JFiles): FileConfiguration {
-        return configFiles.computeIfAbsent(configFile) {
-            val file = File(plugin.dataFolder, it.filename)
-            if (!file.exists()) plugin.saveResource(it.filename, false)
-            YamlConfiguration.loadConfiguration(file)
-        }
-    }
-
     override fun upsertConfig(configFile: JFiles, path: String, value: String): Boolean {
         try {
-            getConfig(configFile).set(path, value)
-            getConfig(configFile).save(File(plugin.dataFolder, configFile.filename))
+            val config = configManager.getConfig(configFile)
+            config.set(path, value)
+            config.save(File(plugin.dataFolder, configFile.filename))
             return true
         } catch (e: Exception) {
-            plugin.logger.log(Level.SEVERE, "Could not modify config: ${e.message}")
             return false
         }
     }
@@ -139,24 +168,17 @@ class ConfigImpl(private val plugin: RedeemX, private val configManager: ConfigM
     }
 
     override fun saveAllConfigs(): Boolean {
-        JFiles.entries.forEach { configFile ->
-            try {
-                val file = File(plugin.dataFolder, configFile.filename)
-                getConfig(configFile).save(file)
-                plugin.logger.log(Level.INFO, "${configFile.filename} saved successfully.")
-                return true
-            } catch (e: Exception) {
-                plugin.logger.log(Level.SEVERE, "Could not save ${configFile.filename}: ${e.message}")
-                return false
-            }
+        try {
+            JFiles.entries.forEach { configManager.saveConfig(it) }
+            return true
+        } catch (e: Exception) {
+            plugin.logger.log(Level.SEVERE, "Could not save configs: ${e.message}")
+            return false
         }
-        return false
     }
 
     override fun reloadAllConfigs(): Boolean {
-       return JFiles.entries.forEach{ reloadConfig(it)} == Unit
+        return JFiles.entries.forEach { reloadConfig(it) } == Unit
     }
-
-
 
 }

@@ -45,7 +45,7 @@ sealed interface JMessage {
             const val ERROR = "$GEN.error"
         }
 
-        data object Gen_Template: Commands(){
+        data object GenTemplate: Commands(){
             private const val GEN_TEMPLATE = "commands.gen_template"
             const val SUCCESS = "$GEN_TEMPLATE.success"
             const val INVALID_SYNTAX = "$GEN_TEMPLATE.invalid-syntax"
@@ -73,6 +73,8 @@ sealed interface JMessage {
             const val LIST = "$MODIFY.list"
             const val INVALID_SET = "$MODIFY.invalid-set"
             const val UNKNOWN_METHOD = "$MODIFY.unknown-method"
+            const val ENABLED = "$MODIFY.enabled"
+            const val EXPIRED_CODE = "$MODIFY.expired-code"
             object Target {
                 private const val TARGET = "commands.modify.target"
                 const val ADD = "$TARGET.add"
@@ -83,6 +85,39 @@ sealed interface JMessage {
                 const val UNKNOWN_METHOD = "$TARGET.unknown-method"
             }
             const val PIN = "$MODIFY.set_pin"
+            const val MAX_REDEEMS = "$MODIFY.max_redeems"
+            const val MAX_PLAYERS = "$MODIFY.max_players"
+            const val PERMISSION = "$MODIFY.permission"
+            const val TARGET = "$MODIFY.target"
+            const val COOLDOWN = "$MODIFY.cooldown"
+            const val TEMPLATE_LOCKED = "$MODIFY.template_locked"
+            const val DURATION = "$MODIFY.duration"
+        }
+
+        data object ModifyTemplate: Commands(){
+            private const val MODIFY_TEMPLATE = "commands.modify_template"
+            const val SUCCESS = "$MODIFY_TEMPLATE.success"
+            const val FAILED = "$MODIFY_TEMPLATE.failed"
+            const val INVALID_SYNTAX = "$MODIFY_TEMPLATE.invalid-syntax"
+            const val INVALID_VALUE = "$MODIFY_TEMPLATE.invalid-value"
+            const val NOT_FOUND = "$MODIFY_TEMPLATE.not-found"
+            const val NO_PERMISSION = "$MODIFY_TEMPLATE.no-permission"
+            const val UNKNOWN_PROPERTY = "$MODIFY_TEMPLATE.unknown-property"
+            const val INVALID_COMMAND = "$MODIFY_TEMPLATE.invalid-command"
+            const val INVALID_ID = "$MODIFY_TEMPLATE.invalid-id"
+            const val LIST = "$MODIFY_TEMPLATE.list"
+            const val INVALID_SET = "$MODIFY_TEMPLATE.invalid-set"
+            const val UNKNOWN_METHOD = "$MODIFY_TEMPLATE.unknown-method"
+            object Target {
+                private const val TARGET = "commands.modify_template.target"
+                const val ADD = "$TARGET.add"
+                const val SET = "$TARGET.set"
+                const val REMOVE = "$TARGET.remove"
+                const val REMOVE_ALL = "$TARGET.remove-all"
+                const val LIST = "$TARGET.list"
+                const val UNKNOWN_METHOD = "$TARGET.unknown-method"
+            }
+            const val PIN = "$MODIFY_TEMPLATE.set_pin"
         }
 
 
@@ -95,6 +130,13 @@ sealed interface JMessage {
             const val INVALID_SYNTAX = "$DELETE.invalid-syntax"
         }
 
+        data object DeleteTemplate : Commands() {
+            private const val DELETE_TEMPLATE = "commands.delete_template"
+            const val SUCCESS = "$DELETE_TEMPLATE.success"
+            const val FAILED = "$DELETE_TEMPLATE.failed"
+            const val NO_PERMISSION = "$DELETE_TEMPLATE.no-permission"
+            const val INVALID_SYNTAX = "$DELETE_TEMPLATE.invalid-syntax"
+        }
         data object DeleteAll : Commands() {
             private const val DELETE_ALL = "commands.delete_all"
             const val SUCCESS = "$DELETE_ALL.success"
@@ -104,15 +146,29 @@ sealed interface JMessage {
             const val CONFIRMATION = "$DELETE_ALL.confirmation"
         }
 
+        data object CommandList : Commands() {
+            private const val LIST = "commands.list"
+            const val HEADER = "$LIST.header"
+            const val NO_CODES = "$LIST.no-codes"
+            const val NO_PERMISSION = "$LIST.no-permission"
+            const val FOOTER = "$LIST.footer"
+        }
+
+        data object ListTemplate : Commands() {
+            private const val LIST_TEMPLATE = "commands.list_template"
+            const val HEADER = "$LIST_TEMPLATE.header"
+            const val NO_CODES = "$LIST_TEMPLATE.no-codes"
+            const val NO_PERMISSION = "$LIST_TEMPLATE.no-permission"
+            const val FOOTER = "$LIST_TEMPLATE.footer"
+        }
 
         data object Renew : Commands() {
             private const val RENEW = "commands.renew"
             const val SUCCESS = "$RENEW.success"
             const val INVALID_SYNTAX = "$RENEW.invalid-syntax"
             const val NOT_FOUND = "$RENEW.not-found"
-            const val EXPIRED_CODE = "$RENEW.expired-code"
             const val NO_PERMISSION = "$RENEW.no-permission"
-
+            const val FAILED = "$RENEW.failed"
         }
 
         data object Info : Commands() {
@@ -150,14 +206,5 @@ sealed interface JMessage {
         }
     }
 }
-
-
-//fun sample(){
-//    Messages.Commands.Gen.SUCCESS
-//    Messages.Commands.Modify.SUCCESS
-//
-//}
-//I am not mad i just used chat gpt
-//But then also took 30m oof
 
 

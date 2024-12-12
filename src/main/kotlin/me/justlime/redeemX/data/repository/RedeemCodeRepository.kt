@@ -2,7 +2,7 @@ package me.justlime.redeemX.data.repository
 
 import me.justlime.redeemX.RedeemX
 import me.justlime.redeemX.data.local.RedeemCodeDao
-import me.justlime.redeemX.data.models.RedeemCode
+import me.justlime.redeemX.models.RedeemCode
 import me.justlime.redeemX.utilities.RedeemCodeService
 
 /**
@@ -12,8 +12,13 @@ class RedeemCodeRepository(private val plugin: RedeemX){
     private val redeemCodeDao: RedeemCodeDao = plugin.redeemCodeDB
     private val service = RedeemCodeService(plugin)
 
-    fun getCode(code: String): RedeemCode {
-        return redeemCodeDao.get(code) ?: throw Exception("Code not found")
+    fun getCode(code: String): RedeemCode? {
+        return redeemCodeDao.get(code)
+    }
+
+    /**Used this for getting list of cached Code use full for listing**/
+    fun getCachedCode(): List<String> {
+        return redeemCodeDao.getCachedCodes()
     }
 
     fun getCodesByTemplate(template: String): List<RedeemCode> {

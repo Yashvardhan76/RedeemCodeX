@@ -1,194 +1,51 @@
 package me.justlime.redeemX.commands.subcommands
 
 import me.justlime.redeemX.RedeemX
-import me.justlime.redeemX.data.config.ConfigManager
-import me.justlime.redeemX.data.config.JFiles
-import me.justlime.redeemX.state.RedeemCodeState
-import me.justlime.redeemX.state.StateManager
+import me.justlime.redeemX.data.config.yml.JConfig
+import me.justlime.redeemX.data.config.yml.JTemplate
+import me.justlime.redeemX.data.repository.ConfigRepository
+import me.justlime.redeemX.data.repository.RedeemCodeRepository
+import me.justlime.redeemX.models.CodePlaceHolder
+import me.justlime.redeemX.models.RedeemCode
 import org.bukkit.command.CommandSender
 
-class GenerateSubCommand(private val plugin: RedeemX) {
-    private val config: ConfigManager = plugin.configFile
-    private val stateManager: StateManager = plugin.stateManager
+class GenerateSubCommand(private val plugin: RedeemX) : JSubCommand {
     private val service = plugin.service
-    var generatedSubCommand = mutableListOf<String>()
+    private val config = ConfigRepository(plugin)
+    private val codeRepo = RedeemCodeRepository(plugin)
+    var generatedCodesList = mutableListOf<String>()
 
-
-    fun execute(sender: CommandSender, args: Array<out String>) {
-        val state = stateManager.createState(sender).apply { this.args = args.toMutableList() }
-
+    override fun execute(sender: CommandSender, args: MutableList<String>): Boolean {
+        val placeHolder = CodePlaceHolder(sender, args)
         // Validate minimum arguments
-        if (state.args.size < 2) {
-            config.sendMsg("commands.gen.invalid-syntax", state)
-            return
+
+        if (args.size < 3) {
+            config.sendMsg("commands.gen.invalid-syntax", placeHolder)
+            return false
         }
 
-        state.inputTemplate = args[1]
-        val cached = state.inputTemplate
+        val codeOrTemplate = args[1]
         var amount = 1
+        if (args.size > 3 && args[1].equals("template", ignoreCase = true)) {
+            amount = args[3].toIntOrNull() ?: 1
+        }
+
         if (args.size > 2 && !args[1].equals("template", ignoreCase = true)) {
+            placeHolder.code = args[2]
             amount = args[2].toIntOrNull() ?: 1
         }
 
-        if (args.size > 3 && args[1].equals("template", ignoreCase = true)) {
-            amount = args[3].toIntOrNull() ?: 1
 
-        }
         while (amount > 0) {
             when {
-                state.inputTemplate.equals("template", ignoreCase = true) -> handleTemplateGeneration(state)
-                state.inputTemplate.toIntOrNull() != null -> handleNumericGeneration(state)
-                state.inputTemplate.matches(Regex("^[A-Z0-9]{3,10}$", RegexOption.IGNORE_CASE)) -> handleCustomCode(state)
-                else -> config.sendMsg("commands.gen.invalid-code", state)
+                codeOrTemplate.equals("template", ignoreCase = true) -> handleTemplateGeneration(args, placeHolder)
+                codeOrTemplate.toIntOrNull() != null -> handleNumericGeneration(args, placeHolder)
+                codeOrTemplate.matches(Regex("^[A-Z0-9]{3,10}$", RegexOption.IGNORE_CASE)) -> createUniqueCode(args[1], placeHolder)
+                else -> config.sendMsg("commands.gen.invalid-code", placeHolder)
             }
-            state.inputTemplate = cached
             amount--
-
         }
-
-        stateManager.clearState(state.sender)
-
-    }
-
-    private fun handleTemplateGeneration(state: RedeemCodeState) {
-        val templateName = state.args.getOrNull(2)?.lowercase() ?: run {
-            config.sendMsg("commands.gen.invalid-syntax", state)
-            return
-        }
-
-        state.template = templateName
-        val templateConfigPath = state.template
-
-        // Fetch template data
-        val tCommands =
-            config.getString("$templateConfigPath.commands", JFiles.TEMPLATE)?.removePrefix("[")?.removeSuffix("]")
-        val tDuration = service.adjustDuration(
-            "0s",
-            config.getString("$templateConfigPath.code-expired-duration", JFiles.TEMPLATE).orEmpty(),
-            isAdding = true
-        )
-        val tPermissionRequired = config.getString("$templateConfigPath.permission.required", JFiles.TEMPLATE)
-            ?.equals("true", ignoreCase = true) ?: false
-
-        state.minLength = config.getString("code-minimum-digit")?.toIntOrNull() ?: 3
-        state.maxLength = config.getString("code-maximum-digit")?.toIntOrNull() ?: 10
-        state.inputTemplate = config.getString("$templateConfigPath.code-generate-digit", JFiles.TEMPLATE) ?: "5"
-
-        val codeLength = state.inputTemplate.toIntOrNull() ?: run {
-            config.sendMsg("commands.gen.invalid-range", state)
-            return
-        }
-
-        if (codeLength !in state.minLength..state.maxLength) {
-            config.sendMsg("commands.gen.invalid-range", state)
-            return
-        }
-
-        generateUniqueCode(codeLength) { uniqueCode ->
-            if (uniqueCode == null) {
-                config.sendMsg("commands.gen.length-error", state)
-                return@generateUniqueCode
-            }
-            state.inputTemplate = uniqueCode
-
-            state.apply {
-                this.inputCode = this.inputTemplate
-                this.code = this.inputTemplate
-                this.template = templateName
-                this.commands = service.parseToMapId(service.parseToId(tCommands))
-                this.duration = "${tDuration}s"
-                this.storedTime = if (tDuration > 1) service.currentTime else null
-                this.isEnabled =
-                    config.getString("$templateConfigPath.enabled", JFiles.TEMPLATE)?.equals("true", ignoreCase = true)
-                        ?: false
-                this.maxRedeems =
-                    config.getString("$templateConfigPath.max_redeems", JFiles.TEMPLATE)?.toIntOrNull() ?: 1
-                this.maxPlayers = config.getString("$templateConfigPath.max_player", JFiles.TEMPLATE)?.toIntOrNull() ?: 1
-                this.permission = if (tPermissionRequired) {
-                    config.getString("$templateConfigPath.permission.value", JFiles.TEMPLATE)
-                        ?.replace("{code}", this.inputTemplate)
-                } else null
-                this.pin = config.getString("$templateConfigPath.pin", JFiles.TEMPLATE)?.toIntOrNull() ?: -1
-            }
-
-            createRedeemCode(state)
-        }
-    }
-
-    private fun handleNumericGeneration(state: RedeemCodeState) {
-        val codeLength = state.inputTemplate.toIntOrNull() ?: return
-
-        val minLength = config.getString("code-minimum-digit")?.toIntOrNull() ?: 3
-        val maxLength = config.getString("code-maximum-digit")?.toIntOrNull() ?: 10
-
-        if (codeLength !in minLength..maxLength) {
-            config.sendMsg("commands.gen.invalid-range", state)
-            return
-        }
-
-        generateUniqueCode(codeLength) { uniqueCode ->
-            if (uniqueCode == null) {
-                config.sendMsg("commands.gen.length-error", state)
-                return@generateUniqueCode
-            }
-            state.inputTemplate = uniqueCode
-            createRedeemCode(state)
-        }
-    }
-
-    private fun handleCustomCode(state: RedeemCodeState) {
-        if (stateManager.fetchState(state)) {
-            config.sendMsg("commands.gen.code-already-exist", state)
-            return
-        }
-        createRedeemCode(state)
-    }
-
-    private fun createRedeemCode(state: RedeemCodeState) {
-        if (!state.args[1].equals("template", ignoreCase = true)) {
-            // Retrieve defaults from the configuration
-            val commands = config.getString("default.commands")?.removePrefix("[")?.removeSuffix("]")
-            val defaultDuration = config.getString("default.code-expired-duration") ?: "0s"
-            val defaultEnabled = config.getString("default.enabled")?.toBooleanStrictOrNull() ?: true
-            val defaultMaxRedeems = config.getString("default.max_redeems")?.toIntOrNull() ?: 1
-            val defaultMaxPlayers = config.getString("default.max_player")?.toIntOrNull() ?: 1
-            val defaultPin = config.getString("default.pin")?.toIntOrNull() ?: -1
-            val permissionRequired = config.getString("default.permission.required")?.toBooleanStrictOrNull() ?: false
-            val defaultPermissionValue = config.getString("default.permission.value") ?: "redeemx.use.{code}"
-
-            // Populate state with default values
-
-            state.apply {
-                this.inputCode = this.inputTemplate
-                this.commands = service.parseToMapId(service.parseToId(commands))
-                this.duration = "${service.adjustDuration("0s", defaultDuration, true)}s"
-                this.storedTime = if (defaultDuration != "0s") service.currentTime else null
-                this.isEnabled = defaultEnabled
-                this.maxRedeems = defaultMaxRedeems
-                this.maxPlayers = defaultMaxPlayers
-                this.permission = if (permissionRequired) {
-                    defaultPermissionValue.replace("{code}", inputTemplate)
-                } else null
-                this.pin = defaultPin
-            }
-        }
-
-        try {
-            // Insert the redeem code into the database
-            state.code = state.inputTemplate
-            state.inputCode = state.inputTemplate
-            val success = stateManager.updateDb(state.sender)
-            if (!success) {
-                config.sendMsg("commands.gen.failed", state)
-                return
-            }
-            config.sendMsg("commands.gen.success", state)
-            generatedSubCommand.add(state.inputTemplate)
-
-        } catch (e: Exception) {
-            config.sendMsg("commands.gen.error", state)
-            e.printStackTrace()
-        }
+        return true
     }
 
     private fun generateUniqueCode(length: Int, maxAttempts: Int = 1024, callback: (String?) -> Unit) {
@@ -202,4 +59,139 @@ class GenerateSubCommand(private val plugin: RedeemX) {
         }
         callback(null) // Failed to generate unique code within maxAttempts
     }
+
+    private fun handleTemplateGeneration(args: MutableList<String>, placeHolder: CodePlaceHolder) {
+        if (args.size < 3) {
+            config.sendMsg("commands.gen.invalid-syntax", placeHolder)
+            return
+        }
+
+        val template = args[2].lowercase()
+
+        placeHolder.template = template
+
+        // Fetch template data
+        val tCommands = config.getTemplateValue(template, JTemplate.COMMANDS)
+        val tDuration = config.getTemplateValue(template, JTemplate.DURATION)
+        val tPermissionRequired = config.getTemplateValue(template, JTemplate.PERMISSION_REQUIRED).equals("true", ignoreCase = true)
+        val tPermissionValue = config.getTemplateValue(template, JTemplate.PERMISSION_VALUE)
+
+        val minLength = config.getConfigValue("code-minimum-digit").toIntOrNull() ?: 3
+        val maxLength = config.getConfigValue("code-maximum-digit").toIntOrNull() ?: 10
+        val codeGenerateDigit = config.getTemplateValue(template, JTemplate.CODE_GENERATE_DIGIT).toIntOrNull() ?: 5
+        placeHolder.apply {
+            this.template = template
+            this.minLength = minLength.toString()
+            this.maxLength = maxLength.toString()
+            this.codeGenerateDigit = codeGenerateDigit.toString()
+        }
+
+        if (codeGenerateDigit !in minLength..maxLength) {
+            config.sendMsg("commands.gen.invalid-range", placeHolder)
+            return
+        }
+
+        generateUniqueCode(codeGenerateDigit) { uniqueCode ->
+            if (uniqueCode == null) {
+                config.sendMsg("commands.gen.length-error", placeHolder)
+                return@generateUniqueCode
+            }
+            val redeemCode = RedeemCode(
+                code = uniqueCode,
+                commands = service.parseToMapId(service.parseToId(tCommands)),
+                storedTime = if (tDuration != "0s" && tDuration.isNotEmpty() && tDuration != "null" && tDuration.isNotBlank()) service.currentTime else null,
+                duration = tDuration,
+                isEnabled = config.getTemplateValue(template, JTemplate.ENABLED).toBooleanStrictOrNull() ?: true,
+                maxRedeems = config.getTemplateValue(template, JTemplate.MAX_REDEEMS).toIntOrNull() ?: 1,
+                maxPlayers = config.getTemplateValue(template, JTemplate.MAX_PLAYERS).toIntOrNull() ?: 1,
+                permission = if (tPermissionRequired) {
+                    tPermissionValue.replace("{code}", uniqueCode)
+                } else null,
+                pin = config.getTemplateValue(template, JTemplate.PIN).toIntOrNull() ?: -1,
+                template = template,
+                templateLocked = true,
+                usage = mutableMapOf(),
+                target = mutableListOf(),
+                storedCooldown = null, //TODO
+                cooldown = "0s",
+            )
+
+            try {
+                val success = codeRepo.upsertCode(redeemCode)
+                if (!success) {
+                    config.sendMsg("commands.gen.failed", placeHolder)
+                    return@generateUniqueCode
+                }
+                config.sendMsg("commands.gen.success", placeHolder)
+                generatedCodesList.add(uniqueCode)
+
+            } catch (e: Exception) {
+                config.sendMsg("commands.gen.error", placeHolder)
+                e.printStackTrace()
+            }
+
+        }
+    }
+
+    private fun handleNumericGeneration(args: MutableList<String>, placeHolder: CodePlaceHolder) {
+        val codeGenerateDigit = args[1].toIntOrNull() ?: return
+
+        val minLength = config.getConfigValue("code-minimum-digit").toIntOrNull() ?: 3
+        val maxLength = config.getConfigValue("code-maximum-digit").toIntOrNull() ?: 10
+        placeHolder.codeGenerateDigit = codeGenerateDigit.toString()
+        if (codeGenerateDigit !in minLength..maxLength) {
+            config.sendMsg("commands.gen.invalid-range", placeHolder)
+            return
+        }
+
+        generateUniqueCode(codeGenerateDigit) { uniqueCode ->
+            if (uniqueCode == null) {
+                config.sendMsg("commands.gen.length-error", placeHolder)
+                return@generateUniqueCode
+            }
+            createUniqueCode(uniqueCode, placeHolder)
+            generatedCodesList.add(uniqueCode)
+        }
+    }
+
+    private fun createUniqueCode(uniqueCode: String, placeHolder: CodePlaceHolder) {
+        placeHolder.code = uniqueCode
+        if (codeRepo.getCode(uniqueCode) != null) {
+            config.sendMsg("commands.gen.code-already-exist", placeHolder)
+            return
+        }
+        val redeemCode = RedeemCode(
+            code = uniqueCode,
+            commands = service.parseToMapId(service.parseToId(config.getConfigValue(JConfig.Default.COMMANDS))),
+            storedTime = if (config.getConfigValue(JConfig.Default.CODE_EXPIRED_DURATION) != "0s") service.currentTime else null,
+            duration = config.getConfigValue(JConfig.Default.CODE_EXPIRED_DURATION),
+            isEnabled = config.getConfigValue(JConfig.Default.ENABLED).toBooleanStrictOrNull() ?: true,
+            maxRedeems = config.getConfigValue(JConfig.Default.MAX_REDEEMS).toIntOrNull() ?: 1,
+            maxPlayers = config.getConfigValue(JConfig.Default.MAX_PLAYERS_CAN_REDEEM).toIntOrNull() ?: 1,
+            permission = if (config.getConfigValue(JConfig.Default.PERMISSION.REQUIRED).equals("true", ignoreCase = true)) config.getConfigValue(JConfig.Default.PERMISSION.VALUE) else null,
+            pin = config.getConfigValue("default.pin").toIntOrNull() ?: 0,
+            template = "",
+            templateLocked = false,
+            usage = mutableMapOf(),
+            target = mutableListOf(),
+            storedCooldown = null, //TODO
+            cooldown = config.getConfigValue("cooldown")
+        )
+
+        try {
+            val success = codeRepo.upsertCode(redeemCode)
+            if (!success) {
+                config.sendMsg("commands.gen.failed", placeHolder)
+                return
+            }
+            config.sendMsg("commands.gen.success", placeHolder)
+            generatedCodesList.add(uniqueCode)
+
+        } catch (e: Exception) {
+            config.sendMsg("commands.gen.error", placeHolder)
+            e.printStackTrace()
+        }
+
+    }
+
 }

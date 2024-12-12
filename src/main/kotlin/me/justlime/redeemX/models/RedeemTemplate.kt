@@ -1,4 +1,4 @@
-package me.justlime.redeemX.data.models
+package me.justlime.redeemX.models
 
 data class RedeemTemplate(
     val name: String,

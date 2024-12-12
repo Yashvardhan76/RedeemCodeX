@@ -1,132 +1,189 @@
 package me.justlime.redeemX.commands.subcommands
 
 import me.justlime.redeemX.RedeemX
-import me.justlime.redeemX.data.config.ConfigManager
 import me.justlime.redeemX.data.config.yml.JMessage
-import me.justlime.redeemX.state.RedeemCodeState
-import me.justlime.redeemX.state.StateManager
+import me.justlime.redeemX.data.repository.ConfigRepository
+import me.justlime.redeemX.data.repository.RedeemCodeRepository
+import me.justlime.redeemX.models.CodePlaceHolder
+import me.justlime.redeemX.models.RedeemCode
 import me.justlime.redeemX.utilities.RedeemCodeService
+import org.bukkit.command.CommandSender
 
 class ModifySubCommand(private val plugin: RedeemX) : JSubCommand {
-    private val config: ConfigManager = plugin.configFile
-    private val stateManager: StateManager = plugin.stateManager
     private val service: RedeemCodeService = plugin.service
+    private val config = ConfigRepository(plugin)
+    private val codeRepo = RedeemCodeRepository(plugin)
     private val db = plugin.redeemCodeDB
 
-    override fun execute(state: RedeemCodeState): Boolean{
-        val sender = state.sender
-        val args = state.args
-        if (args.size < 3) return config.sendMsg(JMessage.Commands.Modify.INVALID_SYNTAX, state) != Unit
+    override fun execute(sender: CommandSender, args: MutableList<String>): Boolean {
+        if (args.size < 3) return config.sendMsg(JMessage.Commands.Modify.INVALID_SYNTAX, CodePlaceHolder(sender,args)) != Unit
+        val redeemCode = codeRepo.getCode(args[1])
+        val placeHolder = CodePlaceHolder.fetchByDB(plugin,args[1],sender)
 
-
-        state.inputCode = args[1]
-        state.inputTemplate = args[1]
-        if (!stateManager.fetchState(state)) {
-            config.sendMsg(JMessage.Commands.Modify.NOT_FOUND, state)
+        if (redeemCode == null) {
+            config.sendMsg(JMessage.Commands.Modify.NOT_FOUND, placeHolder)
             return false
         }
-        state.template = state.inputTemplate
-        state.property = args[2].lowercase()
-        when (state.property) {
+        val property = args[2].lowercase()
+        when (property) {
             "list" -> {
-                config.sendMsg(JMessage.Commands.Modify.LIST, state)
+                //TODO Remove Usages From Modify and Shift to usage subcommand
+                placeHolder.property = property
+                config.sendMsg(JMessage.Commands.Modify.LIST, placeHolder)
                 return true
             }
 
             "info" -> {
-                val codeInfo = db.get(state.code)?.toString() ?: return config.sendMsg(JMessage.Commands.Modify.NOT_FOUND, state) != Unit
+                val codeInfo = redeemCode.toString()
                 sender.sendMessage(codeInfo)
                 return true
             }
 
             "enabled" -> {
-                state.isEnabled = !state.isEnabled
-                return true
+                redeemCode.isEnabled = !redeemCode.isEnabled
+                config.sendMsg(JMessage.Commands.Modify.ENABLED, placeHolder)
+                val success = codeRepo.upsertCode(redeemCode)
+                if (success) {
+                    config.sendMsg(JMessage.Commands.Modify.SUCCESS, placeHolder)
+                    return true
+                } else {
+                    config.sendMsg(JMessage.Commands.Modify.FAILED, placeHolder)
+                    return false
+                }
             }
         }
 
-        if (args.size < 4) return config.sendMsg(JMessage.Commands.Modify.INVALID_SYNTAX, state) != Unit
+        if (args.size < 4) return config.sendMsg(JMessage.Commands.Modify.INVALID_SYNTAX, placeHolder) != Unit
+        val value = args[3]
+        when (property) {
+            "command" -> handleCommandModification(sender, args, redeemCode, placeHolder)
 
+            "duration" -> handleDurationModification(sender, args, redeemCode,placeHolder)
 
-        state.value = args[3]
-        when (state.property) {
-            "command" -> handleCommandModification(args, state)
-
-            "duration" -> service.handleDurationModification(state.value, args.getOrNull(4), state, config)
-
-            "max_redeems" -> state.maxRedeems = state.value.toIntOrNull() ?: return config.sendMsg(JMessage.Commands.Modify.INVALID_VALUE, state) != Unit
-
-            "max_player" -> state.maxPlayers = state.value.toIntOrNull() ?: return config.sendMsg(JMessage.Commands.Modify.INVALID_VALUE, state) != Unit
-
-            "permission" -> state.permission = if (state.value.equals("true", ignoreCase = true)) config.getString("modify.permission")?.replace("{code}", state.code)
-            else if (!state.value.equals("false", ignoreCase = true)) state.value else null
-
-            "pin" -> {
-                state.pin = state.value.toIntOrNull() ?: return config.sendMsg(JMessage.Commands.Modify.INVALID_VALUE, state) != Unit
-                config.sendMsg(JMessage.Commands.Modify.PIN, state)
+            "max_redeems" -> {
+                placeHolder.maxRedeemsPerPlayer = value
+                redeemCode.maxRedeems = value.toIntOrNull() ?: 0
+                if (redeemCode.maxRedeems < 1) return config.sendMsg(JMessage.Commands.Modify.INVALID_VALUE, placeHolder) != Unit
+                config.sendMsg(JMessage.Commands.Modify.MAX_REDEEMS, placeHolder)
             }
 
-            "target" -> if (!handleTargetModification(args, state)) return false
+            "max_player" -> {
+                placeHolder.maxPlayersCanRedeem= value
+                redeemCode.maxPlayers = value.toIntOrNull() ?: 0
+                if (redeemCode.maxPlayers < 1) return config.sendMsg(JMessage.Commands.Modify.INVALID_VALUE, placeHolder) != Unit
+                config.sendMsg(JMessage.Commands.Modify.MAX_PLAYERS, placeHolder)
+            }
+
+            "permission" -> {
+                placeHolder.permission = value
+                redeemCode.permission = if (value.equals("true", ignoreCase = true)) config.getConfigValue("modify.permission").replace("{code}", redeemCode.code)
+                else if (!value.equals("false", ignoreCase = true)) value else null
+                config.sendMsg(JMessage.Commands.Modify.PERMISSION, placeHolder)
+            }
+
+            "set_pin" -> {
+                placeHolder.pin = value
+                redeemCode.pin = value.toIntOrNull() ?: 0
+                if (redeemCode.pin < 1) return config.sendMsg(JMessage.Commands.Modify.INVALID_VALUE, placeHolder) != Unit
+                config.sendMsg(JMessage.Commands.Modify.PIN, placeHolder)
+            }
+
+            "target" -> if (!handleTargetModification(sender,args,redeemCode,placeHolder)) return false
 
             else -> {
-                config.sendMsg(JMessage.Commands.Modify.UNKNOWN_PROPERTY, state)
+                config.sendMsg(JMessage.Commands.Modify.UNKNOWN_PROPERTY, placeHolder)
                 return false
             }
 
         }
-        state.sender.sendMessage(state.pin.toString())
-
-        stateManager.updateState(state)
-
-
         // Save updated redeem code
-        val success = stateManager.updateDb(sender)
+        val success = codeRepo.upsertCode(redeemCode)
         if (success) {
-            config.sendMsg(JMessage.Commands.Modify.SUCCESS, state)
+            config.sendMsg(JMessage.Commands.Modify.SUCCESS, placeHolder)
             return true
         } else {
-            config.sendMsg(JMessage.Commands.Modify.FAILED, state)
+            config.sendMsg(JMessage.Commands.Modify.FAILED, placeHolder)
             return false
         }
     }
 
-    private fun handleCommandModification(args: MutableList<String>, state: RedeemCodeState) {
+    private fun handleDurationModification(sender: CommandSender, args: MutableList<String>, redeemCode: RedeemCode,placeHolder: CodePlaceHolder) {
+        if (redeemCode.storedTime == null) redeemCode.storedTime = service.currentTime
+        val existingDuration = redeemCode.duration ?: "0s"
+        val action = args[3].lowercase()
+        val durationValue = args[4]
+
+
+        when (action.lowercase()) {
+            "set" -> {
+                redeemCode.storedTime = service.currentTime
+                redeemCode.duration = service.adjustDuration("0s", durationValue, isAdding = true).toString() + 's'
+                placeHolder.duration = durationValue
+                config.sendMsg(JMessage.Commands.Modify.DURATION, placeHolder)
+
+            }
+
+            "add" -> {
+                redeemCode.duration = service.adjustDuration(existingDuration, durationValue, isAdding = true).toString() + 's'
+                placeHolder.duration = durationValue
+                config.sendMsg(JMessage.Commands.Modify.DURATION, placeHolder)
+
+            }
+
+            "remove" -> {
+                val duration = service.adjustDuration(existingDuration, durationValue, isAdding = false).toString() + 's'
+                redeemCode.duration = if ((duration.dropLast(1).toIntOrNull() ?: -1) < 0) null else duration
+                placeHolder.duration = durationValue
+                config.sendMsg(JMessage.Commands.Modify.DURATION, placeHolder)
+
+            }
+
+            else -> config.sendMsg("commands.modify.duration-invalid", placeHolder)
+
+        }
+    }
+
+    private fun handleCommandModification(sender: CommandSender, args: MutableList<String>, redeemCode: RedeemCode, placeHolder: CodePlaceHolder) {
         val method = args[3].lowercase()
-        val list = state.commands
+        val list = redeemCode.commands
         val console = plugin.server.consoleSender
 
         when (method) {
             "add" -> {
-                val commandValue = args.drop(4).joinToString(" ")
-                if (commandValue.isBlank()) {
-                    config.sendMsg(JMessage.Commands.Modify.INVALID_COMMAND, state)
+                val command = args.drop(4).joinToString(" ")
+                placeHolder.command = command
+                if (command.isBlank()) {
+                    config.sendMsg(JMessage.Commands.Modify.INVALID_COMMAND, placeHolder)
                     return
                 }
                 val id = list.keys.maxOrNull() ?: 0
-                list[id + 1] = commandValue
+                list[id + 1] = command
             }
 
             "remove" -> {
+                placeHolder.commandId = args[4]
                 val id = args.getOrNull(4)?.toIntOrNull()
                 if (id == null) {
-                    config.sendMsg(JMessage.Commands.Modify.INVALID_ID, state)
+                    config.sendMsg(JMessage.Commands.Modify.INVALID_ID, placeHolder)
                     return
                 }
                 list.remove(id)
             }
 
+            //TODO LIST Must be Removed
             "list" -> {
                 val commandsList = list.values.joinToString("\n")
-                state.sender.sendMessage(commandsList)
-                config.sendMsg(JMessage.Commands.Modify.LIST, state)
+                sender.sendMessage(commandsList)
+                config.sendMsg(JMessage.Commands.Modify.LIST, placeHolder)
                 return
             }
 
             "set" -> {
+                placeHolder.commandId = args[4]
                 val id = args.getOrNull(4)?.toIntOrNull()
                 val commandValue = args.drop(5).joinToString(" ")
                 if (id == null || commandValue.isBlank()) {
-                    config.sendMsg(JMessage.Commands.Modify.INVALID_SET, state)
+                    config.sendMsg(JMessage.Commands.Modify.INVALID_SET, placeHolder)
                     return
                 }
                 list[id] = commandValue
@@ -135,45 +192,51 @@ class ModifySubCommand(private val plugin: RedeemX) : JSubCommand {
             "preview" -> list.values.forEach { plugin.server.dispatchCommand(console, it) }
 
             else -> {
-                config.sendMsg(JMessage.Commands.Modify.UNKNOWN_METHOD, state)
+                config.sendMsg(JMessage.Commands.Modify.UNKNOWN_METHOD, placeHolder)
             }
         }
     }
 
-    private fun handleTargetModification(args: MutableList<String>, state: RedeemCodeState): Boolean {
+    private fun handleTargetModification(sender: CommandSender, args: MutableList<String>,redeemCode: RedeemCode, placeHolder: CodePlaceHolder): Boolean {
         val tempList: MutableList<String?> = mutableListOf()
-        state.target.forEach {
+        redeemCode.target.forEach {
             tempList.add(it?.trim())
         }
-        state.target = tempList.distinct().toMutableList()
+        redeemCode.target = tempList.distinct().toMutableList()
         when (args[3]) {
             "add" -> {
-                state.target.add(args.getOrNull(4))
-                state.target = state.target.distinct().toMutableList()
-                config.sendMsg(JMessage.Commands.Modify.Target.ADD, state)
+                if (args.size < 5) return config.sendMsg(JMessage.Commands.Modify.INVALID_SYNTAX, placeHolder) != Unit
+                placeHolder.target = args[4]
+                redeemCode.target.add(args.getOrNull(4))
+                redeemCode.target = redeemCode.target.distinct().toMutableList()
+                config.sendMsg(JMessage.Commands.Modify.Target.ADD, placeHolder)
             }
 
             "set" -> {
-                state.target = mutableListOf(args.getOrNull(4))
-                config.sendMsg(JMessage.Commands.Modify.Target.SET, state)
+                if (args.size < 5) return config.sendMsg(JMessage.Commands.Modify.INVALID_SYNTAX, placeHolder) != Unit
+                placeHolder.target = args[4]
+                redeemCode.target = mutableListOf(args.getOrNull(4))
+                config.sendMsg(JMessage.Commands.Modify.Target.SET, placeHolder)
             }
 
             "remove" -> {
-                state.target.remove(args.getOrNull(4))
-
-                config.sendMsg(JMessage.Commands.Modify.Target.REMOVE, state)
+                if (args.size < 5) return config.sendMsg(JMessage.Commands.Modify.INVALID_SYNTAX, placeHolder) != Unit
+                placeHolder.target = args[4]
+                redeemCode.target.remove(args.getOrNull(4))
+                config.sendMsg(JMessage.Commands.Modify.Target.REMOVE, placeHolder)
             }
 
             "remove_all" -> {
-                state.target = mutableListOf()
+                redeemCode.target = mutableListOf()
             }
 
+            //TODO Remove Usages From Modify and Shift to usage subcommand
             "list" -> {
-                state.sender.sendMessage(state.target.joinToString("\n"))
+                sender.sendMessage(redeemCode.target.joinToString("\n"))
             }
 
             else -> {
-                config.sendMsg(JMessage.Commands.Modify.Target.UNKNOWN_METHOD, state)
+                config.sendMsg(JMessage.Commands.Modify.Target.UNKNOWN_METHOD, placeHolder)
                 return false
             }
         }

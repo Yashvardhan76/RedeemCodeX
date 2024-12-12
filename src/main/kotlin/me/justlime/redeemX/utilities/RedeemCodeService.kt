@@ -1,9 +1,8 @@
 package me.justlime.redeemX.utilities
 
 import me.justlime.redeemX.RedeemX
-import me.justlime.redeemX.data.config.ConfigManager
-import me.justlime.redeemX.data.models.RedeemCode
-import me.justlime.redeemX.state.RedeemCodeState
+import me.justlime.redeemX.models.CodePlaceHolder
+import me.justlime.redeemX.models.RedeemCode
 import org.bukkit.ChatColor
 import java.sql.ResultSet
 import java.time.LocalDateTime
@@ -21,22 +20,20 @@ class RedeemCodeService(val plugin: RedeemX) {
         val duration = redeemCode.duration ?: return false
 
         // Dynamically fetch current time for each call
-
         val expiryTime = calculateExpiry(storedTime, duration)
-
         return expiryTime?.isBefore(currentTime) ?: false
     }
 
-    private fun calculateExpiry(time: LocalDateTime, duration: String): LocalDateTime? {
+    private fun calculateExpiry(storedTime: LocalDateTime, duration: String): LocalDateTime? {
         val amount = duration.dropLast(1).toIntOrNull() ?: return null
         val unit = duration.takeLast(1)
         return when (unit) {
-            "s" -> time.plusSeconds(amount.toLong())
-            "m" -> time.plusMinutes(amount.toLong())
-            "h" -> time.plusHours(amount.toLong())
-            "d" -> time.plusDays(amount.toLong())
-            "mo" -> time.plusMonths(amount.toLong())
-            "y" -> time.plusYears(amount.toLong())
+            "s" -> storedTime.plusSeconds(amount.toLong())
+            "m" -> storedTime.plusMinutes(amount.toLong())
+            "h" -> storedTime.plusHours(amount.toLong())
+            "d" -> storedTime.plusDays(amount.toLong())
+            "mo" -> storedTime.plusMonths(amount.toLong())
+            "y" -> storedTime.plusYears(amount.toLong())
             else -> null
         }
     }
@@ -135,39 +132,6 @@ class RedeemCodeService(val plugin: RedeemX) {
         return (amount * (timeUnitToSeconds[unit] ?: 1L)).toString() + "s"
     }
 
-
-    fun handleDurationModification(action: String, adjustmentDuration: String?, state: RedeemCodeState,config: ConfigManager) {
-        val service = RedeemCodeService(plugin)
-        val timeZoneId: ZoneId = ZoneId.of("Asia/Kolkata")
-        val currentTime: LocalDateTime = LocalDateTime.now(timeZoneId)
-        if (state.storedTime == null) state.storedTime = currentTime
-
-        val existingDuration = state.duration ?: "0s"
-        val durationValue = adjustmentDuration ?: "0"
-
-        when (action.lowercase()) {
-            "set" -> {
-                state.storedTime = currentTime
-                state.duration = service.adjustDuration("0s", durationValue, isAdding = true).toString() + 's'
-            }
-
-            "add" -> state.duration =
-                service.adjustDuration(existingDuration, durationValue, isAdding = true).toString() + 's'
-
-            "remove" -> {
-                val duration =
-                    service.adjustDuration(existingDuration, durationValue, isAdding = false).toString() + 's'
-                state.duration = if ((duration.dropLast(1).toIntOrNull() ?: -1) < 0) null else duration
-            }
-
-            else -> {
-                config.sendMsg(
-                    "commands.modify.duration-invalid", state = state
-                )
-            }
-        }
-    }
-
     fun applyColors(message: String): String {
         var coloredMessage = ChatColor.translateAlternateColorCodes('&', message)
         val hexPattern = Pattern.compile("&#[a-fA-F0-9]{6}")
@@ -178,5 +142,46 @@ class RedeemCodeService(val plugin: RedeemX) {
             coloredMessage = coloredMessage.replace(hexCode, bukkitHexCode)
         }
         return coloredMessage
+    }
+
+    fun removeColors(message: String): String {
+        // Regex to match Minecraft color codes (§x§r§g§b§x§x§r) and simpler §x formats
+        val colorCodePattern = Regex("\u00A7[x0-9a-fA-F](\u00A7[0-9a-fA-F]){5}|\u00A7[0-9a-fA-F]")
+
+        // Remove any color codes
+        var plainMessage = message.replace(colorCodePattern, "")
+
+        // Remove alternate color codes like &#FFFFFF or &x
+        plainMessage = plainMessage.replace(Regex("&[0-9a-fA-F]|&#[a-fA-F0-9]{6}"), "")
+
+        return plainMessage
+    }
+
+    fun applyPlaceholders(message: String, placeholder: CodePlaceHolder): String {
+        val placeholders: Map<String,String> = mapOf(
+            "code" to placeholder.code,
+            "sender" to placeholder.sender.name,
+            "args" to placeholder.args.joinToString(" "),
+            "commands" to "\n${placeholder.command}",
+            "id" to placeholder.commandId,
+            "duration" to placeholder.duration,
+            "enabled" to placeholder.isEnabled,
+            "max_redeems" to placeholder.maxRedeemsPerPlayer,
+            "max_players" to placeholder.maxPlayersCanRedeem,
+            "permission" to placeholder.permission,
+            "pin" to placeholder.pin,
+            "target" to placeholder.target,
+            "usage" to placeholder.usage,
+            "template" to placeholder.template,
+            "templateLocked" to placeholder.templateLocked,
+            "cooldown" to placeholder.cooldown,
+            "expired" to placeholder.isExpired,
+            "minLength" to placeholder.minLength,
+            "maxLength" to placeholder.maxLength,
+            "code_generate_digit" to placeholder.codeGenerateDigit
+        )
+        return placeholders.entries.fold(message) { msg, (placeholder, value) ->
+            msg.replace("{$placeholder}", value)
+        }
     }
 }

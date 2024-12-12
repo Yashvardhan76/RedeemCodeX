@@ -1,10 +1,10 @@
 package me.justlime.redeemX.commands
 
 import me.justlime.redeemX.RedeemX
-import me.justlime.redeemX.data.config.ConfigManager
 import me.justlime.redeemX.data.config.yml.JMessage
-import me.justlime.redeemX.state.RedeemCodeState
-import me.justlime.redeemX.utilities.RedeemCodeService
+import me.justlime.redeemX.data.repository.ConfigRepository
+import me.justlime.redeemX.data.repository.RedeemCodeRepository
+import me.justlime.redeemX.models.CodePlaceHolder
 import org.bukkit.command.Command
 import org.bukkit.command.CommandExecutor
 import org.bukkit.command.CommandSender
@@ -13,97 +13,99 @@ import org.bukkit.entity.Player
 
 class RedeemCommand(private val plugin: RedeemX) : CommandExecutor, TabCompleter {
 
-    private val stateManager = plugin.stateManager
-    private val config = ConfigManager(plugin)
-    private val service = RedeemCodeService(plugin)
+    private val config = ConfigRepository(plugin)
+    private val codeRepo = RedeemCodeRepository(plugin)
 
     override fun onCommand(sender: CommandSender, command: Command, label: String, args: Array<out String>): Boolean {
-        val state: RedeemCodeState = stateManager.getState(sender)
+        val placeHolder = CodePlaceHolder(sender,args.toMutableList())
         if (sender !is Player) {
-            config.sendMsg(JMessage.RESTRICTED_TO_PLAYERS, state)
+            config.sendMsg(JMessage.RESTRICTED_TO_PLAYERS, placeHolder)
             return true
         }
+
         if (args.isEmpty()) {
-            config.sendMsg(JMessage.Redeemed.USAGE, state)
+            config.sendMsg(JMessage.Redeemed.USAGE, placeHolder)
+            return true
+        }
+        val code = codeRepo.getCode(args[0])
+        placeHolder.code = args[0]
+        val codeValidation = CodeValidation(plugin,args[0])
+        if (!codeValidation.isValidCode(args[0]) || code == null) {
+            config.sendMsg(JMessage.Redeemed.INVALID_CODE, placeHolder)
+            return true
+        }
+        if (!codeValidation.isCodeExist()) {
+            config.sendMsg(JMessage.Redeemed.INVALID_CODE, placeHolder)
             return true
         }
 
-
-        state.inputCode = args[0].uppercase()
-        if (!stateManager.fetchState(state)) {
-            config.sendMsg(JMessage.Redeemed.INVALID_CODE, state)
-            return true
-        }
-        plugin.logger.info("RedeemCommand state: $state")
-
-        state.usageCount = state.usage[sender.name] ?: 0
-        if (state.usageCount >= state.maxRedeems) {
-            config.sendMsg(JMessage.Redeemed.MAX_REDEMPTIONS, state)
+        if (codeValidation.isReachedMaximumRedeem()) {
+            config.sendMsg(JMessage.Redeemed.MAX_REDEMPTIONS, placeHolder)
             return true
         }
 
-        if (state.usage.size > state.maxPlayers) {
-            config.sendMsg(JMessage.Redeemed.MAX_PLAYER_REDEEMED, state)
+        if (codeValidation.isReachedMaximumPlayer()) {
+            config.sendMsg(JMessage.Redeemed.MAX_PLAYER_REDEEMED, placeHolder)
             return true
         }
 
-        if (!state.permission.isNullOrBlank() && !sender.hasPermission(state.permission!!)) {
-            config.sendMsg(JMessage.Redeemed.NO_PERMISSION, state)
+        if (!codeValidation.hasPermission(sender)) {
+            config.sendMsg(JMessage.Redeemed.NO_PERMISSION, placeHolder)
             return true
         }
 
-        if (!state.isEnabled) {
-            config.sendMsg(JMessage.Redeemed.DISABLED, state)
+        if (!codeValidation.isCodeEnabled()) {
+            config.sendMsg(JMessage.Redeemed.DISABLED, placeHolder)
             return true
         }
 
-        if (service.isExpired(state.inputTemplate)) {
-            config.sendMsg(JMessage.Redeemed.EXPIRED_CODE, state)
+        if (codeValidation.isCodeExpired()) {
+            config.sendMsg(JMessage.Redeemed.EXPIRED_CODE, placeHolder)
             return true
         }
 
         // Target validation
-        val tempString = state.target.toString().removeSurrounding("[", "]").trim()
+        val tempString = code.target.toString().removeSurrounding("[", "]").trim()
         if (tempString.isNotBlank()) {
-            val temp: MutableList<String?> = mutableListOf();
-            state.target.filterNotNull().toMutableList().forEach {
+            val temp: MutableList<String?> = mutableListOf()
+            code.target.filterNotNull().toMutableList().forEach {
                 temp.add(it.trim())
             }
-            state.target = temp
-            if (!state.target.contains(sender.name)) {
-                config.sendMsg(JMessage.Redeemed.INVALID_TARGET, state)
+            code.target = temp
+            if (!code.target.contains(sender.name)) {
+                config.sendMsg(JMessage.Redeemed.INVALID_TARGET, placeHolder)
                 return true
             }
         }
 
-        if (state.pin >= 0) {
+        if (code.pin >= 0) {
             if (args.size < 2) {
-                config.sendMsg(JMessage.Redeemed.MISSING_PIN, state)
+                config.sendMsg(JMessage.Redeemed.MISSING_PIN, placeHolder)
                 return true
             }
 
-            state.inputPin = args[1].toIntOrNull()
-            if (state.inputPin != state.pin) {
-                config.sendMsg(JMessage.Redeemed.INVALID_PIN, state)
+            val inputPin = args[1].toIntOrNull()
+            if (inputPin != code.pin) {
+                config.sendMsg(JMessage.Redeemed.INVALID_PIN, placeHolder)
                 return true
             }
         }
 
         // Execute commands
         val console = plugin.server.consoleSender
-        state.commands.values.forEach {
+        code.commands.values.forEach {
             plugin.server.dispatchCommand(console, it)
         }
 
-        state.usage[sender.name] = state.usageCount + 1
-        val success = stateManager.updateDb(sender)
+        code.usage[sender.name] = (code.usage[sender.name]?.plus(1)) ?: 1
+        val success = codeRepo.upsertCode(code)
         if (!success) {
-            config.sendMsg(JMessage.Redeemed.FAILED, state)
+            config.sendMsg(JMessage.Redeemed.FAILED, placeHolder)
             return true
         }
 
         // Success message
-        config.sendMsg(JMessage.Redeemed.SUCCESS, state)
+        config.sendMsg(JMessage.Redeemed.SUCCESS, placeHolder)
         return true
     }
 

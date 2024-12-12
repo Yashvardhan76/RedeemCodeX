@@ -5,40 +5,37 @@ import me.justlime.redeemX.commands.CommandManager
 import me.justlime.redeemX.data.config.ConfigManager
 import me.justlime.redeemX.data.local.DatabaseManager
 import me.justlime.redeemX.data.local.RedeemCodeDaoImpl
-import me.justlime.redeemX.state.StateManager
+import me.justlime.redeemX.data.repository.ConfigRepository
 import me.justlime.redeemX.utilities.RedeemCodeService
 import org.bukkit.plugin.java.JavaPlugin
 
 class RedeemX : JavaPlugin() {
-    lateinit var redeemCodeDB: RedeemCodeDaoImpl
-    lateinit var configFile: ConfigManager
-    lateinit var stateManager: StateManager // Ensure StateManager is initialized before use
-    lateinit var service: RedeemCodeService
     private lateinit var bot: DiscordBot
-
+    lateinit var redeemCodeDB: RedeemCodeDaoImpl
+    lateinit var service: RedeemCodeService
+    lateinit var configManager: ConfigManager
+    lateinit var config: ConfigRepository
+    override fun onLoad() {
+        logger.info("RedeemX Plugin has been loaded!")
+    }
     override fun onEnable() {
         if (!this.dataFolder.exists()) this.dataFolder.mkdir()
-
-        // Register and Initialize Database
+        configManager = ConfigManager(this)
+        config = ConfigRepository(this)
         redeemCodeDB = DatabaseManager.getInstance(this).getRedeemCodeDao()
-        redeemCodeDB.init()
-
         service = RedeemCodeService(this)
-        stateManager = StateManager(this)
-        configFile = ConfigManager(this)
-
-        CommandManager(this)
-
         bot = DiscordBot(this)
-        val isBotEnabled = configFile.getString("bot.enabled").equals("true", true)
-        if (isBotEnabled)bot.startBot()
-
+        val isBotEnabled = config.getConfigValue("bot.enabled").equals("true", ignoreCase = true)
+        if (isBotEnabled) {
+            bot.startBot()
+        }
+        CommandManager(this)
         logger.info("RedeemX Plugin has been enabled!")
     }
 
     override fun onDisable() {
         DatabaseManager.getInstance(this).closePool()
-        logger.info("RedeemX Plugin has been disabled!")
         bot.stopBot()
+        logger.info("RedeemX Plugin has been disabled!")
     }
 }

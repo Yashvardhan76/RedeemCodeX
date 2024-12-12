@@ -97,8 +97,8 @@ commands:
     invalid-command: "&cInvalid command provided. Please provide a valid command."
     invalid-id: "&cInvalid ID provided. Please provide a valid ID."
     list:
-      - "&a{code} Properties"
-      - "&aEnabled: &b{is_enabled}"
+      - "&a&l{code} Properties"
+      - "&aEnabled: &b{enabled}"
       - "&aMax Redeems: &b{max_redeems}"
       - "&aMax Players: &b{max_players}"
       - "&aPermission: &b{permission}"
@@ -114,6 +114,20 @@ commands:
     invalid-set: "&cInvalid set command. Please provide a valid ID and command."
     unknown-method: "&cUnknown method. Please check the documentation."
     set_pin: "&aPin for code &e{code} &ahas been set to &e{pin}&a."
+    duration: "&aDuration for code &e{code} &ahas been set to &e{duration}&a."
+    max_redeems: "&aMax Redeems for code &e{code} &ahas been set to &e{max_redeems}&a."
+    max_players: "&aMax Players for code &e{code} &ahas been set to &e{max_players}&a."
+    permission: "&aPermission for code &e{code} &ahas been set to &e{permission}&a."
+    enabled: "&aEnabled status for code &e{code} &ahas been set to &e{enabled}&a."
+    commandId: "{commandId}"
+    command:
+      add: "&aCommand &e{command}&a added to code &e{code}&a."
+      set: "&aCommand for code &e{code}&a with ID &e{commandId}&a has been set to &e{command}&a."
+      remove: "&aCommand with ID &e{commandId}&a removed from code &e{code}&a."
+      list: "&aCommands for code &e{code}&a:\n{commands}"
+      preview: "&aPreviewing commands for code &e{code}&a..."
+      unknown-method: "&cUnknown command method. Please check the documentation."
+
     target:
       add: "&aTarget &e{target}&a added to code &e{code}&a."
       set: "&aTarget for code &e{code}&a has been set to &e{target}&a."

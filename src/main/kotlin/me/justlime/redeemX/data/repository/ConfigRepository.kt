@@ -1,23 +1,25 @@
 package me.justlime.redeemX.data.repository
 
+import me.justlime.redeemX.RedeemX
 import me.justlime.redeemX.data.config.ConfigDao
+import me.justlime.redeemX.data.config.ConfigImpl
 import me.justlime.redeemX.data.config.JFiles
-import me.justlime.redeemX.data.models.RedeemTemplate
-import me.justlime.redeemX.state.RedeemCodeState
+import me.justlime.redeemX.models.CodePlaceHolder
+import me.justlime.redeemX.models.RedeemTemplate
 
 /**
  * This repository class is responsible for managing configurations. Such as config.yml, messages.yml, and templates.yml.
  */
-class ConfigRepository(private val jConfig: ConfigDao) {
+class ConfigRepository(private val plugin: RedeemX) {
 
-
+    private val config: ConfigDao = ConfigImpl(plugin)
     fun getConfigValue(key: String): String{
-        return jConfig.getString(key, JFiles.CONFIG, false) ?: ""
+        return config.getString(key, JFiles.CONFIG, false) ?: ""
     }
 
     fun setConfigValue(key: String): Boolean{
         try {
-            jConfig.upsertConfig(JFiles.CONFIG,key,"")
+            config.upsertConfig(JFiles.CONFIG,key,"")
             return true
         }catch (e:Exception){
             return false
@@ -25,37 +27,37 @@ class ConfigRepository(private val jConfig: ConfigDao) {
     }
 
     /**Get a Simple Text Message**/
-    fun getMessage(message: String): String {
-        return jConfig.getMessage(message)
+    fun getMessage(message: String,placeHolder: CodePlaceHolder): String {
+        return config.getMessage(message, placeHolder)
     }
 
     /**Get a Colored Text Message with placeholders**/
-    fun getFormattedMessage(message: String, placeholders: Map<String, String>): String {
-        return jConfig.getFormattedMessage(message, placeholders)
+    fun getFormattedMessage(message: String, placeHolder: CodePlaceHolder): String {
+        return config.getFormattedMessage(message, placeHolder)
     }
 
-    fun sendMsg(key: String, state: RedeemCodeState){
-        state.sender.sendMessage(jConfig.getFormattedMessage(key, state.toPlaceholdersMap()))
+    fun sendMsg(key: String, placeHolder: CodePlaceHolder){
+        config.sendMsg(key, placeHolder)
     }
     fun getTemplate(template: String = "default"): RedeemTemplate? {
         return try {
-            jConfig.getTemplate(template)
+            config.getTemplate(template)
         } catch (e:Exception){
             null
         }
     }
 
     fun getTemplateValue(template: String,property: String): String{
-        return jConfig.getString("$template.$property",JFiles.TEMPLATE,false) ?: ""
+        return config.getString("$template.$property",JFiles.TEMPLATE,false) ?: ""
     }
 
     fun getEntireTemplates(): List<RedeemTemplate> {
-        return jConfig.getEntireTemplates()
+        return config.getEntireTemplates()
     }
 
     fun createTemplate(template: RedeemTemplate): Boolean {
         if(getTemplate(template.name) == null){
-            jConfig.upsertTemplate(template = template)
+            config.upsertTemplate(template = template)
             return true
         }
         return false
@@ -63,7 +65,7 @@ class ConfigRepository(private val jConfig: ConfigDao) {
 
     fun modifyTemplate(template: RedeemTemplate): Boolean {
         if(getTemplate(template.name) == null) return false
-        return jConfig.upsertTemplate(template = template)
+        return config.upsertTemplate(template = template)
     }
 
     fun modifyTemplates(template: List<RedeemTemplate>){
@@ -71,15 +73,15 @@ class ConfigRepository(private val jConfig: ConfigDao) {
     }
 
     fun deleteTemplate(name: String): Boolean {
-        return jConfig.deleteTemplate(name)
+        return config.deleteTemplate(name)
     }
 
     fun deleteEntireTemplates(): Boolean {
-        return jConfig.deleteEntireTemplates()
+        return config.deleteEntireTemplates()
     }
 
     fun reloadConfig(): Boolean {
-        return jConfig.reloadAllConfigs()
+        return config.reloadAllConfigs()
     }
 
 }
