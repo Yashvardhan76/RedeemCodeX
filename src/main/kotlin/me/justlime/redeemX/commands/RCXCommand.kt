@@ -40,6 +40,7 @@ class RCXCommand(private val plugin: RedeemX) : CommandExecutor {
                 else config.sendMsg(JMessage.Commands.Modify.NO_PERMISSION, placeHolder)
 
                 "modify_template" -> if(sender.hasPermission(JPermission.Admin.MODIFY)) ModifyTemplateSubCommand(plugin).execute(sender, args.toMutableList())
+                else config.sendMsg(JMessage.Commands.ModifyTemplate.NO_PERMISSION, placeHolder)
 
                 "delete", "delete_all" -> if (sender.hasPermission(JPermission.Admin.DELETE)) DeleteSubCommand(plugin).execute(sender, args.toMutableList())
                 else config.sendMsg(JMessage.Commands.Delete.NO_PERMISSION, placeHolder)

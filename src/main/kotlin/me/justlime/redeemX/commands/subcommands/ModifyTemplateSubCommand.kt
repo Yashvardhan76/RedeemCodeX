@@ -2,14 +2,15 @@ package me.justlime.redeemX.commands.subcommands
 
 import me.justlime.redeemX.RedeemX
 import me.justlime.redeemX.data.config.yml.JMessage
+import me.justlime.redeemX.data.repository.RedeemCodeRepository
 import me.justlime.redeemX.models.CodePlaceHolder
 import org.bukkit.command.CommandSender
 
 class ModifyTemplateSubCommand(plugin: RedeemX): JSubCommand {
     private val config = plugin.config
-    private val codeRepo = plugin.codeRepository
+    private val codeRepo = RedeemCodeRepository(plugin)
     override fun execute(sender: CommandSender, args: MutableList<String>): Boolean {
-        if (args.size < 3) return config.sendMsg(JMessage.Commands.ModifyTemplate.INVALID_SYNTAX, CodePlaceHolder(sender, args)) != Unit
+        if (args.size < 3) return config.sendMsg(JMessage.Commands.ModifyTemplate.INVALID_SYNTAX, CodePlaceHolder(sender)) != Unit
         val placeHolder = CodePlaceHolder(sender, args, template = args[1], property = args[2])
         val property = args[2].lowercase()
         val template = config.getTemplate(args[1]) ?: return config.sendMsg(JMessage.Commands.ModifyTemplate.NOT_FOUND, placeHolder) != Unit
@@ -29,8 +30,13 @@ class ModifyTemplateSubCommand(plugin: RedeemX): JSubCommand {
 
             "max_player" -> {
                 template.maxPlayers = value.toIntOrNull() ?: 0
+                placeHolder.maxPlayers = value
                 if (template.maxPlayers < 1) return config.sendMsg(JMessage.Commands.ModifyTemplate.INVALID_VALUE, placeHolder) != Unit
-                config.sendMsg(JMessage.Commands.ModifyTemplate.MAX_PLAYERS, placeHolder)
+                codeRepo.getCodesByTemplate(template.name).forEach{
+                    it.maxPlayers = template.maxPlayers
+                    codeRepo.upsertCode(it)
+                }
+                config.sendMsg(JMessage.Commands.Modify.MAX_PLAYERS, placeHolder)
             }
 
             "permission" -> {
