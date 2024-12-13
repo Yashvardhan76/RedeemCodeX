@@ -7,7 +7,6 @@ import me.justlime.redeemX.data.repository.ConfigRepository
 import me.justlime.redeemX.data.repository.RedeemCodeRepository
 import me.justlime.redeemX.models.CodePlaceHolder
 import org.bukkit.command.CommandSender
-import java.sql.Timestamp
 
 class RenewSubCommand(val plugin: RedeemX): JSubCommand {
     private val codeRepo = RedeemCodeRepository(plugin)
@@ -30,12 +29,11 @@ class RenewSubCommand(val plugin: RedeemX): JSubCommand {
         }
 
         if(config.getConfigValue(JConfig.Renew.CLEAR_USAGE).equals("true",ignoreCase = true)) {
-            redeemCode.usage.clear()
+            codeRepo.setUsage(redeemCode, mutableMapOf())
         }
 
-        //TODO ADD DELAY
         if (config.getConfigValue(JConfig.Renew.RESET_DELAY).equals("true", ignoreCase = true)){
-            //TODO
+            codeRepo.setStoredCooldown(redeemCode)
             return false
         }
         if(config.getConfigValue(JConfig.Renew.CLEAR_REWARDS).equals("true",ignoreCase = true)){
@@ -44,15 +42,15 @@ class RenewSubCommand(val plugin: RedeemX): JSubCommand {
         }
 
         if(config.getConfigValue(JConfig.Renew.CLEAR_COMMANDS).equals("true",ignoreCase = true)){
-            redeemCode.commands.clear()
+            codeRepo.clearCommands(redeemCode)
         }
 
         if(config.getConfigValue(JConfig.Renew.RESET_EXPIRED).equals("true",ignoreCase = true)){
-            redeemCode.storedTime = Timestamp.valueOf(plugin.service.currentTime)
+            codeRepo.setStoredTime(redeemCode)
         }
 
         if(config.getConfigValue(JConfig.Renew.REMOVE_PERMISSION_REQUIRED).equals("true",ignoreCase = true)){
-            redeemCode.permission = null
+            codeRepo.setPermission(redeemCode,"")
         }
 
 

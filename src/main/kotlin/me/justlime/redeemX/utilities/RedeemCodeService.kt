@@ -3,16 +3,25 @@ package me.justlime.redeemX.utilities
 import me.justlime.redeemX.models.CodePlaceHolder
 import me.justlime.redeemX.models.RedeemCode
 import org.bukkit.ChatColor
-import java.time.LocalDateTime
-import java.time.ZoneId
-import java.time.ZonedDateTime
+import java.sql.Timestamp
+import java.time.Instant
 import java.util.regex.Pattern
 
 class RedeemCodeService {
-    private val timeZoneId: ZoneId = ZoneId.of("Asia/Kolkata")
-    val currentTime: LocalDateTime = ZonedDateTime.now(timeZoneId).toLocalDateTime()
+    val currentTime: Timestamp = Timestamp.from(Instant.now())
 
     fun adjustDuration(existingDuration: String, adjustmentDuration: String, isAdding: Boolean): String {
+        val totalExistingSeconds = parseDurationToSeconds(existingDuration)
+        val totalAdjustmentSeconds = parseDurationToSeconds(adjustmentDuration)
+
+        val adjustedSeconds = if (isAdding) totalExistingSeconds + totalAdjustmentSeconds else totalExistingSeconds - totalAdjustmentSeconds
+        if (adjustedSeconds <= 0) return "0s"
+
+        return formatSecondsToDuration(adjustedSeconds)
+    }
+
+    private fun parseDurationToSeconds(duration: String): Long {
+        val regex = """(\d+)(y|mo|d|h|m|s)""".toRegex()
         val timeUnitToSeconds = mapOf(
             "y" to 31536000L,
             "mo" to 2592000L,
@@ -21,28 +30,32 @@ class RedeemCodeService {
             "m" to 60L,
             "s" to 1L
         )
-        val secondsToTimeUnit = timeUnitToSeconds.entries.sortedByDescending { it.value }
 
-        val existingAmount = existingDuration.dropLast(1).toLongOrNull() ?: return "0s"
-        val existingUnit = existingDuration.takeLast(1)
-        val adjustmentAmount = adjustmentDuration.dropLast(1).toLongOrNull() ?: return "0s"
-        val adjustmentUnit = adjustmentDuration.takeLast(1)
+        return regex.findAll(duration).sumOf { match ->
+            val value = match.groupValues[1].toLongOrNull() ?: 0L
+            val unit = match.groupValues[2]
+            value * (timeUnitToSeconds[unit] ?: 0L)
+        }
+    }
 
-        val existingSeconds = existingAmount * (timeUnitToSeconds[existingUnit] ?: return "0s")
-        val adjustmentSeconds = adjustmentAmount * (timeUnitToSeconds[adjustmentUnit] ?: return "0s")
-
-        val adjustedSeconds = if (isAdding) existingSeconds + adjustmentSeconds else existingSeconds - adjustmentSeconds
-        if (adjustedSeconds <= 0) return "0s"
-
-        // Convert seconds into a human-readable duration with multiple units
+    private fun formatSecondsToDuration(seconds: Long): String {
+        val timeUnitToSeconds = mapOf(
+            "y" to 31536000L,
+            "mo" to 2592000L,
+            "d" to 86400L,
+            "h" to 3600L,
+            "m" to 60L,
+            "s" to 1L
+        )
+        val sortedUnits = timeUnitToSeconds.entries.sortedByDescending { it.value }
         val result = StringBuilder()
-        var remainingSeconds = adjustedSeconds
+        var remainingSeconds = seconds
 
-        for ((unit, secondsInUnit) in secondsToTimeUnit) {
+        for ((unit, secondsInUnit) in sortedUnits) {
             if (remainingSeconds >= secondsInUnit) {
                 val amount = remainingSeconds / secondsInUnit
                 remainingSeconds %= secondsInUnit
-                result.append("${amount}$unit")
+                result.append("${amount}${unit}")
             }
         }
         return result.toString()
@@ -50,27 +63,23 @@ class RedeemCodeService {
 
     fun isDurationValid(duration: String): Boolean {
         if (duration.isBlank()) return false
-        if (duration.length < 2) return false
+        if (duration.length<2) return false
 
-        // Valid units: seconds (s), minutes (m), hours (h), days (d), weeks (w), months (mo), years (y)
-        val pattern = Regex("""^(\d+)([smhdw]|mo|y)$""")
-        return pattern.matches(duration) && duration.takeWhile { it.isDigit() }.toInt() > 0
+        // Define valid units dynamically
+        val validUnits = listOf("y", "mo", "d", "h", "m", "s").joinToString("|")
+        val pattern = Regex("""^(\d+($validUnits))+${'$'}""")
+
+        // Match against the pattern and ensure numbers are valid
+        return pattern.matches(duration) && Regex("""\d+""").findAll(duration).all { it.value.toInt() > 0 }
     }
 
-    fun convertDurationToSeconds(duration: String): String {
-        val timeUnitToSeconds = mapOf("s" to 1L, "m" to 60L, "h" to 3600L, "d" to 86400L, "mo" to 2592000L, "y" to 31536000L)
-        val pattern = Regex("""^(\d+)(s|m|h|d|mo|y)$""")
-        val match = pattern.matchEntire(duration) ?: return "0s"
-
-        val (amount, unit) = match.destructured
-        return (amount.toLong() * (timeUnitToSeconds[unit] ?: 1L)).toString() + "s"
-    }
 
     fun isExpired(redeemCode: RedeemCode): Boolean {
-        val storedTime = redeemCode.storedTime.toLocalDateTime()
+        val storedTime = redeemCode.storedTime
         val duration = redeemCode.duration ?: return false
-        val expiryTime = storedTime.plusSeconds(convertDurationToSeconds(duration).dropLast(1).toLongOrNull() ?: return false)
-        return expiryTime.isBefore(currentTime)
+
+        val expiryTimeMillis = storedTime.time + parseDurationToSeconds(duration) * 1000
+        return System.currentTimeMillis() > expiryTimeMillis
     }
 
     fun parseToId(string: String?): String {

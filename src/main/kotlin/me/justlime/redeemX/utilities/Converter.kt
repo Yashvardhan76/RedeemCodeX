@@ -25,7 +25,7 @@ class Converter {
         return RedeemCode(
             code = result.getString("code"),
             commands = gson.fromJson(result.getString("commands"), object : TypeToken<MutableMap<Int, String>>() {}.type),
-            storedTime = result.getTimestamp("storedTime"),
+            storedTime = result.getTimestampOrNull("storedTime") ?: RedeemCodeService().currentTime,
             duration = result.getString("duration"),
             isEnabled = result.getBoolean("isEnabled"),
             maxRedeems = result.getInt("max_redeems"),
@@ -36,7 +36,7 @@ class Converter {
             usage = gson.fromJson(result.getString("usedBy"), object : TypeToken<MutableMap<String, Int>>() {}.type),
             template = result.getString("template"),
             templateLocked = result.getBoolean("templateLocked"),
-            storedCooldown = result.getTimestampOrNull("storedCooldown"),
+            storedCooldown = result.getTimestampOrNull("storedCooldown") ?: RedeemCodeService().currentTime,
             cooldown = result.getString("cooldown")
         )
     }
@@ -46,18 +46,18 @@ class Converter {
             code = redeemCode.code,
             commands = gson.toJson(redeemCode.commands),
             storedTime = redeemCode.storedTime,
-            duration = redeemCode.duration ?: "0s",
+            duration = redeemCode.duration,
             isEnabled = redeemCode.isEnabled,
             redemptionLimit = redeemCode.maxRedeems,
             playerLimit = redeemCode.maxPlayers,
-            permission = redeemCode.permission ?: "",
+            permission = redeemCode.permission,
             pin = redeemCode.pin,
             target = gson.toJson(redeemCode.target),
             usedBy = gson.toJson(redeemCode.usage),
             template = redeemCode.template,
             templateLocked = redeemCode.templateLocked,
-            storedCooldown = redeemCode.storedCooldown?: Timestamp(System.currentTimeMillis()),
-            cooldown = redeemCode.cooldown ?: "0s"
+            storedCooldown = redeemCode.storedCooldown,
+            cooldown = redeemCode.cooldown
         )
     }
 

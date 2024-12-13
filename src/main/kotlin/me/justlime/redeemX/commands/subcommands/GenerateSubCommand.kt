@@ -2,13 +2,13 @@ package me.justlime.redeemX.commands.subcommands
 
 import me.justlime.redeemX.RedeemX
 import me.justlime.redeemX.data.config.yml.JConfig
+import me.justlime.redeemX.data.config.yml.JMessage
 import me.justlime.redeemX.data.config.yml.JTemplate
 import me.justlime.redeemX.data.repository.ConfigRepository
 import me.justlime.redeemX.data.repository.RedeemCodeRepository
 import me.justlime.redeemX.models.CodePlaceHolder
 import me.justlime.redeemX.models.RedeemCode
 import org.bukkit.command.CommandSender
-import java.sql.Timestamp
 
 class GenerateSubCommand(private val plugin: RedeemX) : JSubCommand {
     private val service = plugin.service
@@ -100,20 +100,18 @@ class GenerateSubCommand(private val plugin: RedeemX) : JSubCommand {
             val redeemCode = RedeemCode(
                 code = uniqueCode,
                 commands = service.parseToMapId(service.parseToId(tCommands)),
-                storedTime = Timestamp.valueOf(service.currentTime),
+                storedTime = service.currentTime,
                 duration = tDuration,
                 isEnabled = config.getTemplateValue(template, JTemplate.ENABLED).toBooleanStrictOrNull() ?: true,
                 maxRedeems = config.getTemplateValue(template, JTemplate.MAX_REDEEMS).toIntOrNull() ?: 1,
                 maxPlayers = config.getTemplateValue(template, JTemplate.MAX_PLAYERS).toIntOrNull() ?: 1,
-                permission = if (tPermissionRequired) {
-                    tPermissionValue.replace("{code}", uniqueCode)
-                } else null,
+                permission = if (tPermissionRequired) tPermissionValue.replace("{code}", uniqueCode) else "",
                 pin = config.getTemplateValue(template, JTemplate.PIN).toIntOrNull() ?: -1,
                 template = template,
                 templateLocked = true,
                 usage = mutableMapOf(),
                 target = mutableListOf(),
-                storedCooldown = null, //TODO
+                storedCooldown = service.currentTime, //TODO
                 cooldown = "0s",
             )
 
@@ -158,24 +156,25 @@ class GenerateSubCommand(private val plugin: RedeemX) : JSubCommand {
     private fun createUniqueCode(uniqueCode: String, placeHolder: CodePlaceHolder) {
         placeHolder.code = uniqueCode
         if (codeRepo.getCode(uniqueCode) != null) {
-            config.sendMsg("commands.gen.code-already-exist", placeHolder)
+            config.sendMsg(JMessage.Commands.Gen.CODE_ALREADY_EXIST, placeHolder)
             return
         }
+        val configPermissionRequired = config.getConfigValue(JConfig.Default.PERMISSION.REQUIRED).equals("true",ignoreCase = true)
         val redeemCode = RedeemCode(
             code = uniqueCode,
             commands = service.parseToMapId(service.parseToId(config.getConfigValue(JConfig.Default.COMMANDS))),
-            storedTime = Timestamp.valueOf(service.currentTime),
+            storedTime = service.currentTime,
             duration = config.getConfigValue(JConfig.Default.CODE_EXPIRED_DURATION),
             isEnabled = config.getConfigValue(JConfig.Default.ENABLED).toBooleanStrictOrNull() ?: true,
             maxRedeems = config.getConfigValue(JConfig.Default.MAX_REDEEMS).toIntOrNull() ?: 1,
             maxPlayers = config.getConfigValue(JConfig.Default.MAX_PLAYERS_CAN_REDEEM).toIntOrNull() ?: 1,
-            permission = if (config.getConfigValue(JConfig.Default.PERMISSION.REQUIRED).equals("true", ignoreCase = true)) config.getConfigValue(JConfig.Default.PERMISSION.VALUE) else null,
+            permission = if (configPermissionRequired) config.getConfigValue(JConfig.Default.PERMISSION.VALUE) else "",
             pin = config.getConfigValue("default.pin").toIntOrNull() ?: 0,
             template = "",
             templateLocked = false,
             usage = mutableMapOf(),
             target = mutableListOf(),
-            storedCooldown = null, //TODO
+            storedCooldown = service.currentTime,
             cooldown = config.getConfigValue("cooldown")
         )
 

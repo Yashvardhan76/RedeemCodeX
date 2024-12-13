@@ -4,7 +4,6 @@ import me.justlime.redeemX.RedeemX
 import me.justlime.redeemX.data.local.RedeemCodeDao
 import me.justlime.redeemX.models.RedeemCode
 import me.justlime.redeemX.utilities.RedeemCodeService
-import java.sql.Timestamp
 
 /**
  * This repository class is responsible for managing redeem codes from database.
@@ -17,7 +16,7 @@ class RedeemCodeRepository(plugin: RedeemX) {
         return redeemCodeDao.get(code)
     }
 
-    /**Used this for getting list of cached Code use full for listing**/
+    /**Used this for getting list of cached Code useful for listing**/
     fun getCachedCode(): List<String> {
         return redeemCodeDao.getCachedCodes()
     }
@@ -71,8 +70,7 @@ class RedeemCodeRepository(plugin: RedeemX) {
         val redeemCodeList = mutableListOf<RedeemCode>()
 
         getEntireCodes().forEach {
-            val convertedDuration = service.convertDurationToSeconds(duration)
-            if (it.duration == convertedDuration) redeemCodeList.add(it)
+            if (it.duration == duration) redeemCodeList.add(it)
         }
         return redeemCodeList
     }
@@ -117,7 +115,7 @@ class RedeemCodeRepository(plugin: RedeemX) {
         if(!service.isDurationValid(duration)) return false
         val existingDuration = code.duration ?: "0s"
         val durationValue = service.adjustDuration(existingDuration, duration, isAdding = false).toString() + 's'
-        code.duration = if ((durationValue.dropLast(1).toIntOrNull() ?: -1) < 0) null else durationValue
+        code.duration = if ((durationValue.dropLast(1).toIntOrNull() ?: -1) < 0) "0s" else durationValue
         return true
     }
 
@@ -151,7 +149,7 @@ class RedeemCodeRepository(plugin: RedeemX) {
 
     fun setPermission(redeemCode: RedeemCode, permission: String): Boolean {
         redeemCode.permission = permission
-        if (permission.isBlank()) redeemCode.permission = null
+        if (permission.isBlank()) redeemCode.permission = ""
         return true
     }
 
@@ -168,7 +166,7 @@ class RedeemCodeRepository(plugin: RedeemX) {
 
     fun setCooldown(redeemCode: RedeemCode, cooldown: String): Boolean {
         redeemCode.cooldown = cooldown
-        if (cooldown.isBlank()) redeemCode.cooldown = null
+        if (cooldown.isBlank()) redeemCode.cooldown = ""
         return true
     }
 
@@ -223,12 +221,12 @@ class RedeemCodeRepository(plugin: RedeemX) {
 
 
     fun setStoredTime(redeemCode: RedeemCode): Boolean {
-        redeemCode.storedTime = Timestamp.valueOf(service.currentTime)
+        redeemCode.storedTime = service.currentTime
         return true
     }
 
     fun setStoredCooldown(redeemCode: RedeemCode): Boolean {
-        redeemCode.storedCooldown = Timestamp.valueOf(service.currentTime)
+        redeemCode.storedCooldown = service.currentTime
         return true
     }
 

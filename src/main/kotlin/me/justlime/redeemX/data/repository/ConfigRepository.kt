@@ -10,7 +10,7 @@ import me.justlime.redeemX.models.RedeemTemplate
 /**
  * This repository class is responsible for managing configurations. Such as config.yml, messages.yml, and templates.yml.
  */
-class ConfigRepository(private val plugin: RedeemX) {
+class ConfigRepository(val plugin: RedeemX) {
 
     private val config: ConfigDao = ConfigImpl(plugin)
     fun getConfigValue(key: String): String{
