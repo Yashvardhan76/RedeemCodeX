@@ -12,8 +12,8 @@ data class CodePlaceHolder(val sender: CommandSender,
                            var commandId: String = "none",
                            var duration: String = "none",
                            var isEnabled: String = "none",
-                           var maxRedeemsPerPlayer: String = "none",
-                           var maxPlayersCanRedeem: String = "none",
+                           var maxRedeems: String = "none",
+                           var maxPlayers: String = "none",
                            var permission: String = "none",
                            var pin: String = "none",
                            var target: String = "none",
@@ -29,10 +29,10 @@ data class CodePlaceHolder(val sender: CommandSender,
 
     companion object {
         fun fetchByDB(plugin: RedeemX, code: String, sender: CommandSender): CodePlaceHolder {
-            val db = plugin.redeemCodeDB.get(code) ?: return CodePlaceHolder(sender, code = code)
+            val redeemCode = plugin.redeemCodeDB.get(code) ?: return CodePlaceHolder(sender, code = code)
 
             val dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
-            val durationSeconds = db.duration.orEmpty().removeSuffix("s").toIntOrNull() ?: 0
+            val durationSeconds = redeemCode.duration.orEmpty().removeSuffix("s").toIntOrNull() ?: 0
             val days = durationSeconds / 86400
             val hours = (durationSeconds % 86400) / 3600
             val minutes = (durationSeconds % 3600) / 60
@@ -48,19 +48,19 @@ data class CodePlaceHolder(val sender: CommandSender,
             return CodePlaceHolder(
                 sender = sender,
                 code = code,
-                command = db.commands.toString().removeSurrounding("{", "}").trim(),
-                duration = if (db.duration.isNullOrEmpty()) "none" else formattedDuration,
-                isEnabled = db.isEnabled.toString(),
-                maxRedeemsPerPlayer = db.maxRedeems.toString(),
-                maxPlayersCanRedeem = db.maxPlayers.toString(),
-                permission = db.permission ?: "none",
-                pin = if (db.pin <= 0) "none" else db.pin.toString(),
-                target = db.target.toString(),
-                usage = db.usage.toString(),
-                template = db.template,
-                templateLocked = db.templateLocked.toString(),
-                cooldown = db.cooldown ?: "none",
-                isExpired = plugin.service.isExpired(code).toString(),
+                command = redeemCode.commands.toString().removeSurrounding("{", "}").trim(),
+                duration = if (redeemCode.duration.isNullOrEmpty()) "none" else formattedDuration,
+                isEnabled = redeemCode.isEnabled.toString(),
+                maxRedeems = redeemCode.maxRedeems.toString(),
+                maxPlayers = redeemCode.maxPlayers.toString(),
+                permission = redeemCode.permission ?: "none",
+                pin = if (redeemCode.pin <= 0) "none" else redeemCode.pin.toString(),
+                target = redeemCode.target.toString(),
+                usage = redeemCode.usage.toString(),
+                template = redeemCode.template,
+                templateLocked = redeemCode.templateLocked.toString(),
+                cooldown = redeemCode.cooldown ?: "none",
+                isExpired = plugin.service.isExpired(redeemCode).toString(),
                 minLength = plugin.config.getConfigValue("code-minimum-digit"),
                 maxLength = plugin.config.getConfigValue("code-maximum-digit"),
                 codeGenerateDigit = plugin.config.getConfigValue("default.code-generate-digit")?: "none"

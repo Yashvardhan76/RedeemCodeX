@@ -7,8 +7,9 @@ import me.justlime.redeemX.data.repository.ConfigRepository
 import me.justlime.redeemX.data.repository.RedeemCodeRepository
 import me.justlime.redeemX.models.CodePlaceHolder
 import org.bukkit.command.CommandSender
+import java.sql.Timestamp
 
-class RenewSubCommand(private val plugin: RedeemX): JSubCommand {
+class RenewSubCommand(val plugin: RedeemX): JSubCommand {
     private val codeRepo = RedeemCodeRepository(plugin)
     private val config = ConfigRepository(plugin)
 
@@ -47,7 +48,7 @@ class RenewSubCommand(private val plugin: RedeemX): JSubCommand {
         }
 
         if(config.getConfigValue(JConfig.Renew.RESET_EXPIRED).equals("true",ignoreCase = true)){
-            if (redeemCode.storedTime != null) redeemCode.storedTime = plugin.service.currentTime
+            redeemCode.storedTime = Timestamp.valueOf(plugin.service.currentTime)
         }
 
         if(config.getConfigValue(JConfig.Renew.REMOVE_PERMISSION_REQUIRED).equals("true",ignoreCase = true)){

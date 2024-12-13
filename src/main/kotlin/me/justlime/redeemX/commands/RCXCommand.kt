@@ -6,6 +6,7 @@ import me.justlime.redeemX.commands.subcommands.GenerateSubCommand
 import me.justlime.redeemX.commands.subcommands.GenerateTemplateSubCommand
 import me.justlime.redeemX.commands.subcommands.InfoSubCommand
 import me.justlime.redeemX.commands.subcommands.ModifySubCommand
+import me.justlime.redeemX.commands.subcommands.ModifyTemplateSubCommand
 import me.justlime.redeemX.commands.subcommands.ReloadSubCommand
 import me.justlime.redeemX.commands.subcommands.RenewSubCommand
 import me.justlime.redeemX.data.config.yml.JMessage
@@ -35,8 +36,10 @@ class RCXCommand(private val plugin: RedeemX) : CommandExecutor {
                     else config.sendMsg(JMessage.Commands.GenTemplate.NO_PERMISSION, placeHolder)
                 }
 
-                "modify", "modify_template" -> if (sender.hasPermission(JPermission.Admin.MODIFY)) ModifySubCommand(plugin).execute(sender, args.toMutableList())
+                "modify",  -> if (sender.hasPermission(JPermission.Admin.MODIFY)) ModifySubCommand(plugin).execute(sender, args.toMutableList())
                 else config.sendMsg(JMessage.Commands.Modify.NO_PERMISSION, placeHolder)
+
+                "modify_template" -> if(sender.hasPermission(JPermission.Admin.MODIFY)) ModifyTemplateSubCommand(plugin).execute(sender, args.toMutableList())
 
                 "delete", "delete_all" -> if (sender.hasPermission(JPermission.Admin.DELETE)) DeleteSubCommand(plugin).execute(sender, args.toMutableList())
                 else config.sendMsg(JMessage.Commands.Delete.NO_PERMISSION, placeHolder)

@@ -11,7 +11,7 @@ class ConfigManager(val plugin: RedeemX) {
 
 
     private val configFiles = mutableMapOf<JFiles, FileConfiguration>()
-    private val service = RedeemCodeService(plugin)
+    private val service = RedeemCodeService()
 
     init {
 

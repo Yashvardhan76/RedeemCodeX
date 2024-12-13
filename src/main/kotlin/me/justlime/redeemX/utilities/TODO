@@ -1,0 +1,23 @@
+##Feature to Be added
+Add Usage Command e.g. /rcx usage <code> [property]
+Add GUI command e.g. /rcx gui
+Add command aliases [clear,remove,setId]
+add pin aliases [remove]
+
+
+##NOT Working
+/rcx modify command remove [arg null error]
+/rcx modify <code> command set <cmd>
+/rcx modify <code> permission true/false
+/rcx modify_template - cmd error and setup left
+
+//add other rcx modify command
+
+/rcx gen <Digit/Custom> [Make amount default: 1]
+/rcx gen template <template> - CODE Placeholder error
+
+if duration empty set 0s as default instead empty or null
+if duration is <= 0s do skip code validation
+duration set storedTime not updating, remove not working setting to 0s
+
+max-redeem placeholder

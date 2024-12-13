@@ -15,15 +15,17 @@ class RedeemX : JavaPlugin() {
     lateinit var service: RedeemCodeService
     lateinit var configManager: ConfigManager
     lateinit var config: ConfigRepository
+    lateinit var codeRepository: ConfigRepository
     override fun onLoad() {
         logger.info("RedeemX Plugin has been loaded!")
     }
     override fun onEnable() {
         if (!this.dataFolder.exists()) this.dataFolder.mkdir()
+        redeemCodeDB = DatabaseManager.getInstance(this).getRedeemCodeDao()
+        redeemCodeDB.fetch()
         configManager = ConfigManager(this)
         config = ConfigRepository(this)
-        redeemCodeDB = DatabaseManager.getInstance(this).getRedeemCodeDao()
-        service = RedeemCodeService(this)
+        service = RedeemCodeService()
         bot = DiscordBot(this)
         val isBotEnabled = config.getConfigValue("bot.enabled").equals("true", ignoreCase = true)
         if (isBotEnabled) {

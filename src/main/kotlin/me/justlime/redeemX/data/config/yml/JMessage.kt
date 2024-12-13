@@ -118,6 +118,13 @@ sealed interface JMessage {
                 const val UNKNOWN_METHOD = "$TARGET.unknown-method"
             }
             const val PIN = "$MODIFY_TEMPLATE.set_pin"
+            const val MAX_REDEEMS = "$MODIFY_TEMPLATE.max_redeems"
+            const val MAX_PLAYERS = "$MODIFY_TEMPLATE.max_players"
+            const val PERMISSION = "$MODIFY_TEMPLATE.permission"
+            const val ENABLED = "$MODIFY_TEMPLATE.enabled"
+            const val CODE_GENERATE_DIGIT = "$MODIFY_TEMPLATE.code_generate_digit"
+            const val COOLDOWN = "$MODIFY_TEMPLATE.cooldown"
+            const val DURATION = "$MODIFY_TEMPLATE.duration"
         }
 
 

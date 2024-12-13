@@ -67,7 +67,7 @@ class RedeemCommand(private val plugin: RedeemX) : CommandExecutor, TabCompleter
         // Target validation
         val tempString = code.target.toString().removeSurrounding("[", "]").trim()
         if (tempString.isNotBlank()) {
-            val temp: MutableList<String?> = mutableListOf()
+            val temp: MutableList<String> = mutableListOf()
             code.target.filterNotNull().toMutableList().forEach {
                 temp.add(it.trim())
             }

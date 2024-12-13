@@ -16,7 +16,7 @@ import java.util.logging.Level
 class ConfigImpl(private val plugin: RedeemX) : ConfigDao {
     private val configFiles = mutableMapOf<JFiles, FileConfiguration>()
     private val configManager = plugin.configManager
-    private val service = RedeemCodeService(plugin)
+    private val service = RedeemCodeService()
 
     companion object {
         private const val DEFAULT_FADE_IN = 10

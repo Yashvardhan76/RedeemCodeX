@@ -8,6 +8,7 @@ import me.justlime.redeemX.data.repository.RedeemCodeRepository
 import me.justlime.redeemX.models.CodePlaceHolder
 import me.justlime.redeemX.models.RedeemCode
 import org.bukkit.command.CommandSender
+import java.sql.Timestamp
 
 class GenerateSubCommand(private val plugin: RedeemX) : JSubCommand {
     private val service = plugin.service
@@ -99,7 +100,7 @@ class GenerateSubCommand(private val plugin: RedeemX) : JSubCommand {
             val redeemCode = RedeemCode(
                 code = uniqueCode,
                 commands = service.parseToMapId(service.parseToId(tCommands)),
-                storedTime = if (tDuration != "0s" && tDuration.isNotEmpty() && tDuration != "null" && tDuration.isNotBlank()) service.currentTime else null,
+                storedTime = Timestamp.valueOf(service.currentTime),
                 duration = tDuration,
                 isEnabled = config.getTemplateValue(template, JTemplate.ENABLED).toBooleanStrictOrNull() ?: true,
                 maxRedeems = config.getTemplateValue(template, JTemplate.MAX_REDEEMS).toIntOrNull() ?: 1,
@@ -163,7 +164,7 @@ class GenerateSubCommand(private val plugin: RedeemX) : JSubCommand {
         val redeemCode = RedeemCode(
             code = uniqueCode,
             commands = service.parseToMapId(service.parseToId(config.getConfigValue(JConfig.Default.COMMANDS))),
-            storedTime = if (config.getConfigValue(JConfig.Default.CODE_EXPIRED_DURATION) != "0s") service.currentTime else null,
+            storedTime = Timestamp.valueOf(service.currentTime),
             duration = config.getConfigValue(JConfig.Default.CODE_EXPIRED_DURATION),
             isEnabled = config.getConfigValue(JConfig.Default.ENABLED).toBooleanStrictOrNull() ?: true,
             maxRedeems = config.getConfigValue(JConfig.Default.MAX_REDEEMS).toIntOrNull() ?: 1,

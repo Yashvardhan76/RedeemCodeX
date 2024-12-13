@@ -40,7 +40,7 @@ class CodeValidation(val plugin: RedeemX, private val userCode: String) {
 
     fun isCodeExpired(): Boolean {
         if (code == null) return false
-        return service.isExpired(userCode)
+        return service.isExpired(code)
     }
 
     fun isCorrectPin(pin: Int): Boolean {
