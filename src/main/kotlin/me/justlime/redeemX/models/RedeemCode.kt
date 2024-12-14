@@ -1,6 +1,5 @@
 package me.justlime.redeemX.models
 
-import me.justlime.redeemX.utilities.RedeemCodeService
 import java.sql.Timestamp
 
 data class RedeemCode(
@@ -19,26 +18,4 @@ data class RedeemCode(
     var templateLocked: Boolean,
     var storedCooldown: Timestamp,
     var cooldown: String //0s for disabled
-) {
-    companion object {
-        fun getEmpty(): RedeemCode {
-            return RedeemCode(
-                code = "",
-                commands = mutableMapOf(),
-                storedTime = RedeemCodeService().currentTime,
-                duration = "0s",
-                isEnabled = false,
-                maxRedeems = 1,
-                maxPlayers = 1,
-                permission = "",
-                pin = 0,
-                target = mutableListOf(),
-                usage = mutableMapOf(),
-                template = "",
-                templateLocked = false,
-                storedCooldown = RedeemCodeService().currentTime,
-                cooldown = "0s"
-            )
-        }
-    }
-}
+)
