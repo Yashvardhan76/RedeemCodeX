@@ -90,6 +90,9 @@ sealed interface JMessage {
             const val PERMISSION = "$MODIFY.permission"
             const val TARGET = "$MODIFY.target"
             const val COOLDOWN = "$MODIFY.cooldown"
+            const val TEMPLATE = "$MODIFY.template"
+            const val TEMPLATE_EMPTY = "$MODIFY.template-empty"
+            const val CODE_GENERATE_DIGIT = "$MODIFY.code_generate_digit"
             const val TEMPLATE_LOCKED = "$MODIFY.template_locked"
             const val DURATION = "$MODIFY.duration"
         }

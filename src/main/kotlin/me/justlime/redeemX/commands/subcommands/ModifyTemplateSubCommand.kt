@@ -23,13 +23,13 @@ class ModifyTemplateSubCommand(plugin: RedeemX): JSubCommand {
             }
 
             "max_redeems" -> {
-                template.maxRedeems = value.toIntOrNull() ?: 0
+                template.maxRedeems = value.toIntOrNull() ?: 1
                 if (template.maxRedeems < 1) return config.sendMsg(JMessage.Commands.ModifyTemplate.INVALID_VALUE, placeHolder) != Unit
                 config.sendMsg(JMessage.Commands.ModifyTemplate.MAX_REDEEMS, placeHolder)
             }
 
             "max_player" -> {
-                template.maxPlayers = value.toIntOrNull() ?: 0
+                template.maxPlayers = value.toIntOrNull() ?: 1
                 placeHolder.maxPlayers = value
                 if (template.maxPlayers < 1) return config.sendMsg(JMessage.Commands.ModifyTemplate.INVALID_VALUE, placeHolder) != Unit
                 codeRepo.getCodesByTemplate(template.name).forEach{

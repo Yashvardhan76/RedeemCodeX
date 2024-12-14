@@ -8,8 +8,8 @@ data class RedeemCode(
     var storedTime: Timestamp,
     var duration: String, //0s for disabled
     var isEnabled: Boolean,
-    var maxRedeems: Int,
-    var maxPlayers: Int,
+    var maxRedeems: Int, //0 for infinite Redemption limit
+    var maxPlayers: Int, //0 for infinite player limit
     var permission: String, //Blank for disabled
     var pin: Int, //0 for disabled
     var target: MutableList<String>, //Blank for disabled

@@ -155,6 +155,7 @@ class RedeemCodeRepository(plugin: RedeemX) {
 
     fun setTemplate(redeemCode: RedeemCode, template: String): Boolean {
         redeemCode.template = template
+        redeemCode.templateLocked = true
         if (template.isBlank()) redeemCode.template = ""
         return true
     }

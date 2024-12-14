@@ -51,6 +51,21 @@ class ModifySubCommand(private val plugin: RedeemX) : JSubCommand {
                     return false
                 }
             }
+
+            "template_locked" -> {
+                placeHolder.templateLocked = redeemCode.templateLocked.toString()
+                if(redeemCode.template.isBlank()) return config.sendMsg(JMessage.Commands.Modify.TEMPLATE_EMPTY,placeHolder) != Unit
+                codeRepo.setTemplateLocked(redeemCode, !redeemCode.templateLocked)
+                config.sendMsg(JMessage.Commands.Modify.TEMPLATE_LOCKED, placeHolder)
+                val success = codeRepo.upsertCode(redeemCode)
+                if (success) {
+                    config.sendMsg(JMessage.Commands.Modify.SUCCESS, placeHolder)
+                    return true
+                } else {
+                    config.sendMsg(JMessage.Commands.Modify.FAILED, placeHolder)
+                    return false
+                }
+            }
         }
 
         if (args.size < 4) return config.sendMsg(JMessage.Commands.Modify.INVALID_SYNTAX, placeHolder) != Unit
@@ -62,30 +77,52 @@ class ModifySubCommand(private val plugin: RedeemX) : JSubCommand {
             "duration" -> handleDurationModification(args, redeemCode, placeHolder)
 
             "max_redeems" -> {
-                placeHolder.maxRedeems
+                placeHolder.maxRedeems = value
                 if (!codeRepo.setMaxRedeems(redeemCode, value.toIntOrNull() ?: 1)) return config.sendMsg(JMessage.Commands.Modify.INVALID_VALUE, placeHolder) != Unit
-                else config.sendMsg(JMessage.Commands.Modify.MAX_REDEEMS, placeHolder)
+                codeRepo.setMaxRedeems(redeemCode, value.toIntOrNull() ?: 1)
+                config.sendMsg(JMessage.Commands.Modify.MAX_REDEEMS, placeHolder)
             }
 
             "max_player" -> {
                 placeHolder.maxPlayers = value
                 if (!codeRepo.setMaxPlayers(redeemCode, value.toIntOrNull() ?: 1)) return config.sendMsg(JMessage.Commands.Modify.INVALID_VALUE, placeHolder) != Unit
-                else config.sendMsg(JMessage.Commands.Modify.MAX_PLAYERS, placeHolder)
+                codeRepo.setMaxPlayers(redeemCode, value.toIntOrNull() ?: 1)
+                config.sendMsg(JMessage.Commands.Modify.MAX_PLAYERS, placeHolder)
             }
 
             "permission" -> {
                 placeHolder.permission = value
                 if (!codeRepo.setPermission(redeemCode, value)) return config.sendMsg(JMessage.Commands.Modify.INVALID_VALUE, placeHolder) != Unit
+                codeRepo.setPermission(redeemCode, value)
                 config.sendMsg(JMessage.Commands.Modify.PERMISSION, placeHolder)
             }
 
             "set_pin" -> {
                 placeHolder.pin = value
                 if (!codeRepo.setPin(redeemCode, value.toIntOrNull() ?: 0)) return config.sendMsg(JMessage.Commands.Modify.INVALID_VALUE, placeHolder) != Unit
+                codeRepo.setPin(redeemCode, value.toIntOrNull() ?: 0)
                 config.sendMsg(JMessage.Commands.Modify.PIN, placeHolder)
             }
 
             "target" -> if (!handleTargetModification(sender, args, redeemCode, placeHolder)) return false
+
+            "cooldown" ->{
+                placeHolder.cooldown = value
+                if (!codeRepo.setCooldown(redeemCode, value)) return config.sendMsg(JMessage.Commands.Modify.INVALID_VALUE, placeHolder) != Unit
+                codeRepo.setStoredCooldown(redeemCode)
+                codeRepo.setCooldown(redeemCode, value)
+                config.sendMsg(JMessage.Commands.Modify.COOLDOWN, placeHolder)
+            }
+
+            "template" -> {
+                placeHolder.template = value
+                if (!codeRepo.setTemplate(redeemCode, value)) return config.sendMsg(JMessage.Commands.Modify.INVALID_VALUE, placeHolder) != Unit
+                codeRepo.setTemplate(redeemCode, value)
+                //TODO implement template system
+                config.getTemplate()
+                codeRepo.setTemplateLocked(redeemCode,true)
+                config.sendMsg(JMessage.Commands.Modify.TEMPLATE, placeHolder)
+            }
 
             else -> {
                 config.sendMsg(JMessage.Commands.Modify.UNKNOWN_PROPERTY, placeHolder)
