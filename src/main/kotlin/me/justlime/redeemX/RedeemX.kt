@@ -15,7 +15,6 @@ class RedeemX : JavaPlugin() {
     lateinit var service: RedeemCodeService
     lateinit var configManager: ConfigManager
     lateinit var config: ConfigRepository
-    lateinit var codeRepository: ConfigRepository
     override fun onLoad() {
         logger.info("RedeemX Plugin has been loaded!")
     }
