@@ -2,7 +2,6 @@ package me.justlime.redeemX.models
 
 import me.justlime.redeemX.RedeemX
 import org.bukkit.command.CommandSender
-import java.time.format.DateTimeFormatter
 
 data class CodePlaceHolder(val sender: CommandSender,
                            val args: List<String> = emptyList(),
@@ -31,8 +30,7 @@ data class CodePlaceHolder(val sender: CommandSender,
         fun fetchByDB(plugin: RedeemX, code: String, sender: CommandSender): CodePlaceHolder {
             val redeemCode = plugin.redeemCodeDB.get(code) ?: return CodePlaceHolder(sender, code = code)
 
-            val dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
-            val durationSeconds = redeemCode.duration.orEmpty().removeSuffix("s").toIntOrNull() ?: 0
+            val durationSeconds = redeemCode.duration.removeSuffix("s").toIntOrNull() ?: 0
             val days = durationSeconds / 86400
             val hours = (durationSeconds % 86400) / 3600
             val minutes = (durationSeconds % 3600) / 60
@@ -49,21 +47,21 @@ data class CodePlaceHolder(val sender: CommandSender,
                 sender = sender,
                 code = code,
                 command = redeemCode.commands.toString().removeSurrounding("{", "}").trim(),
-                duration = if (redeemCode.duration.isNullOrEmpty()) "none" else formattedDuration,
+                duration = if (redeemCode.duration.isEmpty()) "none" else formattedDuration,
                 isEnabled = redeemCode.isEnabled.toString(),
                 maxRedeems = redeemCode.maxRedeems.toString(),
                 maxPlayers = redeemCode.maxPlayers.toString(),
-                permission = redeemCode.permission ?: "none",
+                permission = redeemCode.permission,
                 pin = if (redeemCode.pin <= 0) "none" else redeemCode.pin.toString(),
                 target = redeemCode.target.toString(),
                 usage = redeemCode.usage.toString(),
                 template = redeemCode.template,
                 templateLocked = redeemCode.templateLocked.toString(),
-                cooldown = redeemCode.cooldown ?: "none",
+                cooldown = redeemCode.cooldown,
                 isExpired = plugin.service.isExpired(redeemCode).toString(),
                 minLength = plugin.config.getConfigValue("code-minimum-digit"),
                 maxLength = plugin.config.getConfigValue("code-maximum-digit"),
-                codeGenerateDigit = plugin.config.getConfigValue("default.code-generate-digit")?: "none"
+                codeGenerateDigit = plugin.config.getConfigValue("default.code-generate-digit")
             )
         }
     }
