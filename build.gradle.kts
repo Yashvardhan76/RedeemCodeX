@@ -31,10 +31,10 @@ dependencies {
     compileOnly("org.xerial:sqlite-jdbc:3.47.0.0")
 
     // Java Discord API (JDA) for Discord integration
-    api("net.dv8tion:JDA:5.2.1")
+    compileOnly("net.dv8tion:JDA:5.2.1")
 
     // Gson for JSON serialization and deserialization
-    implementation("com.google.code.gson:gson:2.10.1")
+    compileOnly("com.google.code.gson:gson:2.10.1")
 }
 
 
@@ -63,7 +63,7 @@ tasks.processResources {
 tasks.register<Copy>("copyToServerPlugins") {
     dependsOn("shadowJar")  // Ensure shadowJar completes before copying
     from("$buildDir/libs/RedeemX-${project.version}-all.jar")  // Source jar file
-    into("D:/yashv/server1.21/plugins")      // Destination folder
+    into("E:/Minecraft/servers/Plugin-Maker/plugins")      // Destination folder
 }
 
 // Combined task to build and copy

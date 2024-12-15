@@ -1,8 +1,8 @@
 package me.justlime.redeemX.commands.subcommands
 
 import me.justlime.redeemX.RedeemX
-import me.justlime.redeemX.data.config.yml.JConfig
-import me.justlime.redeemX.data.config.yml.JMessage
+import me.justlime.redeemX.enums.JConfig
+import me.justlime.redeemX.enums.JMessage
 import me.justlime.redeemX.data.repository.ConfigRepository
 import me.justlime.redeemX.data.repository.RedeemCodeRepository
 import me.justlime.redeemX.models.CodePlaceHolder
@@ -33,7 +33,7 @@ class RenewSubCommand(val plugin: RedeemX): JSubCommand {
         }
 
         if (config.getConfigValue(JConfig.Renew.RESET_DELAY).equals("true", ignoreCase = true)){
-            codeRepo.setStoredCooldown(redeemCode)
+            codeRepo.setlastRedeemedTime(redeemCode)
             return false
         }
         if(config.getConfigValue(JConfig.Renew.CLEAR_REWARDS).equals("true",ignoreCase = true)){

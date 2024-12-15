@@ -20,23 +20,6 @@ class RedeemCodeService {
         return formatSecondsToDuration(adjustedSeconds)
     }
 
-    private fun parseDurationToSeconds(duration: String): Long {
-        val regex = """(\d+)(y|mo|d|h|m|s)""".toRegex()
-        val timeUnitToSeconds = mapOf(
-            "y" to 31536000L,
-            "mo" to 2592000L,
-            "d" to 86400L,
-            "h" to 3600L,
-            "m" to 60L,
-            "s" to 1L
-        )
-
-        return regex.findAll(duration).sumOf { match ->
-            val value = match.groupValues[1].toLongOrNull() ?: 0L
-            val unit = match.groupValues[2]
-            value * (timeUnitToSeconds[unit] ?: 0L)
-        }
-    }
 
     private fun formatSecondsToDuration(seconds: Long): String {
         val timeUnitToSeconds = mapOf(
@@ -61,6 +44,25 @@ class RedeemCodeService {
         return result.toString()
     }
 
+    private fun parseDurationToSeconds(duration: String): Long {
+        val regex = """(\d+)(y|mo|d|h|m|s)""".toRegex()
+        val timeUnitToSeconds = mapOf(
+            "y" to 31536000L,
+            "mo" to 2592000L,
+            "d" to 86400L,
+            "h" to 3600L,
+            "m" to 60L,
+            "s" to 1L
+        )
+
+        return regex.findAll(duration).sumOf { match ->
+            val value = match.groupValues[1].toLongOrNull() ?: 0L
+            val unit = match.groupValues[2]
+            value * (timeUnitToSeconds[unit] ?: 0L)
+        }
+    }
+
+
     fun isDurationValid(duration: String): Boolean {
         if (duration.isBlank()) return false
         if (duration.length<2) return false
@@ -75,7 +77,7 @@ class RedeemCodeService {
 
 
     fun isExpired(redeemCode: RedeemCode): Boolean {
-        val storedTime = redeemCode.storedTime
+        val storedTime = redeemCode.validFrom
         val duration = redeemCode.duration ?: return false
 
         val expiryTimeMillis = storedTime.time + parseDurationToSeconds(duration) * 1000

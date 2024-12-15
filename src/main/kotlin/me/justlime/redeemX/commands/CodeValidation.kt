@@ -3,6 +3,7 @@ package me.justlime.redeemX.commands
 import me.justlime.redeemX.RedeemX
 import me.justlime.redeemX.data.repository.RedeemCodeRepository
 import me.justlime.redeemX.models.RedeemCode
+import org.bukkit.command.CommandSender
 import org.bukkit.entity.Player
 
 class CodeValidation(val plugin: RedeemX, private val userCode: String) {
@@ -20,18 +21,19 @@ class CodeValidation(val plugin: RedeemX, private val userCode: String) {
         return true
     }
 
-    fun isReachedMaximumRedeem(): Boolean {
-        if (code.maxRedeems <= 0) return false
-        return code.usage.size >= code.maxRedeems
+    fun isReachedMaximumRedeem(sender: CommandSender): Boolean {
+        if (code.redemption <= 0) return false
+        if (code.usedBy[sender.name] == null) code.usedBy[sender.name] = 0
+        return code.usedBy[sender.name]!! >= code.redemption
     }
 
     fun isReachedMaximumPlayer(): Boolean {
-        if (code.maxPlayers <= 0) return false
-        return code.usage.size >= code.maxPlayers
+        if (code.limit <= 0) return false
+        return code.usedBy.size >= code.limit
     }
 
     fun isCodeEnabled(): Boolean {
-        return code.isEnabled
+        return code.enabled
     }
 
     fun requiredPermission(player: Player): Boolean{
@@ -55,7 +57,6 @@ class CodeValidation(val plugin: RedeemX, private val userCode: String) {
 
 
     fun isCorrectPin(pin: Int): Boolean {
-        if (isPinRequired()) return true
         return code.pin == pin
     }
 

@@ -2,6 +2,7 @@ package me.justlime.redeemX.utilities
 
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
+import me.justlime.redeemX.enums.JProperty
 import me.justlime.redeemX.models.RedeemCode
 import me.justlime.redeemX.models.RedeemCodeDatabase
 import java.sql.ResultSet
@@ -23,21 +24,21 @@ class Converter {
     // Maps a ResultSet row to a RedeemCode
     fun mapResultSetToRedeemCode(result: ResultSet): RedeemCode {
         return RedeemCode(
-            code = result.getString("code"),
-            commands = gson.fromJson(result.getString("commands"), object : TypeToken<MutableMap<Int, String>>() {}.type),
-            storedTime = result.getTimestampOrNull("storedTime") ?: RedeemCodeService().currentTime,
-            duration = result.getString("duration"),
-            isEnabled = result.getBoolean("isEnabled"),
-            maxRedeems = result.getInt("max_redeems"),
-            maxPlayers = result.getInt("max_player"),
-            permission = result.getString("permission"),
-            pin = result.getIntOrNull("pin")?: 0,
-            target = gson.fromJson(result.getString("target"), object : TypeToken<MutableList<String>>() {}.type),
-            usage = gson.fromJson(result.getString("usedBy"), object : TypeToken<MutableMap<String, Int>>() {}.type),
-            template = result.getString("template"),
-            templateLocked = result.getBoolean("templateLocked"),
-            storedCooldown = result.getTimestampOrNull("storedCooldown") ?: RedeemCodeService().currentTime,
-            cooldown = result.getString("cooldown")
+            code = result.getString(JProperty.CODE.property),
+            commands = gson.fromJson(result.getString(JProperty.COMMANDS.property), object : TypeToken<MutableMap<Int, String>>() {}.type),
+            validFrom = result.getTimestampOrNull(JProperty.VALID_FROM.property) ?: RedeemCodeService().currentTime,
+            duration = result.getString(JProperty.DURATION.property),
+            enabled = result.getBoolean(JProperty.ENABLED.property),
+            redemption = result.getInt(JProperty.REDEMPTION.property),
+            limit = result.getInt(JProperty.LIMIT.property),
+            permission = result.getString(JProperty.PERMISSION.property),
+            pin = result.getIntOrNull(JProperty.PIN.property)?: 0,
+            target = gson.fromJson(result.getString(JProperty.TARGET.property), object : TypeToken<MutableList<String>>() {}.type),
+            usedBy = gson.fromJson(result.getString(JProperty.USED_BY.property), object : TypeToken<MutableMap<String, Int>>() {}.type),
+            template = result.getString(JProperty.TEMPLATE.property),
+            locked = result.getBoolean(JProperty.LOCKED.property),
+            lastRedeemed = result.getTimestampOrNull(JProperty.LAST_REDEEMED.property) ?: RedeemCodeService().currentTime,
+            cooldown = result.getString(JProperty.COOLDOWN.property)
         )
     }
     // Maps a RedeemCode to a RedeemCodeDatabase object for storage in the database
@@ -45,18 +46,18 @@ class Converter {
         return RedeemCodeDatabase(
             code = redeemCode.code,
             commands = gson.toJson(redeemCode.commands),
-            storedTime = redeemCode.storedTime,
+            validFrom = redeemCode.validFrom,
             duration = redeemCode.duration,
-            isEnabled = redeemCode.isEnabled,
-            redemptionLimit = redeemCode.maxRedeems,
-            playerLimit = redeemCode.maxPlayers,
+            isEnabled = redeemCode.enabled,
+            redemption = redeemCode.redemption,
+            limit = redeemCode.limit,
             permission = redeemCode.permission,
             pin = redeemCode.pin,
             target = gson.toJson(redeemCode.target),
-            usedBy = gson.toJson(redeemCode.usage),
+            usedBy = gson.toJson(redeemCode.usedBy),
             template = redeemCode.template,
-            templateLocked = redeemCode.templateLocked,
-            storedCooldown = redeemCode.storedCooldown,
+            templateLocked = redeemCode.locked,
+            lastRedeemed = redeemCode.lastRedeemed,
             cooldown = redeemCode.cooldown
         )
     }

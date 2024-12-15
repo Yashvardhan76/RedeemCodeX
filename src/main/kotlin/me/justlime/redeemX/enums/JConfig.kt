@@ -1,20 +1,6 @@
-package me.justlime.redeemX.data.config.yml
+package me.justlime.redeemX.enums
 
 sealed interface JConfig {
-    data object Default : JConfig {
-        const val CODE_GENERATE_DIGIT = "code-generate-digit"
-        const val CODE_EXPIRED_DURATION = "code-expired-duration"
-        const val ENABLED = "enabled"
-        const val MAX_REDEEMS = "max_redeems"
-        const val MAX_PLAYERS_CAN_REDEEM = "max_players_can_redeem"
-        data object PERMISSION : JConfig{
-            const val REQUIRED = "required"
-            const val VALUE = "value"
-        }
-        const val PIN = "pin"
-        const val COMMANDS = "commands"
-    }
-
     data object Modify : JConfig {
         const val PERMISSION = "permission"
     }

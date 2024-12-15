@@ -1,3 +1,18 @@
+default:
+  enabled: true
+  digit: 5
+  commands:
+    - "say redeemed"
+  duration: "0s"
+  redemption: 1
+  limit: 1
+  permission:
+    required: false
+    value: "redeemx.use.{code}"   #default Permission Template
+  pin: -1                         #set -1 to disabled pin
+  messages:
+    - "&aThanks for redeeming!"
+
 template-1:
   code-generate-digit: 4
   commands:

@@ -3,6 +3,7 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/RedeemX.main.iml" filepath="$PROJECT_DIR$/.idea/modules/RedeemX.main.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/me.justlime.RedeemX.main.iml" filepath="$PROJECT_DIR$/.idea/modules/me.justlime.RedeemX.main.iml" />
     </modules>
   </component>
 </project>

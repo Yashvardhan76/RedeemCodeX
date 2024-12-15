@@ -1,197 +1,209 @@
 package me.justlime.redeemX.commands.subcommands
 
 import me.justlime.redeemX.RedeemX
-import me.justlime.redeemX.data.config.yml.JConfig
-import me.justlime.redeemX.data.config.yml.JMessage
-import me.justlime.redeemX.data.config.yml.JTemplate
 import me.justlime.redeemX.data.repository.ConfigRepository
 import me.justlime.redeemX.data.repository.RedeemCodeRepository
+import me.justlime.redeemX.enums.JMessage
 import me.justlime.redeemX.models.CodePlaceHolder
 import me.justlime.redeemX.models.RedeemCode
+import me.justlime.redeemX.models.RedeemTemplate
 import org.bukkit.command.CommandSender
 
 class GenerateSubCommand(private val plugin: RedeemX) : JSubCommand {
     private val service = plugin.service
     private val config = ConfigRepository(plugin)
     private val codeRepo = RedeemCodeRepository(plugin)
-    var generatedCodesList = mutableListOf<String>()
+    val generatedCodesList = mutableListOf<String>()
 
     override fun execute(sender: CommandSender, args: MutableList<String>): Boolean {
         val placeHolder = CodePlaceHolder(sender, args)
-        // Validate minimum arguments
 
-        if (args.size < 3) {
+        // Validate minimum arguments
+        if (args.size < 2) {
             config.sendMsg("commands.gen.invalid-syntax", placeHolder)
             return false
         }
 
-        val codeOrTemplate = args[1]
-        var amount = 1
-        if (args.size > 3 && args[1].equals("template", ignoreCase = true)) {
-            amount = args[3].toIntOrNull() ?: 1
-        }
+        val commandType = args[1].lowercase()
+        val amount = if (commandType == "template") {
+            args.getOrNull(3)?.toIntOrNull() ?: 1
+        } else args.getOrNull(2)?.toIntOrNull() ?: 1
 
-        if (args.size > 2 && !args[1].equals("template", ignoreCase = true)) {
-            placeHolder.code = args[2]
-            amount = args[2].toIntOrNull() ?: 1
-        }
-
-
-        while (amount > 0) {
-            when {
-                codeOrTemplate.equals("template", ignoreCase = true) -> handleTemplateGeneration(args, placeHolder)
-                codeOrTemplate.toIntOrNull() != null -> handleNumericGeneration(args, placeHolder)
-                codeOrTemplate.matches(Regex("^[A-Z0-9]{3,10}$", RegexOption.IGNORE_CASE)) -> createUniqueCode(args[1], placeHolder)
-                else -> config.sendMsg("commands.gen.invalid-code", placeHolder)
+        when {
+            amount == 1 -> {
+                val redeemCode = when {
+                    commandType == "template" -> handleTemplateGeneration(args, placeHolder)
+                    commandType.matches(Regex("\\d+")) -> handleNumericGeneration(commandType.toInt(), placeHolder)
+                    commandType.matches(Regex("^[A-Z0-9]{3,10}$", RegexOption.IGNORE_CASE)) -> handleCodeCreation(commandType, placeHolder)
+                    else -> {
+                        config.sendMsg("commands.gen.invalid-code", placeHolder)
+                        return false
+                    }
+                }
+                if (redeemCode != null) {
+                    upsertRedeemCode(redeemCode, placeHolder)
+                    return true
+                }
+                config.sendMsg("commands.gen.error", placeHolder)
+                return false
             }
-            amount--
+
+            amount > 1 -> {
+                val codes = mutableListOf<RedeemCode>()
+                repeat(amount) {
+                    val redeemCode = when {
+                        commandType == "template" -> handleTemplateGeneration(args, placeHolder)
+                        commandType.matches(Regex("\\d+")) -> handleNumericGeneration(args[1].toInt(), placeHolder)
+                        commandType.matches(Regex("^[A-Z0-9]{3,10}$", RegexOption.IGNORE_CASE)) -> handleCodeCreation(args[1], placeHolder)
+                        else -> {
+                            config.sendMsg("commands.gen.invalid-code", placeHolder)
+                            return@repeat
+                        }
+                    }
+                    if (redeemCode != null) codes.add(redeemCode)
+                    else return@repeat config.sendMsg("commands.gen.error", placeHolder)
+                    if (commandType.matches(Regex("^[A-Z0-9]{3,10}$", RegexOption.IGNORE_CASE))) return@repeat
+
+                }
+                upsertRedeemCodes(codes, placeHolder)
+
+            }
+
+            else -> {
+                config.sendMsg("commands.gen.invalid-amount", placeHolder)
+            }
         }
         return true
     }
 
-    private fun generateUniqueCode(length: Int, maxAttempts: Int = 1024, callback: (String?) -> Unit) {
-        val charset = ('A'..'Z') + ('0'..'9')
-        repeat(maxAttempts) {
-            val code = (1..length).map { charset.random() }.joinToString("")
-            if (plugin.redeemCodeDB.get(code) == null) {
-                callback(code)
-                return
-            }
-        }
-        callback(null) // Failed to generate unique code within maxAttempts
-    }
-
-    private fun handleTemplateGeneration(args: MutableList<String>, placeHolder: CodePlaceHolder) {
-        if (args.size < 3) {
+    private fun handleTemplateGeneration(args: MutableList<String>, placeHolder: CodePlaceHolder): RedeemCode? {
+        val templateName = args.getOrNull(2)?.lowercase() ?: run {
             config.sendMsg("commands.gen.invalid-syntax", placeHolder)
-            return
+            return null
         }
+        val template = config.getTemplate(templateName) ?: return null
+        val (minLength, maxLength) = loadCodeLengthRange(placeHolder)
 
-        val template = args[2].lowercase()
-
-        placeHolder.template = template
-
-        // Fetch template data
-        val tCommands = config.getTemplateValue(template, JTemplate.COMMANDS)
-        val tDuration = config.getTemplateValue(template, JTemplate.DURATION)
-        val tPermissionRequired = config.getTemplateValue(template, JTemplate.PERMISSION_REQUIRED).equals("true", ignoreCase = true)
-        val tPermissionValue = config.getTemplateValue(template, JTemplate.PERMISSION_VALUE)
-
-        val minLength = config.getConfigValue("code-minimum-digit").toIntOrNull() ?: 3
-        val maxLength = config.getConfigValue("code-maximum-digit").toIntOrNull() ?: 10
-        val codeGenerateDigit = config.getTemplateValue(template, JTemplate.CODE_GENERATE_DIGIT).toIntOrNull() ?: 5
-        placeHolder.apply {
-            this.template = template
-            this.minLength = minLength.toString()
-            this.maxLength = maxLength.toString()
-            this.codeGenerateDigit = codeGenerateDigit.toString()
-        }
-
-        if (codeGenerateDigit !in minLength..maxLength) {
+        if (template.codeGenerateDigit !in minLength..maxLength) {
             config.sendMsg("commands.gen.invalid-range", placeHolder)
-            return
+            return null
         }
 
-        generateUniqueCode(codeGenerateDigit) { uniqueCode ->
+        return generateCode(template.codeGenerateDigit) { uniqueCode ->
             if (uniqueCode == null) {
                 config.sendMsg("commands.gen.length-error", placeHolder)
-                return@generateUniqueCode
+                return@generateCode null
             }
-            val redeemCode = RedeemCode(
-                code = uniqueCode,
-                commands = service.parseToMapId(service.parseToId(tCommands)),
-                storedTime = service.currentTime,
-                duration = tDuration,
-                isEnabled = config.getTemplateValue(template, JTemplate.ENABLED).toBooleanStrictOrNull() ?: true,
-                maxRedeems = config.getTemplateValue(template, JTemplate.MAX_REDEEMS).toIntOrNull() ?: 1,
-                maxPlayers = config.getTemplateValue(template, JTemplate.MAX_PLAYERS).toIntOrNull() ?: 1,
-                permission = if (tPermissionRequired) tPermissionValue.replace("{code}", uniqueCode) else "",
-                pin = config.getTemplateValue(template, JTemplate.PIN).toIntOrNull() ?: -1,
-                template = template,
-                templateLocked = true,
-                usage = mutableMapOf(),
-                target = mutableListOf(),
-                storedCooldown = service.currentTime, //TODO
-                cooldown = "0s",
-            )
-
-            try {
-                val success = codeRepo.upsertCode(redeemCode)
-                if (!success) {
-                    config.sendMsg("commands.gen.failed", placeHolder)
-                    return@generateUniqueCode
-                }
-                config.sendMsg("commands.gen.success", placeHolder)
-                generatedCodesList.add(uniqueCode)
-
-            } catch (e: Exception) {
-                config.sendMsg("commands.gen.error", placeHolder)
-                e.printStackTrace()
-            }
-
+            val redeemCode = createRedeemCode(uniqueCode, template)
+            return@generateCode redeemCode
         }
     }
 
-    private fun handleNumericGeneration(args: MutableList<String>, placeHolder: CodePlaceHolder) {
-        val codeGenerateDigit = args[1].toIntOrNull() ?: return
+    private fun handleNumericGeneration(codeLength: Int, placeHolder: CodePlaceHolder): RedeemCode? {
+        val (minLength, maxLength) = loadCodeLengthRange(placeHolder)
 
-        val minLength = config.getConfigValue("code-minimum-digit").toIntOrNull() ?: 3
-        val maxLength = config.getConfigValue("code-maximum-digit").toIntOrNull() ?: 10
-        placeHolder.codeGenerateDigit = codeGenerateDigit.toString()
-        if (codeGenerateDigit !in minLength..maxLength) {
+        if (codeLength !in minLength..maxLength) {
             config.sendMsg("commands.gen.invalid-range", placeHolder)
-            return
+            return null
         }
 
-        generateUniqueCode(codeGenerateDigit) { uniqueCode ->
+        return generateCode(codeLength) { uniqueCode ->
             if (uniqueCode == null) {
                 config.sendMsg("commands.gen.length-error", placeHolder)
-                return@generateUniqueCode
+                return@generateCode null
             }
-            createUniqueCode(uniqueCode, placeHolder)
-            generatedCodesList.add(uniqueCode)
+            handleCodeCreation(uniqueCode, placeHolder)
         }
     }
 
-    private fun createUniqueCode(uniqueCode: String, placeHolder: CodePlaceHolder) {
-        placeHolder.code = uniqueCode
-        if (codeRepo.getCode(uniqueCode) != null) {
+    private fun handleCodeCreation(code: String, placeHolder: CodePlaceHolder): RedeemCode? {
+        placeHolder.code = code
+
+        if (codeRepo.getCode(code) != null) {
             config.sendMsg(JMessage.Commands.Gen.CODE_ALREADY_EXIST, placeHolder)
-            return
+            return null
         }
-        val configPermissionRequired = config.getConfigValue(JConfig.Default.PERMISSION.REQUIRED).equals("true",ignoreCase = true)
-        val redeemCode = RedeemCode(
-            code = uniqueCode,
-            commands = service.parseToMapId(service.parseToId(config.getConfigValue(JConfig.Default.COMMANDS))),
-            storedTime = service.currentTime,
-            duration = config.getConfigValue(JConfig.Default.CODE_EXPIRED_DURATION),
-            isEnabled = config.getConfigValue(JConfig.Default.ENABLED).toBooleanStrictOrNull() ?: true,
-            maxRedeems = config.getConfigValue(JConfig.Default.MAX_REDEEMS).toIntOrNull() ?: 1,
-            maxPlayers = config.getConfigValue(JConfig.Default.MAX_PLAYERS_CAN_REDEEM).toIntOrNull() ?: 1,
-            permission = if (configPermissionRequired) config.getConfigValue(JConfig.Default.PERMISSION.VALUE) else "",
-            pin = config.getConfigValue("default.pin").toIntOrNull() ?: 0,
-            template = "",
-            templateLocked = false,
-            usage = mutableMapOf(),
-            target = mutableListOf(),
-            storedCooldown = service.currentTime,
-            cooldown = config.getConfigValue("cooldown")
-        )
 
+        val defaultConfig = loadDefaultConfig()
+        val redeemCode = createRedeemCode(code, defaultConfig)
+        return redeemCode
+    }
+
+    private fun loadDefaultConfig(): RedeemTemplate {
+        return config.getTemplate() ?: RedeemTemplate(
+            name = "default", commands = mutableMapOf(), duration = "0s", cooldown = "0s", maxRedeems = 1, maxPlayers = 1, templateLocked = false, permissionRequired = false, permissionValue = "", codeGenerateDigit = 5, message = mutableListOf()
+        ).also {
+            plugin.logger.warning("Default template configuration missing; fallback defaults applied.")
+        }
+    }
+
+    private fun loadCodeLengthRange(placeHolder: CodePlaceHolder): Pair<Int, Int> {
+        val minLength = config.getConfigValue("code-minimum-digit").toIntOrNull() ?: 3
+        val maxLength = config.getConfigValue("code-maximum-digit").toIntOrNull() ?: 10
+        placeHolder.minLength = minLength.toString()
+        placeHolder.maxLength = maxLength.toString()
+        return minLength to maxLength
+    }
+
+    private fun createRedeemCode(code: String, redeemTemplate: RedeemTemplate): RedeemCode {
+        return RedeemCode(
+            code = code,
+            template = redeemTemplate.name,
+            commands = redeemTemplate.commands,
+            validFrom = service.currentTime,
+            duration = redeemTemplate.duration,
+            enabled = true,
+            redemption = redeemTemplate.maxRedeems,
+            limit = redeemTemplate.maxPlayers,
+            permission = if (redeemTemplate.permissionRequired) redeemTemplate.permissionValue.replace("{code}", code) else "",
+            pin = redeemTemplate.pin,
+            locked = redeemTemplate.templateLocked,
+            usedBy = mutableMapOf(),
+            target = mutableListOf(),
+            lastRedeemed = service.currentTime,
+            cooldown = "0s"
+        )
+    }
+
+    private fun upsertRedeemCode(redeemCode: RedeemCode, placeHolder: CodePlaceHolder) {
         try {
             val success = codeRepo.upsertCode(redeemCode)
-            if (!success) {
+            if (success) {
+                config.sendMsg("commands.gen.success", placeHolder)
+                generatedCodesList.add(redeemCode.code)
+            } else {
                 config.sendMsg("commands.gen.failed", placeHolder)
-                return
             }
-            config.sendMsg("commands.gen.success", placeHolder)
-            generatedCodesList.add(uniqueCode)
-
         } catch (e: Exception) {
             config.sendMsg("commands.gen.error", placeHolder)
             e.printStackTrace()
         }
+    }
 
+    private fun upsertRedeemCodes(redeemCodes: List<RedeemCode>, placeHolder: CodePlaceHolder) {
+        try {
+            val success = codeRepo.upsertCodes(redeemCodes)
+            if (success) {
+                config.sendMsg("commands.gen.success", placeHolder)
+                generatedCodesList.addAll(redeemCodes.map { it.code })
+            } else {
+                config.sendMsg("commands.gen.failed", placeHolder)
+            }
+        } catch (e: Exception) {
+            config.sendMsg("commands.gen.error", placeHolder)
+            e.printStackTrace()
+        }
+    }
+
+    private fun generateCode(length: Int, callback: (String?) -> RedeemCode?): RedeemCode? {
+        val charset = ('A'..'Z') + ('0'..'9')
+        repeat(1024) { // Max attempts
+            val code = (1..length).map { charset.random() }.joinToString("")
+            if (plugin.redeemCodeDB.get(code) == null) {
+                return callback(code)
+            }
+        }
+        return callback(null) // Failed to generate a unique code
     }
 
 }

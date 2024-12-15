@@ -1,9 +1,9 @@
 package me.justlime.redeemX.commands
 
 import me.justlime.redeemX.RedeemX
-import me.justlime.redeemX.data.config.yml.JMessage
 import me.justlime.redeemX.data.repository.ConfigRepository
 import me.justlime.redeemX.data.repository.RedeemCodeRepository
+import me.justlime.redeemX.enums.JMessage
 import me.justlime.redeemX.models.CodePlaceHolder
 import org.bukkit.command.Command
 import org.bukkit.command.CommandExecutor
@@ -34,7 +34,7 @@ class RedeemCommand(private val plugin: RedeemX) : CommandExecutor, TabCompleter
             return true
         }
 
-        if (codeValidation.isReachedMaximumRedeem()) {
+        if (codeValidation.isReachedMaximumRedeem(sender)) {
             config.sendMsg(JMessage.Redeemed.MAX_REDEMPTIONS, placeHolder)
             return true
         }
@@ -73,34 +73,33 @@ class RedeemCommand(private val plugin: RedeemX) : CommandExecutor, TabCompleter
 
             val pin = args[1].toIntOrNull() ?: 0
             placeHolder.pin = pin.toString()
-            if (codeValidation.isCorrectPin(pin)) {
+            if (!codeValidation.isCorrectPin(pin)) {
                 config.sendMsg(JMessage.Redeemed.INVALID_PIN, placeHolder)
                 return true
             }
         }
 
-        // Execute commands
-        val console = plugin.server.consoleSender
+        // MAIN STUFF
         val code = codeValidation.code
-        code.commands.values.forEach {
-            plugin.server.dispatchCommand(console, it)
-        }
-
-        code.usage[sender.name] = (code.usage[sender.name]?.plus(1)) ?: 1
-        codeRepo.setStoredCooldown(code)
+        code.usedBy[sender.name] = (code.usedBy[sender.name]?.plus(1)) ?: 1
+        codeRepo.setlastRedeemedTime(code)
         val success = codeRepo.upsertCode(code)
         if (!success) {
             config.sendMsg(JMessage.Redeemed.FAILED, placeHolder)
-            return true
+            return false
         }
+        val console = plugin.server.consoleSender
+        code.commands.values.forEach {
+            plugin.server.dispatchCommand(console, it)
+        }
+            config.sendTemplateMsg(code.template, placeHolder)
 
-        // Success message
         config.sendMsg(JMessage.Redeemed.SUCCESS, placeHolder)
         return true
+
     }
 
-    override fun onTabComplete(
-        sender: CommandSender, command: Command, label: String, args: Array<out String>
+    override fun onTabComplete(sender: CommandSender, command: Command, label: String, args: Array<out String>
     ): List<String> {
         return emptyList()
     }
