@@ -137,8 +137,8 @@ class RedeemCodeRepository(plugin: RedeemX) {
         return true
     }
 
-    fun setUsage(redeemCode: RedeemCode, usage: MutableMap<String, Int>): Boolean {
-        //TODO
+    fun clearUsage(redeemCode: RedeemCode): Boolean {
+        redeemCode.usedBy = mutableMapOf()
         return true
     }
 

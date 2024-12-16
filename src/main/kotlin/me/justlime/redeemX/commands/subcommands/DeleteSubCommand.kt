@@ -1,9 +1,10 @@
 package me.justlime.redeemX.commands.subcommands
 
 import me.justlime.redeemX.RedeemX
-import me.justlime.redeemX.enums.JMessage
 import me.justlime.redeemX.data.repository.ConfigRepository
 import me.justlime.redeemX.data.repository.RedeemCodeRepository
+import me.justlime.redeemX.enums.JMessage
+import me.justlime.redeemX.enums.JSubCommand
 import me.justlime.redeemX.models.CodePlaceHolder
 import org.bukkit.command.CommandSender
 

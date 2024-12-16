@@ -21,11 +21,12 @@ sealed interface JConfig {
     }
 
     data object Renew : JConfig {
-        const val RESET_EXPIRED = "reset-expired"
-        const val RESET_DELAY = "reset-delay"
-        const val CLEAR_USAGE = "clear-usage"
-        const val CLEAR_REWARDS = "clear-rewards"
-        const val CLEAR_COMMANDS = "clear-commands"
+        private const val RENEW = "renew"
+        const val RESET_EXPIRED = "$RENEW.reset-expired"
+        const val RESET_DELAY = "$RENEW.reset-delay"
+        const val CLEAR_USAGE = "$RENEW.clear-usage"
+        const val CLEAR_REWARDS = "$RENEW.clear-rewards"
+        const val CLEAR_COMMANDS = "$RENEW.clear-commands"
         const val REMOVE_PERMISSION_REQUIRED = "remove-permission-required"
     }
 

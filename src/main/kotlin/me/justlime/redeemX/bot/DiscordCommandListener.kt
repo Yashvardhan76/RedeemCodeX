@@ -54,7 +54,7 @@ class DiscordCommandListener(val plugin: RedeemX) : ListenerAdapter() {
         val choices = when (event.name) {
             "generate" -> {
                 if (focusedOption.name == "template") {
-                    config.getEntireTemplates()
+                    config.getAllTemplates()
                         .asSequence() // Use sequence for efficiency with larger data sets.
                         .filter { it.name.isNotBlank() && it.name.startsWith(focusedOption.value, ignoreCase = true) }
                         .map { Command.Choice(it.name, it.name) }

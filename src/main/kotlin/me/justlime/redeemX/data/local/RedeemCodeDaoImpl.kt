@@ -8,7 +8,7 @@ import java.sql.PreparedStatement
 import java.sql.Statement
 
 class RedeemCodeDaoImpl(private val dbManager: DatabaseManager) : RedeemCodeDao {
-    lateinit var getFetchCodes: List<String>
+    private lateinit var getFetchCodes: List<String>
     private var getTargetList: MutableMap<String, MutableList<String>> = mutableMapOf() //<code,list of targets>
     private val converter = Converter()
 
@@ -147,7 +147,6 @@ class RedeemCodeDaoImpl(private val dbManager: DatabaseManager) : RedeemCodeDao 
         fetch()
         return isSuccess
     }
-
 
     override fun get(code: String): RedeemCode? {
         return fetchRedeemCodes("SELECT * FROM redeem_codes WHERE code = ?", code).firstOrNull()

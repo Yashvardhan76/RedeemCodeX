@@ -1,9 +1,12 @@
 package me.justlime.redeemX.commands.subcommands
 
 import me.justlime.redeemX.RedeemX
+import me.justlime.redeemX.commands.CommandManager
+import me.justlime.redeemX.data.config.JFiles
+import me.justlime.redeemX.data.repository.ConfigRepository
 import me.justlime.redeemX.enums.JMessage
 import me.justlime.redeemX.enums.JPermission
-import me.justlime.redeemX.data.repository.ConfigRepository
+import me.justlime.redeemX.enums.JSubCommand
 import me.justlime.redeemX.models.CodePlaceHolder
 import org.bukkit.command.CommandSender
 
@@ -18,8 +21,10 @@ class ReloadSubCommand(val plugin: RedeemX) : JSubCommand {
             return false
         }
         try {
-            config.reloadConfig()
-            db.fetch()
+            config.reloadConfig(JFiles.CONFIG)
+            config.reloadConfig(JFiles.MESSAGES)
+            config.reloadConfig(JFiles.TEMPLATE)
+            CommandManager(plugin).tabCompleterList.fetched()
             config.sendMsg(JMessage.Commands.Reload.SUCCESS, placeHolder)
             return true
 

@@ -223,6 +223,7 @@ class ConfigImpl(private val plugin: RedeemX) : ConfigDao {
         }
     }
 
+
     override fun saveAllConfigs(): Boolean {
         try {
             JFiles.entries.forEach { configManager.saveConfig(it) }

@@ -13,12 +13,11 @@ auto-remove-permission-when-redeemed: false
 
 
 #Set cooldown for using /redeem
-
 cooldown: 3s
 
 renew:
   reset-expired: true
-  reset-delay: true #TODO
+  reset-delay: true
   clear-usage: true
   clear-rewards: false #TODO
   clear-commands: false
@@ -28,7 +27,7 @@ bot:
   enabled: false
   token: "YOUR_BOT_TOKEN_HERE"
 
-maximum-pool-size: 5  # Adjust the pool size as necessary for your server load
+maximum-pool-size: 1  # Adjust the pool size as necessary for your server load
 
 #Don't change it unless you know what you are doing
 database-version: 1.0

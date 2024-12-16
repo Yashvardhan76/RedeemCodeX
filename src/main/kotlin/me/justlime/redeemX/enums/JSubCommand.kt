@@ -1,4 +1,4 @@
-package me.justlime.redeemX.commands.subcommands
+package me.justlime.redeemX.enums
 
 import org.bukkit.command.CommandSender
 

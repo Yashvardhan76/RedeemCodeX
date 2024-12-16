@@ -17,9 +17,3 @@ add auto-delete onRedeemed
 /rcx modify_template - cmd error and setup left
 
 /rcx gen template <template> - CODE Placeholder error
-
-if duration empty set 0s as default instead empty or null
-if duration is <= 0s do skip code validation
-duration set storedTime not updating, remove not working setting to 0s
-
-max-redeem placeholder

@@ -4,6 +4,7 @@ import me.justlime.redeemX.RedeemX
 import me.justlime.redeemX.data.repository.ConfigRepository
 import me.justlime.redeemX.data.repository.RedeemCodeRepository
 import me.justlime.redeemX.enums.JMessage
+import me.justlime.redeemX.enums.JSubCommand
 import me.justlime.redeemX.enums.JTemplate
 import me.justlime.redeemX.enums.Tab
 import me.justlime.redeemX.models.CodePlaceHolder
@@ -56,24 +57,24 @@ class ModifySubCommand(private val plugin: RedeemX) : JSubCommand {
                     return false
                 }
             }
-
             Tab.Modify.SetPermission.value -> {
-               if (redeemCode.permission.isNotBlank()) {
-                   codeRepo.setPermission(redeemCode,"")
-                   placeHolder.permission = redeemCode.permission
-                   config.sendMsg(JMessage.Commands.Modify.UNSET_PERMISSION, placeHolder)
-               }
-                else {
-                   val permission = config.getTemplateValue("default", JTemplate.PERMISSION_VALUE.property)
-                   codeRepo.setPermission(redeemCode, permission)
-                   placeHolder.permission = redeemCode.permission
-                   config.sendMsg(JMessage.Commands.Modify.SET_PERMISSION, placeHolder)
-               }
-                val success = codeRepo.upsertCode(redeemCode)
-                if (!success) {
-                    config.sendMsg(JMessage.Commands.Modify.FAILED, placeHolder)
+                if (args.size== 3) {
+                    if (redeemCode.permission.isNotBlank()) {
+                        codeRepo.setPermission(redeemCode, "")
+                        placeHolder.permission = redeemCode.permission
+                        config.sendMsg(JMessage.Commands.Modify.UNSET_PERMISSION, placeHolder)
+                    } else {
+                        val permission = config.getTemplateValue("default", JTemplate.PERMISSION_VALUE.property)
+                        codeRepo.setPermission(redeemCode, permission)
+                        placeHolder.permission = redeemCode.permission
+                        config.sendMsg(JMessage.Commands.Modify.SET_PERMISSION, placeHolder)
+                    }
+                    val success = codeRepo.upsertCode(redeemCode)
+                    if (!success) {
+                        config.sendMsg(JMessage.Commands.Modify.FAILED, placeHolder)
+                    }
+                    return success
                 }
-                return success
             }
 
             Tab.Modify.Locked.value -> {
@@ -198,7 +199,7 @@ class ModifySubCommand(private val plugin: RedeemX) : JSubCommand {
             }
 
             Tab.Modify.SetRedemption.value -> {
-                placeHolder.maxRedeems = value
+                placeHolder.redemption = value
                 if (!codeRepo.setMaxRedeems(
                         redeemCode,
                         value.toIntOrNull() ?: 1
@@ -209,7 +210,7 @@ class ModifySubCommand(private val plugin: RedeemX) : JSubCommand {
             }
 
             Tab.Modify.SetPlayerLimit.value -> {
-                placeHolder.maxPlayers = value
+                placeHolder.playerLimit = value
                 if (!codeRepo.setMaxPlayers(
                         redeemCode,
                         value.toIntOrNull() ?: 1

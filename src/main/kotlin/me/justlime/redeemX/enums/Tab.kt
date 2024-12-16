@@ -12,7 +12,8 @@ sealed interface Tab {
         Reload("reload"),
         Usage("usage"), //TODO
         GUI("gui"), //TODO
-        CONFIRM("CONFIRM")
+        CONFIRM("CONFIRM"),
+        Renew("renew")
     }
 
     // Modify Commands

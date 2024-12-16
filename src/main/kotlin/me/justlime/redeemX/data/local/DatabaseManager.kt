@@ -3,6 +3,7 @@ package me.justlime.redeemX.data.local
 import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource
 import me.justlime.redeemX.RedeemX
+import me.justlime.redeemX.data.repository.ConfigRepository
 import java.io.File
 import java.sql.Connection
 import java.sql.SQLException
@@ -10,12 +11,13 @@ import java.sql.SQLException
 class DatabaseManager(val plugin: RedeemX) {
 
     private val databaseFile = File(plugin.dataFolder, "redeemx.db")
+    private val configRepo = ConfigRepository(plugin)
     private val hikariDataSource: HikariDataSource
 
     init {
         val config = HikariConfig().apply {
             jdbcUrl = "jdbc:sqlite:${databaseFile.absolutePath}"
-            maximumPoolSize = 5  // Adjust the pool size as necessary for your server load
+            maximumPoolSize = configRepo.getConfigValue("maximum-pool-size").toIntOrNull() ?: 5
             isAutoCommit = true
             connectionTestQuery = "SELECT 1"
         }

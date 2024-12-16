@@ -1,9 +1,11 @@
 package me.justlime.redeemX.commands.subcommands
 
 import me.justlime.redeemX.RedeemX
+import me.justlime.redeemX.commands.CommandManager
 import me.justlime.redeemX.data.repository.ConfigRepository
 import me.justlime.redeemX.data.repository.RedeemCodeRepository
 import me.justlime.redeemX.enums.JMessage
+import me.justlime.redeemX.enums.JSubCommand
 import me.justlime.redeemX.models.CodePlaceHolder
 import me.justlime.redeemX.models.RedeemCode
 import me.justlime.redeemX.models.RedeemTemplate
@@ -170,6 +172,7 @@ class GenerateSubCommand(private val plugin: RedeemX) : JSubCommand {
             val success = codeRepo.upsertCode(redeemCode)
             if (success) {
                 config.sendMsg("commands.gen.success", placeHolder)
+                CommandManager(plugin).tabCompleterList.fetched()
                 generatedCodesList.add(redeemCode.code)
             } else {
                 config.sendMsg("commands.gen.failed", placeHolder)
@@ -185,6 +188,7 @@ class GenerateSubCommand(private val plugin: RedeemX) : JSubCommand {
             val success = codeRepo.upsertCodes(redeemCodes)
             if (success) {
                 config.sendMsg("commands.gen.success", placeHolder)
+                CommandManager(plugin).tabCompleterList.fetched()
                 generatedCodesList.addAll(redeemCodes.map { it.code })
             } else {
                 config.sendMsg("commands.gen.failed", placeHolder)

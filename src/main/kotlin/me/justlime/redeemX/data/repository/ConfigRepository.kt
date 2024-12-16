@@ -56,7 +56,7 @@ class ConfigRepository(val plugin: RedeemX) {
         return config.getString("$template.$property",JFiles.TEMPLATE,false) ?: ""
     }
 
-    fun getEntireTemplates(): List<RedeemTemplate> {
+    fun getAllTemplates(): List<RedeemTemplate> {
         return config.getEntireTemplates()
     }
 
@@ -85,8 +85,8 @@ class ConfigRepository(val plugin: RedeemX) {
         return config.deleteEntireTemplates()
     }
 
-    fun reloadConfig(): Boolean {
-        return config.reloadAllConfigs()
+    fun reloadConfig(jFiles: JFiles): Boolean {
+        return config.reloadConfig(jFiles)
     }
 
 }

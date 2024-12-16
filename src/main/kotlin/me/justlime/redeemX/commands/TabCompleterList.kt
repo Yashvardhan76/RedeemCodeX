@@ -20,12 +20,11 @@ class TabCompleterList(val plugin: RedeemX) : TabCompleter {
     private val amount = listOf(Tab.Generate.Amount.value)
     private val genSubcommands = Tab.Generate.entries.filter { it != Tab.Generate.Amount }.map { it.value }
     private var cachedCodes = codeRepo.getCachedCode()
-    private var cachedTemplate = config.getEntireTemplates().map { it.name }
+    private var cachedTemplate = config.getAllTemplates().map { it.name }
 
     override fun onTabComplete(sender: CommandSender, command: Command, label: String, args: Array<out String>
     ): MutableList<String>? {
         val completions: MutableList<String> = mutableListOf()
-
         // Handle argument completions based on argument size
         when (args.size) {
             1 -> {
@@ -38,6 +37,7 @@ class TabCompleterList(val plugin: RedeemX) : TabCompleter {
                     Tab.GeneralActions.Modify.value -> completions.addAll(cachedCodes)
                     Tab.GeneralActions.ModifyTemplate.value -> completions.addAll(cachedCodes)
                     Tab.GeneralActions.Delete.value -> completions.addAll(cachedCodes)
+                    Tab.GeneralActions.Renew.value -> completions.addAll(cachedCodes)
                 }
             }
 
@@ -55,5 +55,10 @@ class TabCompleterList(val plugin: RedeemX) : TabCompleter {
 
         // Filter and return completions that match the current input (case-insensitive)
         return completions.filter { it.startsWith(args.lastOrNull() ?: "", ignoreCase = true) }.sortedBy { it.lowercase() }.toMutableList()
+    }
+
+    fun fetched(){
+        cachedCodes = codeRepo.getCachedCode()
+        cachedTemplate = config.getAllTemplates().map { it.name }
     }
 }

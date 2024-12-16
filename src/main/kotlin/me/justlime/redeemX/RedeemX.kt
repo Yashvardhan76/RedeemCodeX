@@ -20,9 +20,9 @@ class RedeemX : JavaPlugin() {
     }
     override fun onEnable() {
         if (!this.dataFolder.exists()) this.dataFolder.mkdir()
+        configManager = ConfigManager(this)
         redeemCodeDB = DatabaseManager.getInstance(this).getRedeemCodeDao()
         redeemCodeDB.fetch()
-        configManager = ConfigManager(this)
         config = ConfigRepository(this)
         service = RedeemCodeService()
         bot = DiscordBot(this)
