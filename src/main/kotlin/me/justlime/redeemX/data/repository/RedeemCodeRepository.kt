@@ -84,8 +84,7 @@ class RedeemCodeRepository(plugin: RedeemX) {
     }
 
     fun setPermission(redeemCode: RedeemCode, permission: String): Boolean {
-        redeemCode.permission = permission
-        if (permission.isBlank()) redeemCode.permission = ""
+        redeemCode.permission = permission.replace("{code}",redeemCode.code)
         return true
     }
 

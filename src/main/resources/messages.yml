@@ -118,6 +118,7 @@ commands:
     max_redeems: "&aMax Redeems for code &e{code} &ahas been set to &e{max_redeems}&a."
     max_players: "&aMax Players for code &e{code} &ahas been set to &e{max_players}&a."
     permission: "&aPermission for code &e{code} &ahas been set to &e{permission}&a."
+    permission-disabled: "&a Permission for code &e{code} &ahas been disabled"
     enabled: "&aEnabled status for code &e{code} &ahas been set to &e{enabled}&a."
     commandId: "{commandId}"
     command:
