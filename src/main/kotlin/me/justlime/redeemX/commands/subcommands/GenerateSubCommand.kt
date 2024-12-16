@@ -171,6 +171,7 @@ class GenerateSubCommand(private val plugin: RedeemX) : JSubCommand {
         try {
             val success = codeRepo.upsertCode(redeemCode)
             if (success) {
+                placeHolder.code = redeemCode.code
                 config.sendMsg("commands.gen.success", placeHolder)
                 CommandManager(plugin).tabCompleterList.fetched()
                 generatedCodesList.add(redeemCode.code)
@@ -187,6 +188,7 @@ class GenerateSubCommand(private val plugin: RedeemX) : JSubCommand {
         try {
             val success = codeRepo.upsertCodes(redeemCodes)
             if (success) {
+                placeHolder.code = redeemCodes.joinToString(" ") { it.code }
                 config.sendMsg("commands.gen.success", placeHolder)
                 CommandManager(plugin).tabCompleterList.fetched()
                 generatedCodesList.addAll(redeemCodes.map { it.code })

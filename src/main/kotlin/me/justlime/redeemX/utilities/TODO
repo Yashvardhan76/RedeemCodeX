@@ -3,6 +3,11 @@ Add Usage Command e.g. /rcx usage <code> [property]
 Add GUI command e.g. /rcx gui
 add pagination system for cachedCode Limit of 600
 
+TOP Priority
+Add Rewards
+Setup Cooldowns
+ADD Other Plugin Placeholder Support
+
 TODO GEN
 add BulkCustomNameSupport Like CODE1 CODE2 CODE@AZ6F
 add direct property to option

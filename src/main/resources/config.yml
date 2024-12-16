@@ -23,6 +23,12 @@ renew:
   clear-commands: false
   remove-permission-required: false
 
+#TODO
+logger:
+  generate: true  #Log The Code with created Time
+  modify: false   #Log The Code with Modified Time
+  delete: true #Log The Code with deleted Time
+
 bot:
   enabled: false
   token: "YOUR_BOT_TOKEN_HERE"
