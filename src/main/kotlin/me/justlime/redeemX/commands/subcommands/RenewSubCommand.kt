@@ -34,8 +34,7 @@ class RenewSubCommand(val plugin: RedeemX): JSubCommand {
         }
 
         if (config.getConfigValue(JConfig.Renew.RESET_DELAY).equals("true", ignoreCase = true)){
-            TODO()
-            codeRepo.setLastRedeemedTime(redeemCode, "")
+            codeRepo.clearRedeemedTime(redeemCode)
         }
         if(config.getConfigValue(JConfig.Renew.CLEAR_REWARDS).equals("true",ignoreCase = true)){
             //TODO

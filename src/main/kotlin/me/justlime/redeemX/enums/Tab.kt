@@ -3,7 +3,7 @@ package me.justlime.redeemX.enums
 sealed interface Tab {
     // General Actions
     enum class GeneralActions(val value: String) {
-        Gen("create"),
+        Gen("gen"),
         Modify("modify"),
         ModifyTemplate("modifyTemplate"),
         Delete("delete"),
@@ -11,7 +11,7 @@ sealed interface Tab {
         Info("info"),
         Reload("reload"),
         Usage("usage"), //TODO
-        GUI("gui"), //TODO
+//        GUI("gui"), //TODO
         CONFIRM("CONFIRM"),
         Renew("renew")
     }
@@ -20,8 +20,8 @@ sealed interface Tab {
     enum class Modify(val value: String) {
         Enabled("enabled"), // Can be toggled
         Locked("locked"),   // Can be toggled
-        SetRedemption("setRedemptionLimit"),
-        SetPlayerLimit("setPlayerLimit"),
+        SetRedemption("redemption"),
+        SetPlayerLimit("playerLimit"),
 
         SetCommand("setCommand"),
         AddCommand("addCommand"),
@@ -33,8 +33,8 @@ sealed interface Tab {
         AddDuration("addDuration"),
         RemoveDuration("removeDuration"),
 
-        SetPermission("setPermission"), // Can be toggled
-        SetPin("setPin"),         // Can be toggled
+        SetPermission("permission"), // Can be toggled
+        SetPin("pin"),         // Can be toggled
 
         SetTarget("setTarget"),
         AddTarget("addTarget"),
@@ -42,7 +42,7 @@ sealed interface Tab {
         ListTarget("listTarget"),
 
 
-        SetTemplate("setTemplate"),    // Can be toggled
+        SetTemplate("template"),    // Can be toggled
         Cooldown("cooldown")
     }
 

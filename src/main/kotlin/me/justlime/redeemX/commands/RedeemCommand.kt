@@ -5,6 +5,7 @@ import me.justlime.redeemX.data.repository.ConfigRepository
 import me.justlime.redeemX.data.repository.RedeemCodeRepository
 import me.justlime.redeemX.enums.JMessage
 import me.justlime.redeemX.models.CodePlaceHolder
+import me.justlime.redeemX.utilities.RedeemCodeService
 import org.bukkit.command.Command
 import org.bukkit.command.CommandExecutor
 import org.bukkit.command.CommandSender
@@ -27,8 +28,8 @@ class RedeemCommand(private val plugin: RedeemX) : CommandExecutor, TabCompleter
             config.sendMsg(JMessage.Redeemed.USAGE, placeHolder)
             return true
         }
-        placeHolder.code = args[0]
-        val codeValidation = CodeValidation(plugin, args[0],sender)
+        placeHolder.code = args[0].uppercase()
+        val codeValidation = CodeValidation(plugin, args[0].uppercase(), sender)
         if (!codeValidation.isCodeExist()) {
             config.sendMsg(JMessage.Redeemed.INVALID_CODE, placeHolder)
             return true
@@ -65,11 +66,6 @@ class RedeemCommand(private val plugin: RedeemX) : CommandExecutor, TabCompleter
             return true
         }
 
-        if(codeValidation.isCooldown()){
-            config.sendMsg(JMessage.Redeemed.ON_COOLDOWN, placeHolder)
-            return true
-        }
-
         if (codeValidation.isPinRequired()) {
             if (args.size < 2) {
                 config.sendMsg(JMessage.Redeemed.MISSING_PIN, placeHolder)
@@ -84,10 +80,16 @@ class RedeemCommand(private val plugin: RedeemX) : CommandExecutor, TabCompleter
             }
         }
 
-        // MAIN STUFF
         val code = codeValidation.code
+        val service = RedeemCodeService()
+        if (codeValidation.isCooldown(placeHolder)) {
+            config.sendMsg(JMessage.Redeemed.ON_COOLDOWN, placeHolder)
+            return true
+        }
+
+        // MAIN STUFF
         code.usedBy[sender.name] = (code.usedBy[sender.name]?.plus(1)) ?: 1
-        codeRepo.setLastRedeemedTime(code,sender.name)
+        codeRepo.setLastRedeemedTime(code, sender.name)
         val success = codeRepo.upsertCode(code)
         if (!success) {
             config.sendMsg(JMessage.Redeemed.FAILED, placeHolder)
@@ -97,7 +99,8 @@ class RedeemCommand(private val plugin: RedeemX) : CommandExecutor, TabCompleter
         code.commands.values.forEach {
             plugin.server.dispatchCommand(console, it)
         }
-            config.sendTemplateMsg(code.template, placeHolder)
+        config.sendTemplateMsg(code.template, placeHolder)
+
 
         config.sendMsg(JMessage.Redeemed.SUCCESS, placeHolder)
         return true

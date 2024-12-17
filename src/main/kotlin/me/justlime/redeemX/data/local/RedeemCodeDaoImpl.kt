@@ -30,10 +30,15 @@ class RedeemCodeDaoImpl(private val dbManager: DatabaseManager) : RedeemCodeDao 
         getFetchCodes = getCachedCodes()
     }
 
+    override fun getCachedTargetList(): MutableMap<String, MutableList<String>> {
+        return getTargetList
+    }
+
     private fun fetchTargetList() {
         getEntireCodes().forEach { state ->
             getTargetList[state.code] = state.target
         }
+        return
     }
 
     override fun createTable() {
@@ -91,10 +96,10 @@ class RedeemCodeDaoImpl(private val dbManager: DatabaseManager) : RedeemCodeDao 
                 statement.setInt(9, mappedData.redemption)
                 statement.setInt(10, mappedData.limit)
                 statement.setString(11, mappedData.usedBy)
-                statement.setTimestamp(13, mappedData.validFrom)
-                statement.setString(14, mappedData.lastRedeemed)
-                statement.setString(15, mappedData.target)
-                statement.setString(16, mappedData.commands)
+                statement.setTimestamp(12, mappedData.validFrom)
+                statement.setString(13, mappedData.lastRedeemed)
+                statement.setString(14, mappedData.target)
+                statement.setString(15, mappedData.commands)
 
                 isSuccess = statement.executeUpdate() > 0
             }
@@ -132,10 +137,10 @@ class RedeemCodeDaoImpl(private val dbManager: DatabaseManager) : RedeemCodeDao 
                     statement.setInt(9, mappedData.redemption)
                     statement.setInt(10, mappedData.limit)
                     statement.setString(11, mappedData.usedBy)
-                    statement.setTimestamp(13, mappedData.validFrom)
-                    statement.setString(14, mappedData.lastRedeemed)
-                    statement.setString(15, mappedData.target)
-                    statement.setString(16, mappedData.commands)
+                    statement.setTimestamp(12, mappedData.validFrom)
+                    statement.setString(13, mappedData.lastRedeemed)
+                    statement.setString(14, mappedData.target)
+                    statement.setString(15, mappedData.commands)
                     statement.addBatch()
                 }
 

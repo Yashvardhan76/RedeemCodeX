@@ -8,7 +8,10 @@ import java.time.Instant
 import java.util.regex.Pattern
 
 class RedeemCodeService {
-    val currentTime: Timestamp = Timestamp.from(Instant.now())
+
+    fun getCurrentTime(): Timestamp {
+        return Timestamp.from(Instant.now())
+    }
 
     fun adjustDuration(existingDuration: String, adjustmentDuration: String, isAdding: Boolean): String {
         val totalExistingSeconds = parseDurationToSeconds(existingDuration)
@@ -20,15 +23,9 @@ class RedeemCodeService {
         return formatSecondsToDuration(adjustedSeconds)
     }
 
-
-    private fun formatSecondsToDuration(seconds: Long): String {
+    fun formatSecondsToDuration(seconds: Long): String {
         val timeUnitToSeconds = mapOf(
-            "y" to 31536000L,
-            "mo" to 2592000L,
-            "d" to 86400L,
-            "h" to 3600L,
-            "m" to 60L,
-            "s" to 1L
+            "y" to 31536000L, "mo" to 2592000L, "d" to 86400L, "h" to 3600L, "m" to 60L, "s" to 1L
         )
         val sortedUnits = timeUnitToSeconds.entries.sortedByDescending { it.value }
         val result = StringBuilder()
@@ -44,15 +41,10 @@ class RedeemCodeService {
         return result.toString()
     }
 
-    private fun parseDurationToSeconds(duration: String): Long {
+    fun parseDurationToSeconds(duration: String): Long {
         val regex = """(\d+)(y|mo|d|h|m|s)""".toRegex()
         val timeUnitToSeconds = mapOf(
-            "y" to 31536000L,
-            "mo" to 2592000L,
-            "d" to 86400L,
-            "h" to 3600L,
-            "m" to 60L,
-            "s" to 1L
+            "y" to 31536000L, "mo" to 2592000L, "d" to 86400L, "h" to 3600L, "m" to 60L, "s" to 1L
         )
 
         return regex.findAll(duration).sumOf { match ->
@@ -62,10 +54,9 @@ class RedeemCodeService {
         }
     }
 
-
     fun isDurationValid(duration: String): Boolean {
         if (duration.isBlank()) return false
-        if (duration.length<2) return false
+        if (duration.length < 2) return false
 
         // Define valid units dynamically
         val validUnits = listOf("y", "mo", "d", "h", "m", "s").joinToString("|")
@@ -75,27 +66,25 @@ class RedeemCodeService {
         return pattern.matches(duration) && Regex("""\d+""").findAll(duration).all { it.value.toInt() > 0 }
     }
 
-
     fun isExpired(redeemCode: RedeemCode): Boolean {
         val time = redeemCode.validFrom
         val duration = redeemCode.duration
 
         val expiryTimeMillis = time.time + parseDurationToSeconds(duration) * 1000
-        return System.currentTimeMillis() > expiryTimeMillis
+        return getCurrentTime().time > expiryTimeMillis  //29oct > 30oct (false)
     }
 
-    fun onCoolDown(cooldown: String, lastRedeemed: MutableMap<String, Timestamp>, player: String): Boolean{
+    fun onCoolDown(cooldown: String, lastRedeemed: MutableMap<String, Timestamp>, player: String): Boolean {
         val cooldownTimeMillis = parseDurationToSeconds(cooldown) * 1000
-        val lastRedeemedTimeMillis = lastRedeemed[player]?.time ?: 0
-        return System.currentTimeMillis() < lastRedeemedTimeMillis + cooldownTimeMillis
+        val lastRedeemedTimeMillis = lastRedeemed[player]?.time ?: 0L
+        val cooldownTime = lastRedeemedTimeMillis + cooldownTimeMillis
+        return getCurrentTime().time < cooldownTime //29oct < 28oct + 2d = 30oct (true)
+
     }
 
     fun parseToId(string: String?): String {
         if (string.isNullOrBlank()) return ""
-        return string.trim()
-            .split(",")
-            .mapIndexed { index, entry -> "$index: ${entry.trim()}" }
-            .joinToString(", ")
+        return string.trim().split(",").mapIndexed { index, entry -> "$index: ${entry.trim()}" }.joinToString(", ")
     }
 
     fun parseToMapId(string: String?, separator: String = ":"): MutableMap<Int, String> {
@@ -143,7 +132,7 @@ class RedeemCodeService {
     }
 
     fun applyPlaceholders(message: String, placeholder: CodePlaceHolder): String {
-        val placeholders: Map<String,String> = mapOf(
+        val placeholders: Map<String, String> = mapOf(
             "code" to placeholder.code,
             "sender" to placeholder.sender.name,
             "args" to placeholder.args.joinToString(" "),
@@ -163,7 +152,8 @@ class RedeemCodeService {
             "expired" to placeholder.isExpired,
             "minLength" to placeholder.minLength,
             "maxLength" to placeholder.maxLength,
-            "code_generate_digit" to placeholder.codeGenerateDigit
+            "code_generate_digit" to placeholder.codeGenerateDigit,
+            "property" to placeholder.property
         )
         return placeholders.entries.fold(message) { msg, (placeholder, value) ->
             msg.replace("{$placeholder}", value)

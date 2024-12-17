@@ -2,6 +2,7 @@ package me.justlime.redeemX.commands
 
 import me.justlime.redeemX.RedeemX
 import me.justlime.redeemX.data.repository.RedeemCodeRepository
+import me.justlime.redeemX.models.CodePlaceHolder
 import me.justlime.redeemX.models.RedeemCode
 import org.bukkit.command.CommandSender
 import org.bukkit.entity.Player
@@ -23,13 +24,12 @@ class CodeValidation(val plugin: RedeemX, private val userCode: String,private v
 
     fun isReachedMaximumRedeem(sender: CommandSender): Boolean {
         if (code.redemption <= 0) return false
-        if (code.usedBy[sender.name] == null) code.usedBy[sender.name] = 0
-        return code.usedBy[sender.name]!! >= code.redemption
+        return (code.usedBy[sender.name] ?: 0) > code.redemption
     }
 
     fun isReachedMaximumPlayer(): Boolean {
         if (code.limit <= 0) return false
-        return code.usedBy.size >= code.limit
+        return code.usedBy.size > code.limit
     }
 
     fun isCodeEnabled(): Boolean {
@@ -69,8 +69,17 @@ class CodeValidation(val plugin: RedeemX, private val userCode: String,private v
         return code.target.contains(player)
     }
 
-    fun isCooldown(): Boolean{
-        if (service.onCoolDown(code.cooldown,code.lastRedeemed,sender.name)) return true
+    fun isCooldown(placeHolder: CodePlaceHolder): Boolean{
+        if (service.onCoolDown(code.cooldown,code.lastRedeemed,sender.name)) {
+            val lastRedeemedTime = code.lastRedeemed[sender.name]?.time
+            if (lastRedeemedTime != null) {
+                val currentTimeMillis = service.getCurrentTime().time
+                val elapsedTimeInSeconds = (lastRedeemedTime / 1000) + service.parseDurationToSeconds(code.cooldown) - (currentTimeMillis / 1000)
+                val duration = service.adjustDuration(service.formatSecondsToDuration(elapsedTimeInSeconds),"0s", true)
+                placeHolder.cooldown = duration
+            }
+            return true
+        }
         repo.setLastRedeemedTime(code,sender.name)
         return false
     }

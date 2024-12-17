@@ -152,7 +152,7 @@ class GenerateSubCommand(private val plugin: RedeemX) : JSubCommand {
             code = code,
             template = redeemTemplate.name,
             commands = redeemTemplate.commands,
-            validFrom = service.currentTime,
+            validFrom = service.getCurrentTime(),
             duration = redeemTemplate.duration,
             enabled = true,
             redemption = redeemTemplate.maxRedeems,

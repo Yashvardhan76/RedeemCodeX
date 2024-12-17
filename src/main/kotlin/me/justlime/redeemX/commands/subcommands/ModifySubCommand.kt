@@ -18,8 +18,7 @@ class ModifySubCommand(private val plugin: RedeemX) : JSubCommand {
 
     override fun execute(sender: CommandSender, args: MutableList<String>): Boolean {
         if (args.size < 3) return config.sendMsg(
-            JMessage.Commands.Modify.INVALID_SYNTAX,
-            CodePlaceHolder(sender, args)
+            JMessage.Commands.Modify.INVALID_SYNTAX, CodePlaceHolder(sender, args)
         ) != Unit
         val redeemCode = codeRepo.getCode(args[1])
         val placeHolder = CodePlaceHolder.fetchByDB(plugin, args[1], sender)
@@ -30,6 +29,7 @@ class ModifySubCommand(private val plugin: RedeemX) : JSubCommand {
         }
         val console = plugin.server.consoleSender
         val property = args[2]
+        placeHolder.property = property
         when (property) {
             Tab.GeneralActions.Usage.value -> {
                 //TODO Remove Usages From Modify and Shift to usage subcommand
@@ -57,8 +57,9 @@ class ModifySubCommand(private val plugin: RedeemX) : JSubCommand {
                     return false
                 }
             }
+
             Tab.Modify.SetPermission.value -> {
-                if (args.size== 3) {
+                if (args.size == 3) {
                     if (redeemCode.permission.isNotBlank()) {
                         codeRepo.setPermission(redeemCode, "")
                         placeHolder.permission = redeemCode.permission
@@ -80,8 +81,7 @@ class ModifySubCommand(private val plugin: RedeemX) : JSubCommand {
             Tab.Modify.Locked.value -> {
                 placeHolder.templateLocked = redeemCode.locked.toString()
                 if (redeemCode.template.isBlank()) return config.sendMsg(
-                    JMessage.Commands.Modify.TEMPLATE_EMPTY,
-                    placeHolder
+                    JMessage.Commands.Modify.TEMPLATE_EMPTY, placeHolder
                 ) != Unit
                 codeRepo.setTemplateLocked(redeemCode, !redeemCode.locked)
                 config.sendMsg(JMessage.Commands.Modify.TEMPLATE_LOCKED, placeHolder)
@@ -139,13 +139,11 @@ class ModifySubCommand(private val plugin: RedeemX) : JSubCommand {
         }
 
         if (args.size < 4) return config.sendMsg(JMessage.Commands.Modify.INVALID_SYNTAX, placeHolder) != Unit
-        placeHolder.property = property
         val value = args[3]
         when (property) {
             Tab.Modify.SetTemplate.value -> {
                 val template = config.getTemplate(value) ?: return config.sendMsg(
-                    JMessage.Commands.Modify.TEMPLATE_INVALID,
-                    placeHolder
+                    JMessage.Commands.Modify.TEMPLATE_INVALID, placeHolder
                 ) != Unit
                 placeHolder.template = value
                 codeRepo.setTemplate(redeemCode, template)
@@ -156,8 +154,7 @@ class ModifySubCommand(private val plugin: RedeemX) : JSubCommand {
             Tab.Modify.SetDuration.value -> {
                 if (args.size < 4) return config.sendMsg(JMessage.Commands.Modify.INVALID_SYNTAX, placeHolder) != Unit
                 if (!codeRepo.setDuration(
-                        redeemCode,
-                        value
+                        redeemCode, value
                     )
                 ) return config.sendMsg(JMessage.Commands.Modify.INVALID_VALUE, placeHolder) != Unit
                 placeHolder.duration = redeemCode.duration
@@ -167,8 +164,7 @@ class ModifySubCommand(private val plugin: RedeemX) : JSubCommand {
             Tab.Modify.AddDuration.value -> {
                 if (args.size < 4) return config.sendMsg(JMessage.Commands.Modify.INVALID_SYNTAX, placeHolder) != Unit
                 if (!codeRepo.addDuration(
-                        redeemCode,
-                        value
+                        redeemCode, value
                     )
                 ) return config.sendMsg(JMessage.Commands.Modify.INVALID_VALUE, placeHolder) != Unit
                 placeHolder.duration = redeemCode.duration
@@ -178,8 +174,7 @@ class ModifySubCommand(private val plugin: RedeemX) : JSubCommand {
             Tab.Modify.RemoveDuration.value -> {
                 if (args.size < 4) return config.sendMsg(JMessage.Commands.Modify.INVALID_SYNTAX, placeHolder) != Unit
                 if (!codeRepo.removeDuration(
-                        redeemCode,
-                        value
+                        redeemCode, value
                     )
                 ) return config.sendMsg(JMessage.Commands.Modify.INVALID_VALUE, placeHolder) != Unit
                 placeHolder.duration = redeemCode.duration
@@ -188,21 +183,14 @@ class ModifySubCommand(private val plugin: RedeemX) : JSubCommand {
 
             Tab.Modify.Cooldown.value -> {
                 placeHolder.cooldown = value
-                if (!codeRepo.setCooldown(
-                        redeemCode,
-                        value
-                    )
-                ) return config.sendMsg(JMessage.Commands.Modify.INVALID_VALUE, placeHolder) != Unit
-                codeRepo.setLastRedeemedTime(redeemCode, sender.name)
-                codeRepo.setCooldown(redeemCode, value)
+                if (!codeRepo.setCooldown(redeemCode, value)) return config.sendMsg(JMessage.Commands.Modify.INVALID_VALUE, placeHolder) != Unit
                 config.sendMsg(JMessage.Commands.Modify.COOLDOWN, placeHolder)
             }
 
             Tab.Modify.SetRedemption.value -> {
                 placeHolder.redemption = value
                 if (!codeRepo.setMaxRedeems(
-                        redeemCode,
-                        value.toIntOrNull() ?: 1
+                        redeemCode, value.toIntOrNull() ?: 1
                     )
                 ) return config.sendMsg(JMessage.Commands.Modify.INVALID_VALUE, placeHolder) != Unit
                 codeRepo.setMaxRedeems(redeemCode, value.toIntOrNull() ?: 1)
@@ -212,8 +200,7 @@ class ModifySubCommand(private val plugin: RedeemX) : JSubCommand {
             Tab.Modify.SetPlayerLimit.value -> {
                 placeHolder.playerLimit = value
                 if (!codeRepo.setMaxPlayers(
-                        redeemCode,
-                        value.toIntOrNull() ?: 1
+                        redeemCode, value.toIntOrNull() ?: 1
                     )
                 ) return config.sendMsg(JMessage.Commands.Modify.INVALID_VALUE, placeHolder) != Unit
                 codeRepo.setMaxPlayers(redeemCode, value.toIntOrNull() ?: 1)
@@ -230,8 +217,7 @@ class ModifySubCommand(private val plugin: RedeemX) : JSubCommand {
             Tab.Modify.SetPin.value -> {
                 placeHolder.pin = value
                 if (!codeRepo.setPin(
-                        redeemCode,
-                        value.toIntOrNull() ?: 0
+                        redeemCode, value.toIntOrNull() ?: 0
                     )
                 ) return config.sendMsg(JMessage.Commands.Modify.INVALID_VALUE, placeHolder) != Unit
                 codeRepo.setPin(redeemCode, value.toIntOrNull() ?: 0)
@@ -263,8 +249,7 @@ class ModifySubCommand(private val plugin: RedeemX) : JSubCommand {
                 val commands = args.drop(3).joinToString(" ")
                 placeHolder.command = commands
                 if (commands.isBlank()) return config.sendMsg(
-                    JMessage.Commands.Modify.INVALID_COMMAND,
-                    placeHolder
+                    JMessage.Commands.Modify.INVALID_COMMAND, placeHolder
                 ) != Unit
                 codeRepo.setCommands(redeemCode, service.parseToMapId(service.parseToId(commands)))
                 sender.sendMessage(placeHolder.command)
@@ -275,8 +260,7 @@ class ModifySubCommand(private val plugin: RedeemX) : JSubCommand {
                 val command = args.drop(3).joinToString(" ")
                 placeHolder.command = command
                 if (command.isBlank()) return config.sendMsg(
-                    JMessage.Commands.Modify.INVALID_COMMAND,
-                    placeHolder
+                    JMessage.Commands.Modify.INVALID_COMMAND, placeHolder
                 ) != Unit
                 codeRepo.addCommand(redeemCode, command)
                 config.sendMsg(JMessage.Commands.Modify.SUCCESS, placeHolder)
@@ -285,8 +269,7 @@ class ModifySubCommand(private val plugin: RedeemX) : JSubCommand {
             Tab.Modify.RemoveCommand.value -> {
                 placeHolder.commandId = value
                 val id = value.toIntOrNull() ?: return config.sendMsg(
-                    JMessage.Commands.Modify.INVALID_ID,
-                    placeHolder
+                    JMessage.Commands.Modify.INVALID_ID, placeHolder
                 ) != Unit
                 codeRepo.removeCommand(redeemCode, id)
                 config.sendMsg(JMessage.Commands.Modify.SUCCESS, placeHolder)

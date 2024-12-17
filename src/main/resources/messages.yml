@@ -24,6 +24,17 @@ redeemed-message:
     actionbar: "&cUnexpected error. Please contact support."
     title: "&cFailed"
 
+  on-cooldown:
+    chat:
+      - "&cCode &e{code} &cis currently on cooldown. Please try again later."
+    title:
+      main: "&cOn Cooldown"
+      sub: "&ePlease wait {cooldown} before trying again."
+      fade-in: 10
+      stay: 70
+      fade-out: 10
+    actionbar: "&cCode &e{code} &cis on cooldown. Please wait {cooldown}."
+
   invalid-code:
     chat: "&cInvalid code. Please try again or contact support."
     actionbar: "&cCode not found. Please enter a valid code."
@@ -96,6 +107,18 @@ commands:
     unknown-property: "&cUnknown property &e{property}&c. Please check the documentation."
     invalid-command: "&cInvalid command provided. Please provide a valid command."
     invalid-id: "&cInvalid ID provided. Please provide a valid ID."
+
+
+    template_empty: "&cThe template for code &e{code}&c is empty. Please set a template first."
+    template_invalid: "&cInvalid template &e{template}&c provided."
+    template_set: "&aTemplate for code &e{code} &ahas been set to &e{template}&a."
+    template_unset: "&aTemplate for code &e{code} &ahas been unset."
+    template_locked: "&aTemplate locked status for code &e{code} &ahas been set to &e{templateLocked}&a."
+    unset_permission: "&aPermission for code &e{code} &ahas been unset."
+    set_permission: "&aPermission for code &e{code} &ahas been set to &e{permission}&a."
+    cooldown: "&aCode &e{code} &ahas been set to &e{cooldown}&a"
+
+
     list:
       - "&a&l{code} Properties"
       - "&aEnabled: &b{enabled}"

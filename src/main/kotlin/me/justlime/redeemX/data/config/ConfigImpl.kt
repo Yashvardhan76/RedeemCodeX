@@ -65,6 +65,10 @@ class ConfigImpl(private val plugin: RedeemX) : ConfigDao {
         // Fetch different types of messages
         var message = getFormattedMessage("$key.chat", placeHolder).removeSurrounding("[", "]")
         if (message.isEmpty()) message = getFormattedMessage(key, placeHolder).removeSurrounding("[", "]")
+        if(message.isEmpty()) message = getFormattedTemplateMessage(key, placeHolder).removeSurrounding("[", "]")
+        if (message.isEmpty()) message = getFormattedTemplateMessage(key, placeHolder).removeSurrounding("[", "]")
+        if (message.isEmpty()) return
+
         val chatMessage: MutableList<String> = message.split(",").toMutableList()
         val actionBarMessage = getFormattedMessage("$key.actionbar", placeHolder)
         val titleMessage = getFormattedMessage("$key.title.main", placeHolder)
@@ -93,42 +97,10 @@ class ConfigImpl(private val plugin: RedeemX) : ConfigDao {
                 chatMessage.forEach { placeHolder.sender.sendMessage(it.trim()) }
             }
         }
-
     }
 
     override fun sendTemplateMsg(template: String, placeHolder: CodePlaceHolder) {
-        var message = getFormattedTemplateMessage("$template.messages.chat", placeHolder).removeSurrounding("[", "]")
-        if (message.isEmpty()) message = getFormattedTemplateMessage(template, placeHolder).removeSurrounding("[", "]")
-        val chatMessage: MutableList<String> = message.split(",").toMutableList()
-        val actionBarMessage = getFormattedTemplateMessage("$template.messages.actionbar", placeHolder)
-        val titleMessage = getFormattedTemplateMessage("$template.messages.title.main", placeHolder)
-        val subtitleMessage = getFormattedTemplateMessage("$template.messages.title.sub", placeHolder)
-        val fadeIn = getFormattedTemplateMessage("$template.messages.title.fadeIn", placeHolder).toIntOrNull() ?: DEFAULT_FADE_IN
-        val stay = getFormattedTemplateMessage("$template.messages.title.stay", placeHolder).toIntOrNull() ?: DEFAULT_STAY
-        val fadeOut = getFormattedTemplateMessage("$template.messages.title.fadeOut", placeHolder).toIntOrNull() ?: DEFAULT_FADE_OUT
-
-        // Send action bar message
-
-
-        actionBarMessage.let {
-            if (placeHolder.sender is Player && actionBarMessage.isNotEmpty()) {
-                placeHolder.sender.spigot().sendMessage(ChatMessageType.ACTION_BAR, TextComponent(it))
-            }
-        }
-
-        // Send title message
-        titleMessage.let {
-            if (placeHolder.sender is Player && it.isNotEmpty()) {
-                placeHolder.sender.sendTitle(it, subtitleMessage, fadeIn, stay, fadeOut)
-            }
-        }
-
-        // Send chat message
-        chatMessage.let {
-            if (chatMessage.isNotEmpty()) {
-                chatMessage.forEach { placeHolder.sender.sendMessage(it.trim()) }
-            }
-        }
+        sendMsg("$template.messages",placeHolder)
     }
 
     override fun getTemplate(template: String): RedeemTemplate {

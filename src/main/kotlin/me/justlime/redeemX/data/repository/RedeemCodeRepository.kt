@@ -23,6 +23,10 @@ class RedeemCodeRepository(plugin: RedeemX) {
         return redeemCodeDao.getCachedCodes()
     }
 
+    fun getCachedTargetList(): MutableMap<String, MutableList<String>> {
+        return redeemCodeDao.getCachedTargetList()
+    }
+
     //TODO This Performance is currently heavy
     fun getCodesByProperty(property: JProperty, value: String): List<RedeemCode> {
         return redeemCodeDao.getByProperty(property, value)
@@ -83,7 +87,7 @@ class RedeemCodeRepository(plugin: RedeemX) {
             permission = template.permissionValue
             permission = if (template.permissionRequired) template.permissionValue else ""
             pin = template.pin
-            validFrom = service.currentTime
+            validFrom = service.getCurrentTime()
             duration = template.duration
             usedBy = mutableMapOf()
             target = mutableListOf()
@@ -150,7 +154,7 @@ class RedeemCodeRepository(plugin: RedeemX) {
     }
 
     fun setStoredTime(redeemCode: RedeemCode): Boolean {
-        redeemCode.validFrom = service.currentTime
+        redeemCode.validFrom = service.getCurrentTime()
         return true
     }
 
@@ -180,11 +184,17 @@ class RedeemCodeRepository(plugin: RedeemX) {
     }
 
     fun setLastRedeemedTime(redeemCode: RedeemCode,player: String): Boolean {
-        redeemCode.lastRedeemed[player] = service.currentTime
+        redeemCode.lastRedeemed[player] = service.getCurrentTime()
         return true
     }
 
+    fun clearRedeemedTime(redeemCode: RedeemCode){
+        redeemCode.lastRedeemed.clear()
+    }
+
     fun setCooldown(redeemCode: RedeemCode, cooldown: String): Boolean {
+        //check is coldown string valid
+        if (!service.isDurationValid(cooldown)) return false
         redeemCode.cooldown = cooldown
         if (cooldown.isBlank()) redeemCode.cooldown = ""
         return true
