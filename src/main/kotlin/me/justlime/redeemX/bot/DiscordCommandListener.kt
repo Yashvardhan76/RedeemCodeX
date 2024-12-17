@@ -12,7 +12,9 @@ import net.dv8tion.jda.api.hooks.ListenerAdapter
 import net.dv8tion.jda.api.interactions.commands.Command
 import org.bukkit.Bukkit
 
-class DiscordCommandListener(val plugin: RedeemX) : ListenerAdapter() {
+class
+
+DiscordCommandListener(val plugin: RedeemX) : ListenerAdapter() {
     private val generateSubCommand = GenerateSubCommand(plugin)
     private val sender = Bukkit.getConsoleSender()
     val config = ConfigRepository(plugin)

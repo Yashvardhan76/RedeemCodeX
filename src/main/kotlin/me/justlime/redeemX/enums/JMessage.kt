@@ -26,6 +26,7 @@ sealed interface JMessage {
             const val INVALID_TARGET = "$REDEEMED.invalid-target"
             const val MAX_PLAYER_REDEEMED = "$REDEEMED.max-player-redeemed"
             const val MAX_REDEMPTIONS = "$REDEEMED.max-redemptions"
+            const val ON_COOLDOWN = "$REDEEMED.on-cooldown"
         }
     }
 
