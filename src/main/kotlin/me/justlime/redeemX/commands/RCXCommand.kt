@@ -31,7 +31,7 @@ class RCXCommand(private val plugin: RedeemX) : CommandExecutor {
                 Tab.GeneralActions.Gen.value -> if (sender.hasPermission(JPermission.Admin.GEN)) GenerateSubCommand(plugin).execute(sender, args.toMutableList())
                 else config.sendMsg(JMessage.Commands.Gen.NO_PERMISSION, placeHolder)
 
-                Tab.GeneralActions.Modify.value  -> if (sender.hasPermission(JPermission.Admin.MODIFY)) ModifySubCommand(plugin).execute(sender, args.toMutableList())
+                Tab.GeneralActions.Modify.value,  -> if (sender.hasPermission(JPermission.Admin.MODIFY)) ModifySubCommand(plugin).execute(sender, args.toMutableList())
                 else config.sendMsg(JMessage.Commands.Modify.NO_PERMISSION, placeHolder)
 
                 Tab.GeneralActions.ModifyTemplate.value -> if(sender.hasPermission(JPermission.Admin.MODIFY)) ModifyTemplateSubCommand(plugin).execute(sender, args.toMutableList())

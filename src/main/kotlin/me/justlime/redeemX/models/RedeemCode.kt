@@ -15,7 +15,7 @@ data class RedeemCode(
     var template: String, //Blank for disabled
     var locked: Boolean,
     var validFrom: Timestamp,
-    var lastRedeemed: MutableMap<String, Timestamp>,
+    var lastRedeemed: Timestamp,
     var usedBy: MutableMap<String, Int>,
-    var commands: MutableMap<Int, String> //Empty list for disabled
+    var commands: MutableMap<Int, String>, //Empty list for disabled
 )

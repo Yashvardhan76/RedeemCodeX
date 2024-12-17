@@ -77,17 +77,11 @@ class RedeemCodeService {
 
 
     fun isExpired(redeemCode: RedeemCode): Boolean {
-        val time = redeemCode.validFrom
-        val duration = redeemCode.duration
+        val storedTime = redeemCode.validFrom
+        val duration = redeemCode.duration ?: return false
 
-        val expiryTimeMillis = time.time + parseDurationToSeconds(duration) * 1000
+        val expiryTimeMillis = storedTime.time + parseDurationToSeconds(duration) * 1000
         return System.currentTimeMillis() > expiryTimeMillis
-    }
-
-    fun onCoolDown(cooldown: String, lastRedeemed: MutableMap<String, Timestamp>, player: String): Boolean{
-        val cooldownTimeMillis = parseDurationToSeconds(cooldown) * 1000
-        val lastRedeemedTimeMillis = lastRedeemed[player]?.time ?: 0
-        return System.currentTimeMillis() < lastRedeemedTimeMillis + cooldownTimeMillis
     }
 
     fun parseToId(string: String?): String {

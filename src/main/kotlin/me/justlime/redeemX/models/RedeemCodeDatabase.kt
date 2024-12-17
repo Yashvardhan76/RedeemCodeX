@@ -16,6 +16,6 @@ data class RedeemCodeDatabase(
     val usedBy: String,
     val template: String,
     val templateLocked: Boolean,
-    val lastRedeemed: String,
-    val cooldown: String,
+    val lastRedeemed: Timestamp,
+    val cooldown: String
 )

@@ -1,6 +1,5 @@
 package me.justlime.redeemX.data.config
 
-import me.justlime.redeemX.enums.JFiles
 import me.justlime.redeemX.models.CodePlaceHolder
 
 interface ConfigDao {

@@ -119,15 +119,15 @@ class GenerateSubCommand(private val plugin: RedeemX) : JSubCommand {
     }
 
     private fun handleCodeCreation(code: String, placeHolder: CodePlaceHolder): RedeemCode? {
-        placeHolder.code = code.uppercase()
+        placeHolder.code = code
 
-        if (codeRepo.getCode(code.uppercase()) != null) {
+        if (codeRepo.getCode(code) != null) {
             config.sendMsg(JMessage.Commands.Gen.CODE_ALREADY_EXIST, placeHolder)
             return null
         }
 
         val defaultConfig = loadDefaultConfig()
-        val redeemCode = createRedeemCode(code.uppercase(), defaultConfig)
+        val redeemCode = createRedeemCode(code, defaultConfig)
         return redeemCode
     }
 
@@ -162,7 +162,7 @@ class GenerateSubCommand(private val plugin: RedeemX) : JSubCommand {
             locked = redeemTemplate.templateLocked,
             usedBy = mutableMapOf(),
             target = mutableListOf(),
-            lastRedeemed = mutableMapOf(),
+            lastRedeemed = service.currentTime,
             cooldown = "0s"
         )
     }

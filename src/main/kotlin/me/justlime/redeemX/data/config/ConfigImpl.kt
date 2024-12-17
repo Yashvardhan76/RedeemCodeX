@@ -1,7 +1,6 @@
 package me.justlime.redeemX.data.config
 
 import me.justlime.redeemX.RedeemX
-import me.justlime.redeemX.enums.JFiles
 import me.justlime.redeemX.enums.JMessage
 import me.justlime.redeemX.models.CodePlaceHolder
 import me.justlime.redeemX.models.RedeemTemplate
@@ -93,7 +92,6 @@ class ConfigImpl(private val plugin: RedeemX) : ConfigDao {
                 chatMessage.forEach { placeHolder.sender.sendMessage(it.trim()) }
             }
         }
-
     }
 
     override fun sendTemplateMsg(template: String, placeHolder: CodePlaceHolder) {

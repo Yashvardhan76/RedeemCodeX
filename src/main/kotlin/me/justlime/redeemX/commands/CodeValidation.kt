@@ -6,7 +6,7 @@ import me.justlime.redeemX.models.RedeemCode
 import org.bukkit.command.CommandSender
 import org.bukkit.entity.Player
 
-class CodeValidation(val plugin: RedeemX, private val userCode: String,private val sender: CommandSender) {
+class CodeValidation(val plugin: RedeemX, private val userCode: String) {
     private val service = plugin.service
     private val repo = RedeemCodeRepository(plugin)
     lateinit var code: RedeemCode
@@ -67,12 +67,6 @@ class CodeValidation(val plugin: RedeemX, private val userCode: String,private v
     fun isTargetValid(player: String): Boolean {
         if (!isTargetRequired()) return true
         return code.target.contains(player)
-    }
-
-    fun isCooldown(): Boolean{
-        if (service.onCoolDown(code.cooldown,code.lastRedeemed,sender.name)) return true
-        repo.setLastRedeemedTime(code,sender.name)
-        return false
     }
 
 }

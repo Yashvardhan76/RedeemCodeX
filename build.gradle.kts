@@ -63,9 +63,9 @@ tasks.processResources {
 tasks.register<Copy>("copyToServerPlugins") {
     dependsOn("shadowJar")  // Ensure shadowJar completes before copying
     from("$buildDir/libs/RedeemX-${project.version}-all.jar")  // Source jar file
-    into("D:/yashv/server1.21/plugins")      // Destination folder
+    into("E:/Minecraft/servers/Plugin-Maker/plugins")      // Destination folder
 }
- 
+
 // Combined task to build and copy
 tasks.register("buildAndCopy") {
     dependsOn("build", "copyToServerPlugins")

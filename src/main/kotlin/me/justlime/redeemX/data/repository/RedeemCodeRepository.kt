@@ -2,7 +2,6 @@ package me.justlime.redeemX.data.repository
 
 import me.justlime.redeemX.RedeemX
 import me.justlime.redeemX.data.local.RedeemCodeDao
-import me.justlime.redeemX.enums.JProperty
 import me.justlime.redeemX.models.RedeemCode
 import me.justlime.redeemX.models.RedeemTemplate
 import me.justlime.redeemX.utilities.RedeemCodeService
@@ -24,9 +23,25 @@ class RedeemCodeRepository(plugin: RedeemX) {
     }
 
     //TODO This Performance is currently heavy
-    fun getCodesByProperty(property: JProperty, value: String): List<RedeemCode> {
-        return redeemCodeDao.getByProperty(property, value)
-    }
+    fun getCodesByEnabled(enabled: Boolean): List<RedeemCode> = filterCodes { it.enabled == enabled }
+
+    fun getCodesByTemplate(template: String): List<RedeemCode> = filterCodes { it.template == template }
+
+    fun getCodesByDuration(duration: String): List<RedeemCode> = filterCodes { it.duration == duration }
+
+    fun getCodesByExpired(expired: Boolean = true): List<RedeemCode> = filterCodes { service.isExpired(it) == expired }
+
+    fun getCodesByMaxRedeem(maxRedeem: Int): List<RedeemCode> = filterCodes { it.redemption == maxRedeem }
+
+    fun getCodesByMaxPlayer(maxPlayer: Int): List<RedeemCode> = filterCodes { it.limit == maxPlayer }
+
+    fun getCodesByPermission(permission: String): List<RedeemCode> = filterCodes { it.permission == permission }
+
+    fun getCodesByPin(pin: Int): List<RedeemCode> = filterCodes { it.pin == pin }
+
+    fun getCodesByTemplateLocked(templateLocked: Boolean): List<RedeemCode> = filterCodes { it.locked == templateLocked }
+
+    fun getCodesByCooldown(cooldown: String): List<RedeemCode> = filterCodes { it.cooldown == cooldown }
 
 
     fun getAllCodes(): List<RedeemCode> {
@@ -89,7 +104,7 @@ class RedeemCodeRepository(plugin: RedeemX) {
             target = mutableListOf()
             commands = template.commands
             locked = true
-            lastRedeemed = mutableMapOf()
+            lastRedeemed = service.currentTime
             cooldown = template.cooldown
         }
         return true
@@ -179,8 +194,8 @@ class RedeemCodeRepository(plugin: RedeemX) {
         return true
     }
 
-    fun setLastRedeemedTime(redeemCode: RedeemCode,player: String): Boolean {
-        redeemCode.lastRedeemed[player] = service.currentTime
+    fun setlastRedeemedTime(redeemCode: RedeemCode): Boolean {
+        redeemCode.lastRedeemed = service.currentTime
         return true
     }
 

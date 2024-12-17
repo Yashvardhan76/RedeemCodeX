@@ -193,7 +193,7 @@ class ModifySubCommand(private val plugin: RedeemX) : JSubCommand {
                         value
                     )
                 ) return config.sendMsg(JMessage.Commands.Modify.INVALID_VALUE, placeHolder) != Unit
-                codeRepo.setLastRedeemedTime(redeemCode, sender.name)
+                codeRepo.setlastRedeemedTime(redeemCode)
                 codeRepo.setCooldown(redeemCode, value)
                 config.sendMsg(JMessage.Commands.Modify.COOLDOWN, placeHolder)
             }
