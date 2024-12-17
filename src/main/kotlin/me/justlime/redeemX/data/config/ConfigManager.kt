@@ -1,6 +1,7 @@
 package me.justlime.redeemX.data.config
 
 import me.justlime.redeemX.RedeemX
+import me.justlime.redeemX.enums.JFiles
 import org.bukkit.configuration.file.FileConfiguration
 import org.bukkit.configuration.file.YamlConfiguration
 import java.io.File

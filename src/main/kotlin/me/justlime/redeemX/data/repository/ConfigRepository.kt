@@ -3,7 +3,7 @@ package me.justlime.redeemX.data.repository
 import me.justlime.redeemX.RedeemX
 import me.justlime.redeemX.data.config.ConfigDao
 import me.justlime.redeemX.data.config.ConfigImpl
-import me.justlime.redeemX.data.config.JFiles
+import me.justlime.redeemX.enums.JFiles
 import me.justlime.redeemX.models.CodePlaceHolder
 import me.justlime.redeemX.models.RedeemTemplate
 
@@ -53,7 +53,7 @@ class ConfigRepository(val plugin: RedeemX) {
     }
 
     fun getTemplateValue(template: String,property: String): String{
-        return config.getString("$template.$property",JFiles.TEMPLATE,false) ?: ""
+        return config.getString("$template.$property", JFiles.TEMPLATE,false) ?: ""
     }
 
     fun getAllTemplates(): List<RedeemTemplate> {

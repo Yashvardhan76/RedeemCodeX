@@ -27,7 +27,7 @@ class RedeemCodeDaoImpl(private val dbManager: DatabaseManager) : RedeemCodeDao 
     }
 
     private fun fetchCodes() {
-        getFetchCodes = getEntireCodes().map { it.code }
+        getFetchCodes = getCachedCodes()
     }
 
     private fun fetchTargetList() {
@@ -91,10 +91,10 @@ class RedeemCodeDaoImpl(private val dbManager: DatabaseManager) : RedeemCodeDao 
                 statement.setInt(9, mappedData.redemption)
                 statement.setInt(10, mappedData.limit)
                 statement.setString(11, mappedData.usedBy)
-                statement.setTimestamp(12, mappedData.validFrom)
-                statement.setTimestamp(13, mappedData.lastRedeemed)
-                statement.setString(14, mappedData.target)
-                statement.setString(15, mappedData.commands)
+                statement.setTimestamp(13, mappedData.validFrom)
+                statement.setString(14, mappedData.lastRedeemed)
+                statement.setString(15, mappedData.target)
+                statement.setString(16, mappedData.commands)
 
                 isSuccess = statement.executeUpdate() > 0
             }
@@ -132,11 +132,10 @@ class RedeemCodeDaoImpl(private val dbManager: DatabaseManager) : RedeemCodeDao 
                     statement.setInt(9, mappedData.redemption)
                     statement.setInt(10, mappedData.limit)
                     statement.setString(11, mappedData.usedBy)
-                    statement.setTimestamp(12, mappedData.validFrom)
-                    statement.setTimestamp(13, mappedData.lastRedeemed)
-                    statement.setString(14, mappedData.target)
-                    statement.setString(15, mappedData.commands)
-
+                    statement.setTimestamp(13, mappedData.validFrom)
+                    statement.setString(14, mappedData.lastRedeemed)
+                    statement.setString(15, mappedData.target)
+                    statement.setString(16, mappedData.commands)
                     statement.addBatch()
                 }
 
@@ -153,6 +152,17 @@ class RedeemCodeDaoImpl(private val dbManager: DatabaseManager) : RedeemCodeDao 
     }
 
     override fun getCachedCodes(): List<String> {
+        val codes = mutableListOf<String>()
+        val query = "SELECT code FROM redeem_codes"
+        dbManager.getConnection()?.use { conn ->
+            conn.prepareStatement(query).use { statement ->
+                val result = statement.executeQuery()
+                while (result.next()) {
+                    codes.add(result.getString(1))
+                }
+            }
+        }
+        getFetchCodes = codes
         return getFetchCodes
     }
 

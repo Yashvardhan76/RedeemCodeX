@@ -28,7 +28,7 @@ class RedeemCommand(private val plugin: RedeemX) : CommandExecutor, TabCompleter
             return true
         }
         placeHolder.code = args[0]
-        val codeValidation = CodeValidation(plugin, args[0])
+        val codeValidation = CodeValidation(plugin, args[0],sender)
         if (!codeValidation.isCodeExist()) {
             config.sendMsg(JMessage.Redeemed.INVALID_CODE, placeHolder)
             return true
@@ -65,6 +65,11 @@ class RedeemCommand(private val plugin: RedeemX) : CommandExecutor, TabCompleter
             return true
         }
 
+        if(codeValidation.isCooldown()){
+            config.sendMsg(JMessage.Redeemed.ON_COOLDOWN, placeHolder)
+            return true
+        }
+
         if (codeValidation.isPinRequired()) {
             if (args.size < 2) {
                 config.sendMsg(JMessage.Redeemed.MISSING_PIN, placeHolder)
@@ -82,7 +87,7 @@ class RedeemCommand(private val plugin: RedeemX) : CommandExecutor, TabCompleter
         // MAIN STUFF
         val code = codeValidation.code
         code.usedBy[sender.name] = (code.usedBy[sender.name]?.plus(1)) ?: 1
-        codeRepo.setlastRedeemedTime(code)
+        codeRepo.setLastRedeemedTime(code,sender.name)
         val success = codeRepo.upsertCode(code)
         if (!success) {
             config.sendMsg(JMessage.Redeemed.FAILED, placeHolder)

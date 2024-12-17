@@ -37,7 +37,7 @@ class Converter {
             usedBy = gson.fromJson(result.getString(JProperty.USED_BY.property), object : TypeToken<MutableMap<String, Int>>() {}.type),
             template = result.getString(JProperty.TEMPLATE.property),
             locked = result.getBoolean(JProperty.LOCKED.property),
-            lastRedeemed = result.getTimestampOrNull(JProperty.LAST_REDEEMED.property) ?: RedeemCodeService().currentTime,
+            lastRedeemed = gson.fromJson(result.getString(JProperty.LAST_REDEEMED.property), object : TypeToken<MutableMap<String, Timestamp>>() {}.type),
             cooldown = result.getString(JProperty.COOLDOWN.property)
         )
     }
@@ -57,7 +57,7 @@ class Converter {
             usedBy = gson.toJson(redeemCode.usedBy),
             template = redeemCode.template,
             templateLocked = redeemCode.locked,
-            lastRedeemed = redeemCode.lastRedeemed,
+            lastRedeemed = gson.toJson(redeemCode.lastRedeemed),
             cooldown = redeemCode.cooldown
         )
     }
