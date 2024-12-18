@@ -153,7 +153,8 @@ class RedeemCodeService {
             "minLength" to placeholder.minLength,
             "maxLength" to placeholder.maxLength,
             "code_generate_digit" to placeholder.codeGenerateDigit,
-            "property" to placeholder.property
+            "property" to placeholder.property,
+            "player" to placeholder.player
         )
         return placeholders.entries.fold(message) { msg, (placeholder, value) ->
             msg.replace("{$placeholder}", value)

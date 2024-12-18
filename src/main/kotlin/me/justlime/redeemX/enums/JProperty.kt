@@ -15,5 +15,7 @@ enum class JProperty(val property: String) {
     VALID_FROM("validFrom"),
     LAST_REDEEMED("lastRedeemed"),
     TARGET("target"),
-    COMMANDS("commands")
+    COMMANDS("commands"),
+    CREATED("created_at"),
+    MODIFIED("last_modified")
 }

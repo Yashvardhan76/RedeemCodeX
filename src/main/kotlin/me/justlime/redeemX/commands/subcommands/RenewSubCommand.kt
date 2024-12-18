@@ -19,8 +19,11 @@ class RenewSubCommand(val plugin: RedeemX): JSubCommand {
             config.sendMsg(JMessage.Commands.Renew.INVALID_SYNTAX, placeHolder)
             return false
         }
-        val code = args[1]
+        val code = args[1].uppercase()
+        val player = if (args.size>2){ args[2] } else ""
         placeHolder.code = args[1]
+
+        placeHolder.player = player
 
         val redeemCode = codeRepo.getCode(code)
 
@@ -30,7 +33,11 @@ class RenewSubCommand(val plugin: RedeemX): JSubCommand {
         }
 
         if(config.getConfigValue(JConfig.Renew.CLEAR_USAGE).equals("true",ignoreCase = true)) {
-            codeRepo.clearUsage(redeemCode)
+            val success = codeRepo.clearUsage(redeemCode, player)
+            if (!success) {
+                config.sendMsg(JMessage.Commands.Renew.PLAYER_NOT_FOUND, placeHolder)
+                return true
+            }
         }
 
         if (config.getConfigValue(JConfig.Renew.RESET_DELAY).equals("true", ignoreCase = true)){

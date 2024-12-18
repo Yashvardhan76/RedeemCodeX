@@ -13,6 +13,14 @@ TODO GEN
 add BulkCustomNameSupport Like CODE1 CODE2 CODE@AZ6F
 add direct property to option
 
+TODO Delete
+fetch delete codes
+/rcx delete * CONFIRM
+/rcx delete CODE <code> [codes]
+/rcx delete TEMPLATE <Template> [Templates]
+/rcx delete LAST <Amount> CONFIRM /Delete Codes from last Added
+
+
 TODO MODIFY
 target list add + placeholder support for list
 

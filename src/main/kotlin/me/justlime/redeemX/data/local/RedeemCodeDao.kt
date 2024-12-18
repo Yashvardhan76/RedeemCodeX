@@ -10,8 +10,10 @@ interface RedeemCodeDao {
     fun deleteEntireCodes(): Boolean
     fun deleteByCode(code: String): Boolean
     fun get(code: String): RedeemCode?
+    fun fetch()
     fun getCachedCodes(): List<String>
-    fun getCachedTargetList(): MutableMap<String, MutableList<String>>
+    fun getCachedTargets(): MutableMap<String, MutableList<String>>
+    fun getCachedUsages(): MutableMap<String, MutableMap<String,Int>>
     fun getByProperty(property: JProperty, value: String): List<RedeemCode>
     fun getEntireCodes(): List<RedeemCode>
     fun getTemplateCodes(template: String): List<RedeemCode>

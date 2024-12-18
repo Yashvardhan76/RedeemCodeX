@@ -18,13 +18,21 @@ class RedeemCodeRepository(plugin: RedeemX) {
         return redeemCodeDao.get(code)
     }
 
+    fun fetch(){
+        redeemCodeDao.fetch()
+    }
+
     /**Used this for getting list of cached Code useful for listing**/
     fun getCachedCode(): List<String> {
         return redeemCodeDao.getCachedCodes()
     }
 
     fun getCachedTargetList(): MutableMap<String, MutableList<String>> {
-        return redeemCodeDao.getCachedTargetList()
+        return redeemCodeDao.getCachedTargets()
+    }
+
+    fun getCachedUsageList(): MutableMap<String, MutableMap<String,Int>>{
+        return redeemCodeDao.getCachedUsages()
     }
 
     //TODO This Performance is currently heavy
@@ -73,7 +81,7 @@ class RedeemCodeRepository(plugin: RedeemX) {
     }
 
     fun setPermission(redeemCode: RedeemCode, permission: String): Boolean {
-        redeemCode.permission = permission.replace("{code}",redeemCode.code)
+        redeemCode.permission = permission.replace("{code}", redeemCode.code)
         return true
     }
 
@@ -126,9 +134,17 @@ class RedeemCodeRepository(plugin: RedeemX) {
         return true
     }
 
-    fun clearUsage(redeemCode: RedeemCode): Boolean {
-        redeemCode.usedBy = mutableMapOf()
-        return true
+
+    fun clearUsage(redeemCode: RedeemCode, player: String = ""): Boolean {
+        if (player.isBlank()) {
+            redeemCode.usedBy.clear()
+            return true
+        }
+        if (redeemCode.usedBy.containsKey(player)) {
+            redeemCode.usedBy.remove(player)
+            return true
+        }
+        return false
     }
 
     fun setCommands(redeemCode: RedeemCode, commands: MutableMap<Int, String>): Boolean {
@@ -183,12 +199,12 @@ class RedeemCodeRepository(plugin: RedeemX) {
         return true
     }
 
-    fun setLastRedeemedTime(redeemCode: RedeemCode,player: String): Boolean {
+    fun setLastRedeemedTime(redeemCode: RedeemCode, player: String): Boolean {
         redeemCode.lastRedeemed[player] = service.getCurrentTime()
         return true
     }
 
-    fun clearRedeemedTime(redeemCode: RedeemCode){
+    fun clearRedeemedTime(redeemCode: RedeemCode) {
         redeemCode.lastRedeemed.clear()
     }
 

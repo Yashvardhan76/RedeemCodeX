@@ -18,12 +18,14 @@ class TabCompleterList(val plugin: RedeemX) : TabCompleter {
     private val modifyOptions = Tab.Modify.entries.map { it.value }
     private val modifyTemplateOptions = Tab.Template.entries.map { it.value }
     private val amount = listOf(Tab.Generate.Amount.value)
-    private val genSubcommands = Tab.Generate.entries.filter { it != Tab.Generate.Amount }.map { it.value }
+    private val genSubcommands = Tab.Generate.entries.filter { it.value != Tab.Generate.Amount.value }.map { it.value }
     private var cachedCodes = codeRepo.getCachedCode()
     private var cachedTemplate = config.getAllTemplates().map { it.name }
     private var cachedTargetList = codeRepo.getCachedTargetList()
+    private var cachedUsageList = codeRepo.getCachedUsageList()
 
-    override fun onTabComplete(sender: CommandSender, command: Command, label: String, args: Array<out String>
+    override fun onTabComplete(
+        sender: CommandSender, command: Command, label: String, args: Array<out String>
     ): MutableList<String>? {
         val completions: MutableList<String> = mutableListOf()
         // Handle argument completions based on argument size
@@ -46,23 +48,21 @@ class TabCompleterList(val plugin: RedeemX) : TabCompleter {
                 when (args[0]) {
                     Tab.GeneralActions.Modify.value -> completions.addAll(modifyOptions)
                     Tab.GeneralActions.ModifyTemplate.value -> completions.addAll(modifyTemplateOptions)
+                    Tab.GeneralActions.Renew.value -> completions.addAll(cachedUsageList[args[1]]?.keys ?: listOf())
                 }
                 when (args[1]) {
                     Tab.Generate.Template.value -> completions.addAll(cachedTemplate)
                 }
             }
+
             4 -> {
-                when (args[2]){
+                when (args[2]) {
                     Tab.Modify.RemoveTarget.value -> {
                         val list = cachedTargetList[args[1]] ?: mutableListOf()
                         completions.addAll(list)
                     }
 
-                    Tab.Modify.SetTarget.value -> {
-                        return null
-                    }
-
-                    Tab.Modify.AddTarget.value -> {
+                    Tab.Modify.SetTarget.value, Tab.Modify.AddTarget.value -> {
                         return null
                     }
                 }
@@ -83,7 +83,6 @@ class TabCompleterList(val plugin: RedeemX) : TabCompleter {
     }
 
     fun fetched() {
-        cachedCodes = codeRepo.getCachedCode()
-        cachedTemplate = config.getAllTemplates().map { it.name }
+        codeRepo.fetch()
     }
 }

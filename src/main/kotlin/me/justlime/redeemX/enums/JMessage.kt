@@ -184,6 +184,7 @@ sealed interface JMessage {
             const val NOT_FOUND = "$RENEW.not-found"
             const val NO_PERMISSION = "$RENEW.no-permission"
             const val FAILED = "$RENEW.failed"
+            const val PLAYER_NOT_FOUND = "$RENEW.player-not-found"
         }
 
         data object Info : Commands() {

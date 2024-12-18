@@ -8,37 +8,14 @@ import java.sql.PreparedStatement
 import java.sql.Statement
 
 class RedeemCodeDaoImpl(private val dbManager: DatabaseManager) : RedeemCodeDao {
-    private lateinit var getFetchCodes: List<String>
-    private var getTargetList: MutableMap<String, MutableList<String>> = mutableMapOf() //<code,list of targets>
+    private val getCachedCodes: MutableList<String> = mutableListOf()
+    private val getCachedTargetList: MutableMap<String, MutableList<String>> = mutableMapOf() //<code,list of targets>
+    private val getCachedUsageList: MutableMap<String, MutableMap<String, Int>> = mutableMapOf()
     private val converter = Converter()
 
-    fun getTargetList(code: String): MutableList<String> {
-        return getTargetList[code] ?: mutableListOf()
-    }
-
     init {
-        fetch()
-    }
-
-    fun fetch() {
         createTable()
-        fetchCodes()
-        fetchTargetList()
-    }
-
-    private fun fetchCodes() {
-        getFetchCodes = getCachedCodes()
-    }
-
-    override fun getCachedTargetList(): MutableMap<String, MutableList<String>> {
-        return getTargetList
-    }
-
-    private fun fetchTargetList() {
-        getEntireCodes().forEach { state ->
-            getTargetList[state.code] = state.target
-        }
-        return
+        fetch()
     }
 
     override fun createTable() {
@@ -61,7 +38,9 @@ class RedeemCodeDaoImpl(private val dbManager: DatabaseManager) : RedeemCodeDao 
                         ${JProperty.VALID_FROM.property} TIMESTAMP,
                         ${JProperty.LAST_REDEEMED.property} TIMESTAMP,
                         ${JProperty.TARGET.property} TEXT,
-                        ${JProperty.COMMANDS.property} TEXT
+                        ${JProperty.COMMANDS.property} TEXT,
+                        ${JProperty.CREATED.property} TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                        ${JProperty.MODIFIED.property} TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 );
                 """
                 )
@@ -72,16 +51,29 @@ class RedeemCodeDaoImpl(private val dbManager: DatabaseManager) : RedeemCodeDao 
     override fun upsertCode(redeemCode: RedeemCode): Boolean {
         var isSuccess = false
         if (redeemCode.code.isBlank() || redeemCode.code.isEmpty()) return false
+
         dbManager.getConnection()?.use { conn ->
             val columns = JProperty.entries.map { it.property }
-            val placeholders = columns.joinToString(", ") { "?" }
-            val updateFields = columns.joinToString(", ") { "$it = EXCLUDED.$it" }
+            val insertColumns = columns.filter { it != JProperty.CREATED.property }
+            val placeholders = insertColumns.joinToString(", ") { "?" }
+            val updateFields = JProperty.entries
+                .filter { it != JProperty.CODE } // Exclude the primary key from updates
+                .joinToString(", ") { column ->
+                    if (column == JProperty.MODIFIED) {
+                        "${column.property} = CURRENT_TIMESTAMP"
+                    } else {
+                        "${column.property} = EXCLUDED.${column.property}"
+                    }
+                }
+
+
             val sql = """
-                INSERT INTO redeem_codes (${columns.joinToString(", ")})
-                VALUES ($placeholders)
-                ON CONFLICT(${JProperty.CODE.property}) DO UPDATE SET 
-                    $updateFields
+            INSERT INTO redeem_codes (${insertColumns.joinToString(", ")})
+            VALUES ($placeholders)
+            ON CONFLICT(${JProperty.CODE.property}) DO UPDATE SET 
+                $updateFields
             """
+
             conn.prepareStatement(sql).use { statement ->
                 val mappedData = converter.mapRedeemCodeToDatabase(redeemCode)
 
@@ -104,9 +96,10 @@ class RedeemCodeDaoImpl(private val dbManager: DatabaseManager) : RedeemCodeDao 
                 isSuccess = statement.executeUpdate() > 0
             }
         }
-        fetch()
+        fetch() // Refresh in-memory data if needed
         return isSuccess
     }
+
 
     override fun upsertCodes(redeemCodes: List<RedeemCode>): Boolean {
         var isSuccess = false
@@ -114,14 +107,26 @@ class RedeemCodeDaoImpl(private val dbManager: DatabaseManager) : RedeemCodeDao 
 
         dbManager.getConnection()?.use { conn ->
             val columns = JProperty.entries.map { it.property }
-            val placeholders = columns.joinToString(", ") { "?" }
-            val updateFields = columns.joinToString(", ") { "$it = EXCLUDED.$it" }
+            val insertColumns = columns.filter { it != JProperty.CREATED.property }
+            val placeholders = insertColumns.joinToString(", ") { "?" }
+            val updateFields = JProperty.entries
+                .filter { it != JProperty.CODE } // Exclude the primary key from updates
+                .joinToString(", ") { column ->
+                    if (column == JProperty.MODIFIED) {
+                        "${column.property} = CURRENT_TIMESTAMP"
+                    } else {
+                        "${column.property} = EXCLUDED.${column.property}"
+                    }
+                }
+
+
             val sql = """
-            INSERT INTO redeem_codes (${columns.joinToString(", ")})
+            INSERT INTO redeem_codes (${insertColumns.joinToString(", ")})
             VALUES ($placeholders)
             ON CONFLICT(${JProperty.CODE.property}) DO UPDATE SET 
                 $updateFields
-        """
+            """
+
             conn.prepareStatement(sql).use { statement ->
                 for (redeemCode in redeemCodes) {
                     val mappedData = converter.mapRedeemCodeToDatabase(redeemCode)
@@ -141,34 +146,41 @@ class RedeemCodeDaoImpl(private val dbManager: DatabaseManager) : RedeemCodeDao 
                     statement.setString(13, mappedData.lastRedeemed)
                     statement.setString(14, mappedData.target)
                     statement.setString(15, mappedData.commands)
+
                     statement.addBatch()
                 }
 
                 val results = statement.executeBatch()
-                isSuccess = results.all { it > 0 } // Check if all updates/inserts were successful.
+                isSuccess = results.all { it > 0 } // Check if all updates/inserts were successful
             }
         }
-        fetch()
+        fetch() // Refresh in-memory data if needed
         return isSuccess
     }
+
 
     override fun get(code: String): RedeemCode? {
         return fetchRedeemCodes("SELECT * FROM redeem_codes WHERE code = ?", code).firstOrNull()
     }
 
-    override fun getCachedCodes(): List<String> {
-        val codes = mutableListOf<String>()
-        val query = "SELECT code FROM redeem_codes"
-        dbManager.getConnection()?.use { conn ->
-            conn.prepareStatement(query).use { statement ->
-                val result = statement.executeQuery()
-                while (result.next()) {
-                    codes.add(result.getString(1))
-                }
-            }
+    override fun fetch() {
+        getEntireCodes().forEach { state ->
+            getCachedTargetList[state.code] = state.target
+            getCachedUsageList[state.code] = state.usedBy
+            getCachedCodes.add(state.code)
         }
-        getFetchCodes = codes
-        return getFetchCodes
+    }
+
+    override fun getCachedCodes(): List<String> {
+        return getCachedCodes
+    }
+
+    override fun getCachedTargets(): MutableMap<String, MutableList<String>> {
+        return getCachedTargetList
+    }
+
+    override fun getCachedUsages(): MutableMap<String, MutableMap<String, Int>> {
+        return getCachedUsageList
     }
 
     override fun getByProperty(property: JProperty, value: String): List<RedeemCode> {

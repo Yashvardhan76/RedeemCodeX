@@ -183,12 +183,16 @@ commands:
     not-found: "&cError: Code &e{code}&c could not be found for renewal."
     expired-code: "&cError: Code &e{code}&c is expired and cannot be renewed."
     no-permission: "&cYou do not have permission to renew codes."
+    failed: "&cAn error occurred while renewing the code &e{code}&c. Please try again later."
+    player-not-found: "&cError: Player &e{player}&c has never redeemed this code."
+
 
   info:
     details: "&aCode Details: &e{code}&a. Expiry: &e{expiry}&a."
     not-found: "&cError: Code &e{code}&c could not be found."
     no-permission: "&cYou do not have permission to view code details."
     additional-info: "&aMax Redeems: &e{max_redeems}&a, Redeemed By: &e{redeemed_by}/{max_player}"
+
 
   help:
     header: "&aAvailable Commands: /redeem <gen|modify|delete|delete_all|info|renew|help>"
