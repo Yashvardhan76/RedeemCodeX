@@ -7,7 +7,6 @@ sealed interface Tab {
         Modify("modify"),
         ModifyTemplate("modifyTemplate"),
         Delete("delete"),
-        DeleteAll("delete_all"),
         Info("info"),
         Reload("reload"),
         Usage("usage"), //TODO

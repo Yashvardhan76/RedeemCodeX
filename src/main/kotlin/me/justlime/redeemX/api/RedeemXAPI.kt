@@ -3,6 +3,9 @@ package me.justlime.redeemX.api
 import me.justlime.redeemX.RedeemX
 import me.justlime.redeemX.commands.subcommands.GenerateSubCommand
 import me.justlime.redeemX.commands.subcommands.ModifySubCommand
+import me.justlime.redeemX.commands.subcommands.ModifyTemplateSubCommand
+import me.justlime.redeemX.data.repository.ConfigRepository
+import me.justlime.redeemX.data.repository.RedeemCodeRepository
 import me.justlime.redeemX.enums.Tab
 import org.bukkit.command.CommandSender
 
@@ -35,12 +38,20 @@ object RedeemXAPI {
         return gen.codeList
     }
 
-    fun modifyCodes(sender: CommandSender, code: String, property: Tab.Modify, value: String): List<String> {
+    fun modifyCodes(sender: CommandSender, code: String, property: Tab.Modify, value: String = ""): List<String> {
         val modify = ModifySubCommand(plugin)
         val args = if (value.isNotBlank() || value.isNotBlank()) mutableListOf(Tab.GeneralActions.Modify.value, code, property.value)
         else mutableListOf(Tab.GeneralActions.Modify.value, code, property.value, value)
         modify.execute(sender, args)
         return modify.codeList
+    }
+    //TODO Improve Required
+    fun modifyTemplate(sender: CommandSender,template: String,property: Tab.Modify,value: String = ""): List<String>{
+        val templateSC = ModifyTemplateSubCommand(plugin)
+        val args = if (value.isNotBlank() || value.isNotBlank()) mutableListOf(Tab.GeneralActions.Modify.value, template, property.value)
+        else mutableListOf(Tab.GeneralActions.Modify.value, template, property.value, value)
+        templateSC.execute(sender, args)
+        return templateSC.codeList
     }
 
     fun deleteCodes(sender: CommandSender, args: MutableList<String>): List<String> {
@@ -49,6 +60,15 @@ object RedeemXAPI {
 
     fun getPlugin(): RedeemX {
         return plugin
+    }
+
+    fun getCodes(): List<String> {
+        return RedeemCodeRepository(plugin).getCachedCode()
+    }
+
+    fun getTemplates(): List<String> {
+        val templates = ConfigRepository(plugin).getAllTemplates()
+        return templates.map { it.name }
     }
 
     fun isInitialized() = ::plugin.isInitialized

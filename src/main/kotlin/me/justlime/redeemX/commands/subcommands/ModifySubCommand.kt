@@ -87,6 +87,7 @@ class ModifySubCommand(private val plugin: RedeemX) : JSubCommand {
     ): Boolean {
         if (!service.isDurationValid(duration)) return config.sendMsg(JMessage.Commands.Modify.INVALID_VALUE, placeHolder) != Unit
         code.duration = service.adjustDuration(existingDuration, duration, isAdding)
+        placeHolder.duration = code.duration
         config.sendMsg(JMessage.Commands.Modify.DURATION, placeHolder)
         return true
     }
@@ -113,9 +114,9 @@ class ModifySubCommand(private val plugin: RedeemX) : JSubCommand {
         if (args.size < 3) return config.sendMsg(
             JMessage.Commands.Modify.INVALID_SYNTAX, CodePlaceHolder(sender, args)
         ) != Unit
-        val placeHolder = CodePlaceHolder.fetchByDB(plugin, args[1], sender)
+        val placeHolder = CodePlaceHolder.fetchByDB(plugin, args[1].uppercase(), sender)
         placeHolder.property = args[2]
-        val redeemCode = codeRepo.getCode(args[1])
+        val redeemCode = codeRepo.getCode(args[1].uppercase())
        codeList = listOf(args[1])
         if (redeemCode == null) {
             config.sendMsg(JMessage.Commands.Modify.NOT_FOUND, placeHolder)

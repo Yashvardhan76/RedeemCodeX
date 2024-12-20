@@ -20,7 +20,6 @@ class ModifyTemplateSubCommand(plugin: RedeemX) : JSubCommand {
         if (args.size < 4) return config.sendMsg(JMessage.Commands.ModifyTemplate.INVALID_SYNTAX, placeHolder) != Unit
         val value = args[3]
         when {
-
             property.equals("maxRedeems", ignoreCase = true) -> {
                 template.maxRedeems = value.toIntOrNull() ?: 1
                 if (template.maxRedeems < 1) return config.sendMsg(JMessage.Commands.ModifyTemplate.INVALID_VALUE, placeHolder) != Unit

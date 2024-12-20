@@ -29,31 +29,17 @@ class RCXCommand(private val plugin: RedeemX) : CommandExecutor {
         if (sender.hasPermission(JPermission.Admin.USE)) {
             when (args[0].lowercase()) {
                 Tab.GeneralActions.Gen.value -> if (sender.hasPermission(JPermission.Admin.GEN)) GenerateSubCommand(plugin).execute(sender, args.toMutableList())
-                else config.sendMsg(JMessage.Commands.Gen.NO_PERMISSION, placeHolder)
-
                 Tab.GeneralActions.Modify.value  -> if (sender.hasPermission(JPermission.Admin.MODIFY)) ModifySubCommand(plugin).execute(sender, args.toMutableList())
-                else config.sendMsg(JMessage.Commands.Modify.NO_PERMISSION, placeHolder)
-
                 Tab.GeneralActions.ModifyTemplate.value -> if(sender.hasPermission(JPermission.Admin.MODIFY)) ModifyTemplateSubCommand(plugin).execute(sender, args.toMutableList())
-                else config.sendMsg(JMessage.Commands.ModifyTemplate.NO_PERMISSION, placeHolder)
-
-                Tab.GeneralActions.Delete.value, Tab.GeneralActions.DeleteAll.value -> if (sender.hasPermission(JPermission.Admin.DELETE)) DeleteSubCommand(plugin).execute(sender, args.toMutableList())
-                else config.sendMsg(JMessage.Commands.Delete.NO_PERMISSION, placeHolder)
-
+                Tab.GeneralActions.Delete.value -> if (sender.hasPermission(JPermission.Admin.DELETE)) DeleteSubCommand(plugin).execute(sender, args.toMutableList())
                 Tab.GeneralActions.Info.value -> if (sender.hasPermission(JPermission.Admin.INFO)) InfoSubCommand(plugin).execute(sender, args.toMutableList())
-                else config.sendMsg(key = JMessage.Commands.Info.NO_PERMISSION, placeHolder)
-
                 Tab.GeneralActions.Renew.value -> if (sender.hasPermission(JPermission.Admin.RENEW)) RenewSubCommand(plugin).execute(sender, args.toMutableList())
-                else config.sendMsg(JMessage.Commands.Renew.NO_PERMISSION, placeHolder)
-
                 Tab.GeneralActions.Reload.value -> if (sender.hasPermission(JPermission.Admin.RELOAD)) ReloadSubCommand(plugin).execute(sender, args.toMutableList())
-                else config.sendMsg(JMessage.Commands.Reload.NO_PERMISSION, placeHolder)
-
-                else -> config.sendMsg(JMessage.Commands.Help.HEADER, placeHolder)
+                else ->config.sendMsg(JMessage.Commands.Gen.NO_PERMISSION, placeHolder)
             }
             return true
         }
-        config.sendMsg("no-permission", placeHolder)
+        config.sendMsg(JMessage.Commands.Gen.NO_PERMISSION, placeHolder)
         return true
     }
 
