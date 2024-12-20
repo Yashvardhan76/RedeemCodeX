@@ -96,7 +96,6 @@ sealed interface JMessage {
             const val TEMPLATE_EMPTY = "$MODIFY.template-empty"
             const val TEMPLATE_INVALID = "$MODIFY.template-invalid"
             const val TEMPLATE_LOCKED = "$MODIFY.template_locked"
-            const val TEMPLATE_UNSET = "$MODIFY.template_unset"
 
             const val CODE_GENERATE_DIGIT = "$MODIFY.code_generate_digit"
             const val DURATION = "$MODIFY.duration"

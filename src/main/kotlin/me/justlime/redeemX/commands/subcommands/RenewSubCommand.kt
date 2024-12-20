@@ -12,6 +12,7 @@ import org.bukkit.command.CommandSender
 class RenewSubCommand(val plugin: RedeemX): JSubCommand {
     private val codeRepo = RedeemCodeRepository(plugin)
     private val config = ConfigRepository(plugin)
+    override var codeList: List<String> = emptyList()
 
     override fun execute(sender: CommandSender, args: MutableList<String>): Boolean {
         val placeHolder = CodePlaceHolder(sender)

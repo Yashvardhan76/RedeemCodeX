@@ -31,8 +31,8 @@ sealed interface JConfig {
     }
 
     data object Bot : JConfig {
-        const val ENABLED = "enabled"
-        const val TOKEN = "token"
+        const val ENABLED = "bot.enabled"
+        const val TOKEN = "bot.token"
     }
 
     data object Database : JConfig {

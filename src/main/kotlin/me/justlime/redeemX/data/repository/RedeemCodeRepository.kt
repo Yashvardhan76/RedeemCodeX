@@ -18,7 +18,7 @@ class RedeemCodeRepository(plugin: RedeemX) {
         return redeemCodeDao.get(code)
     }
 
-    fun fetch(){
+    fun fetch() {
         redeemCodeDao.fetch()
     }
 
@@ -31,7 +31,7 @@ class RedeemCodeRepository(plugin: RedeemX) {
         return redeemCodeDao.getCachedTargets()
     }
 
-    fun getCachedUsageList(): MutableMap<String, MutableMap<String,Int>>{
+    fun getCachedUsageList(): MutableMap<String, MutableMap<String, Int>> {
         return redeemCodeDao.getCachedUsages()
     }
 
@@ -39,7 +39,6 @@ class RedeemCodeRepository(plugin: RedeemX) {
     fun getCodesByProperty(property: JProperty, value: String): List<RedeemCode> {
         return redeemCodeDao.getByProperty(property, value)
     }
-
 
     fun getAllCodes(): List<RedeemCode> {
         return redeemCodeDao.getEntireCodes()
@@ -85,9 +84,17 @@ class RedeemCodeRepository(plugin: RedeemX) {
         return true
     }
 
-    fun setTemplate(redeemCode: RedeemCode, template: RedeemTemplate): Boolean {
+    /**
+     * Sets the template for a redeem code.
+     *
+     * @param redeemCode The redeem code to modify.
+     * @param template The new template for the redeem code.
+     * @return `true` if the operation was successful, `false` otherwise.
 
-        if (template.name.isBlank()) redeemCode.template = ""
+     **/
+    fun templateToRedeemCode(redeemCode: RedeemCode, template: RedeemTemplate,locked: Boolean = true): Boolean {
+
+        if (template.name.isBlank()) redeemCode.template = "default"
         redeemCode.apply {
             this.template = template.name
             redemption = template.maxRedeems
@@ -100,7 +107,7 @@ class RedeemCodeRepository(plugin: RedeemX) {
             usedBy = mutableMapOf()
             target = mutableListOf()
             commands = template.commands
-            locked = true
+            this.locked = locked
             lastRedeemed = mutableMapOf()
             cooldown = template.cooldown
         }
@@ -133,7 +140,6 @@ class RedeemCodeRepository(plugin: RedeemX) {
         redeemCode.target.clear()
         return true
     }
-
 
     fun clearUsage(redeemCode: RedeemCode, player: String = ""): Boolean {
         if (player.isBlank()) {
@@ -171,6 +177,12 @@ class RedeemCodeRepository(plugin: RedeemX) {
 
     fun setStoredTime(redeemCode: RedeemCode): Boolean {
         redeemCode.validFrom = service.getCurrentTime()
+        return true
+    }
+
+    fun modifyDuration(code: RedeemCode,duration: String,isAdding: Boolean): Boolean{
+        if (!service.isDurationValid(duration)) return false
+        code.duration = service.adjustDuration(code.duration, duration, isAdding)
         return true
     }
 

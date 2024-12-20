@@ -66,5 +66,30 @@ data class CodePlaceHolder(
                 codeGenerateDigit = plugin.config.getConfigValue("default.code-generate-digit")
             )
         }
+        fun applyByRedeemCode(redeemCode: RedeemCode,sender: CommandSender): CodePlaceHolder{
+           return CodePlaceHolder(
+               sender = sender,
+                code = redeemCode.code,
+                command = redeemCode.commands.toString().removeSurrounding("{", "}").trim(),
+                duration = redeemCode.duration,
+                isEnabled = redeemCode.enabled.toString(),
+                redemption = redeemCode.redemption.toString(),
+                playerLimit = redeemCode.limit.toString(),
+                permission = redeemCode.permission,
+                pin = if (redeemCode.pin <= 0) "none" else redeemCode.pin.toString(),
+                target = redeemCode.target.toString(),
+                usage = redeemCode.usedBy.toString(),
+                template = redeemCode.template,
+                templateLocked = redeemCode.locked.toString(),
+                cooldown = redeemCode.cooldown,
+                minLength = "6",
+                maxLength = "10",
+                codeGenerateDigit = "6"
+           )
+        }
+
+
+
+
     }
 }

@@ -11,7 +11,7 @@ import org.bukkit.command.CommandSender
 class DeleteSubCommand(private val plugin: RedeemX) : JSubCommand {
     private val config = ConfigRepository(plugin)
     private val codeRepo = RedeemCodeRepository(plugin)
-
+    override var codeList: List<String> = emptyList()
     override fun execute(sender: CommandSender, args: MutableList<String>): Boolean {
         val placeHolder = CodePlaceHolder(sender)
 

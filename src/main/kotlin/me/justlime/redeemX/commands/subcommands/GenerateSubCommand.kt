@@ -15,7 +15,8 @@ class GenerateSubCommand(private val plugin: RedeemX) : JSubCommand {
     private val service = plugin.service
     private val config = ConfigRepository(plugin)
     private val codeRepo = RedeemCodeRepository(plugin)
-    val generatedCodesList = mutableListOf<String>()
+    private val generatedCodesList = mutableListOf<String>()
+    override var codeList: List<String> = generatedCodesList
 
     override fun execute(sender: CommandSender, args: MutableList<String>): Boolean {
         val placeHolder = CodePlaceHolder(sender, args)
@@ -44,6 +45,7 @@ class GenerateSubCommand(private val plugin: RedeemX) : JSubCommand {
                 }
                 if (redeemCode != null) {
                     upsertRedeemCode(redeemCode, placeHolder)
+                    
                     return true
                 }
                 config.sendMsg("commands.gen.error", placeHolder)

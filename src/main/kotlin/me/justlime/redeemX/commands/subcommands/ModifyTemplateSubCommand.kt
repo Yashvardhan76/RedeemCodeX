@@ -11,6 +11,7 @@ import org.bukkit.command.CommandSender
 class ModifyTemplateSubCommand(plugin: RedeemX) : JSubCommand {
     private val config = plugin.config
     private val codeRepo = RedeemCodeRepository(plugin)
+    override var codeList: List<String> = emptyList()
     override fun execute(sender: CommandSender, args: MutableList<String>): Boolean {
         if (args.size < 3) return config.sendMsg(JMessage.Commands.ModifyTemplate.INVALID_SYNTAX, CodePlaceHolder(sender)) != Unit
         val placeHolder = CodePlaceHolder(sender, args, template = args[1], property = args[2])

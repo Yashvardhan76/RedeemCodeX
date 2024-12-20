@@ -40,10 +40,6 @@ class RCXCommand(private val plugin: RedeemX) : CommandExecutor {
                 Tab.GeneralActions.Delete.value, Tab.GeneralActions.DeleteAll.value -> if (sender.hasPermission(JPermission.Admin.DELETE)) DeleteSubCommand(plugin).execute(sender, args.toMutableList())
                 else config.sendMsg(JMessage.Commands.Delete.NO_PERMISSION, placeHolder)
 
-                "delete_template" -> {}//TODO
-
-                "delete_all_template" -> {}//TODO
-
                 Tab.GeneralActions.Info.value -> if (sender.hasPermission(JPermission.Admin.INFO)) InfoSubCommand(plugin).execute(sender, args.toMutableList())
                 else config.sendMsg(key = JMessage.Commands.Info.NO_PERMISSION, placeHolder)
 

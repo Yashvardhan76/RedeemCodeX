@@ -41,7 +41,6 @@ sealed interface Tab {
         RemoveTarget("removeTarget"),
         ListTarget("listTarget"),
 
-
         SetTemplate("template"),    // Can be toggled
         Cooldown("cooldown")
     }
