@@ -31,7 +31,7 @@ class Converter {
             duration = result.getString(JProperty.DURATION.property),
             enabled = result.getBoolean(JProperty.ENABLED.property),
             redemption = result.getInt(JProperty.REDEMPTION.property),
-            limit = result.getInt(JProperty.LIMIT.property),
+            playerLimit = result.getInt(JProperty.PLAYER_LIMIT.property),
             permission = result.getString(JProperty.PERMISSION.property),
             pin = result.getIntOrNull(JProperty.PIN.property) ?: 0,
             target = safeFromJson(result.getString(JProperty.TARGET.property), targetType) ?: mutableListOf(),
@@ -39,7 +39,8 @@ class Converter {
             template = result.getString(JProperty.TEMPLATE.property),
             locked = result.getBoolean(JProperty.LOCKED.property),
             lastRedeemed = safeFromJson(result.getString(JProperty.LAST_REDEEMED.property), lastRedeemedType) ?: mutableMapOf(),
-            cooldown = result.getString(JProperty.COOLDOWN.property)
+            cooldown = result.getString(JProperty.COOLDOWN.property),
+            modified = result.getTimestamp(JProperty.MODIFIED.property)
         )
     }
 
@@ -49,15 +50,15 @@ class Converter {
             commands = gson.toJson(redeemCode.commands),
             validFrom = redeemCode.validFrom,
             duration = redeemCode.duration,
-            isEnabled = redeemCode.enabled,
+            enabled = redeemCode.enabled,
             redemption = redeemCode.redemption,
-            limit = redeemCode.limit,
+            playerLimit = redeemCode.playerLimit,
             permission = redeemCode.permission,
             pin = redeemCode.pin,
             target = gson.toJson(redeemCode.target),
             usedBy = gson.toJson(redeemCode.usedBy),
             template = redeemCode.template,
-            templateLocked = redeemCode.locked,
+            locked = redeemCode.locked,
             lastRedeemed = gson.toJson(redeemCode.lastRedeemed),
             cooldown = redeemCode.cooldown
         )

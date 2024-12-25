@@ -17,7 +17,7 @@ interface ConfigDao {
     fun getEntireTemplates(): List<me.justlime.redeemX.models.RedeemTemplate>
     fun upsertTemplate(template: me.justlime.redeemX.models.RedeemTemplate): Boolean
     fun deleteTemplate(name: String): Boolean
-    fun deleteEntireTemplates(): Boolean
+    fun deleteAllTemplates(): Boolean
 
     fun upsertConfig(configFile: JFiles, path: String, value: String): Boolean
     fun saveAllConfigs(): Boolean

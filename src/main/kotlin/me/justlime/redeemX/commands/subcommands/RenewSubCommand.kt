@@ -7,17 +7,24 @@ import me.justlime.redeemX.enums.JConfig
 import me.justlime.redeemX.enums.JMessage
 import me.justlime.redeemX.enums.JSubCommand
 import me.justlime.redeemX.models.CodePlaceHolder
+import me.justlime.redeemX.utilities.RedeemCodeService
 import org.bukkit.command.CommandSender
 
 class RenewSubCommand(val plugin: RedeemX): JSubCommand {
     private val codeRepo = RedeemCodeRepository(plugin)
     private val config = ConfigRepository(plugin)
     override var codeList: List<String> = emptyList()
+    override val permission: String = ""
+    private val service = RedeemCodeService()
 
     override fun execute(sender: CommandSender, args: MutableList<String>): Boolean {
         val placeHolder = CodePlaceHolder(sender)
+        if (!hasPermission(sender)){
+            config.sendMsg(JMessage.NO_PERMISSION, placeHolder)
+            return true
+        }
         if (args.size < 2) {
-            config.sendMsg(JMessage.Commands.Renew.INVALID_SYNTAX, placeHolder)
+            config.sendMsg(JMessage.Commands.Help.UNKNOWN_COMMAND, placeHolder)
             return false
         }
         val code = args[1].uppercase()
@@ -27,6 +34,8 @@ class RenewSubCommand(val plugin: RedeemX): JSubCommand {
         placeHolder.player = player
 
         val redeemCode = codeRepo.getCode(code)
+
+        plugin.logger.info(redeemCode?.commands.toString())
 
         if (redeemCode == null) {
             config.sendMsg(JMessage.Commands.Renew.NOT_FOUND, placeHolder)
@@ -61,7 +70,7 @@ class RenewSubCommand(val plugin: RedeemX): JSubCommand {
             codeRepo.setPermission(redeemCode,"")
         }
 
-
+        redeemCode.modified = service.getCurrentTime()
         val success = codeRepo.upsertCode(redeemCode)
         if (!success) {
             config.sendMsg(JMessage.Commands.Renew.FAILED, placeHolder)

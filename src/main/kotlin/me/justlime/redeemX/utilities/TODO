@@ -3,7 +3,7 @@ Add Usage Command e.g. /rcx usage <code> [property]
 Add GUI command e.g. /rcx gui
 add pagination system for cachedCode Limit of 600
 /rcx modify_template - setup
-
+ADD Prefix
 
 TOP Priority
 Add Rewards
@@ -18,7 +18,7 @@ fetch delete codes
 /rcx delete * CONFIRM
 /rcx delete CODE <code> [codes]
 /rcx delete TEMPLATE <Template> [Templates]
-/rcx delete LAST <Amount> CONFIRM /Delete Codes from last Added
+/rcx delete LAST <Template> <Amount> CONFIRM /Delete Codes from last Added where template ="" ?: Default
 
 
 TODO MODIFY

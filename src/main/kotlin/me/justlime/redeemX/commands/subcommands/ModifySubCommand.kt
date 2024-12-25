@@ -6,7 +6,7 @@ import me.justlime.redeemX.data.repository.RedeemCodeRepository
 import me.justlime.redeemX.enums.JMessage
 import me.justlime.redeemX.enums.JSubCommand
 import me.justlime.redeemX.enums.JTemplate
-import me.justlime.redeemX.enums.Tab
+import me.justlime.redeemX.enums.JTab
 import me.justlime.redeemX.models.CodePlaceHolder
 import me.justlime.redeemX.models.RedeemCode
 import me.justlime.redeemX.utilities.RedeemCodeService
@@ -100,6 +100,7 @@ class ModifySubCommand(private val plugin: RedeemX) : JSubCommand {
     }
 
     private fun update(redeemCode: RedeemCode, placeHolder: CodePlaceHolder): Boolean {
+        redeemCode.modified = service.getCurrentTime()
         val success = codeRepo.upsertCode(redeemCode)
         if (success) {
             config.sendMsg(JMessage.Commands.Modify.SUCCESS, placeHolder)
@@ -110,46 +111,51 @@ class ModifySubCommand(private val plugin: RedeemX) : JSubCommand {
     }
 
     override var codeList: List<String> = emptyList()
+    override val permission: String = ""
+
     override fun execute(sender: CommandSender, args: MutableList<String>): Boolean {
-        if (args.size < 3) return config.sendMsg(
-            JMessage.Commands.Modify.INVALID_SYNTAX, CodePlaceHolder(sender, args)
+        if (!hasPermission(sender)) {
+            config.sendMsg(JMessage.NO_PERMISSION, CodePlaceHolder(sender, args))
+            return true
+        }
+        if (args.size < 4) return config.sendMsg(
+            JMessage.Commands.Help.UNKNOWN_COMMAND, CodePlaceHolder(sender, args)
         ) != Unit
-        val placeHolder = CodePlaceHolder.fetchByDB(plugin, args[1].uppercase(), sender)
-        placeHolder.property = args[2]
-        val redeemCode = codeRepo.getCode(args[1].uppercase())
-       codeList = listOf(args[1])
+        val placeHolder = CodePlaceHolder.fetchByDB(plugin, args[2].uppercase(), sender)
+        placeHolder.property = args[3]
+        val redeemCode = codeRepo.getCode(args[2].uppercase())
+       codeList = listOf(args[2])
         if (redeemCode == null) {
             config.sendMsg(JMessage.Commands.Modify.NOT_FOUND, placeHolder)
             return false
         }
         when (placeHolder.property) {
-            Tab.GeneralActions.Usage.value -> return getUsage(placeHolder)
-            Tab.Modify.Enabled.value -> return toggle(redeemCode, placeHolder)
-            Tab.Modify.Locked.value -> return setLocked(redeemCode, placeHolder)
-            Tab.Modify.ListTarget.value -> return getList(redeemCode, sender)
-            Tab.Modify.PreviewCommand.value -> return previewCommand(redeemCode)
+            JTab.GeneralActions.Usage.value -> return getUsage(placeHolder)
+            JTab.Modify.Enabled.value -> return toggle(redeemCode, placeHolder)
+            JTab.Modify.Locked.value -> return setLocked(redeemCode, placeHolder)
+            JTab.Modify.ListTarget.value -> return getList(redeemCode, sender)
         }
 
-        if (args.size == 3) when (placeHolder.property) {
-            Tab.Modify.SetPermission.value -> return setPermission(redeemCode, placeHolder)
-            Tab.Modify.SetTarget.value -> return setTarget(redeemCode, placeHolder)
+        if (args.size == 4) when (placeHolder.property) {
+            JTab.Modify.SetPermission.value -> return setPermission(redeemCode, placeHolder)
+            JTab.Modify.SetTarget.value -> return setTarget(redeemCode, placeHolder)
         }
 
-        if (args.size < 4) return config.sendMsg(JMessage.Commands.Modify.INVALID_SYNTAX, placeHolder) != Unit
-        val value = args[3]
+        if (args.size < 5) return config.sendMsg(JMessage.Commands.Help.UNKNOWN_COMMAND, placeHolder) != Unit
+        val value = args[4]
         when (placeHolder.property) {
-            Tab.Modify.SetTemplate.value -> setTemplate(redeemCode, value, placeHolder)
+            JTab.Modify.SetTemplate.value -> setTemplate(redeemCode, value, placeHolder)
 
-            Tab.Modify.SetDuration.value -> modifyDuration(redeemCode, "0s", value, true, placeHolder)
+            JTab.Modify.SetDuration.value -> modifyDuration(redeemCode, "0s", value, true, placeHolder)
 
-            Tab.Modify.AddDuration.value -> modifyDuration(redeemCode, redeemCode.duration, value, true, placeHolder)
+            JTab.Modify.AddDuration.value -> modifyDuration(redeemCode, redeemCode.duration, value, true, placeHolder)
 
-            Tab.Modify.RemoveDuration.value -> modifyDuration(redeemCode, redeemCode.duration, value, false, placeHolder)
+            JTab.Modify.RemoveDuration.value -> modifyDuration(redeemCode, redeemCode.duration, value, false, placeHolder)
 
-            Tab.Modify.Cooldown.value -> setCooldown(redeemCode, value, placeHolder)
+            JTab.Modify.Cooldown.value -> setCooldown(redeemCode, value, placeHolder)
 
-            Tab.Modify.SetRedemption.value -> {
-                placeHolder.redemption = value
+            JTab.Modify.SetRedemption.value -> {
+                placeHolder.redemptionLimit = value
                 if (!codeRepo.setMaxRedeems(redeemCode, value.toIntOrNull() ?: 1)) return config.sendMsg(
                     JMessage.Commands.Modify.INVALID_VALUE,
                     placeHolder
@@ -158,7 +164,7 @@ class ModifySubCommand(private val plugin: RedeemX) : JSubCommand {
                 config.sendMsg(JMessage.Commands.Modify.MAX_REDEEMS, placeHolder)
             }
 
-            Tab.Modify.SetPlayerLimit.value -> {
+            JTab.Modify.SetPlayerLimit.value -> {
                 placeHolder.playerLimit = value
                 if (!codeRepo.setMaxPlayers(
                         redeemCode, value.toIntOrNull() ?: 1
@@ -168,7 +174,7 @@ class ModifySubCommand(private val plugin: RedeemX) : JSubCommand {
                 config.sendMsg(JMessage.Commands.Modify.MAX_PLAYERS, placeHolder)
             }
 
-            Tab.Modify.SetPermission.value -> {
+            JTab.Modify.SetPermission.value -> {
                 placeHolder.permission = value
                 if (!codeRepo.setPermission(
                         redeemCode, value
@@ -178,7 +184,7 @@ class ModifySubCommand(private val plugin: RedeemX) : JSubCommand {
                 config.sendMsg(JMessage.Commands.Modify.SET_PERMISSION, placeHolder)
             }
 
-            Tab.Modify.SetPin.value -> {
+            JTab.Modify.SetPin.value -> {
                 placeHolder.pin = value
                 if (!codeRepo.setPin(
                         redeemCode, value.toIntOrNull() ?: 0
@@ -188,29 +194,29 @@ class ModifySubCommand(private val plugin: RedeemX) : JSubCommand {
                 config.sendMsg(JMessage.Commands.Modify.PIN, placeHolder)
             }
 
-            Tab.Modify.SetTarget.value -> {
-                if (args.size < 4) return config.sendMsg(JMessage.Commands.Modify.INVALID_SYNTAX, placeHolder) != Unit
+            JTab.Modify.SetTarget.value -> {
+                if (args.size < 5) return config.sendMsg(JMessage.Commands.Help.UNKNOWN_COMMAND, placeHolder) != Unit
                 placeHolder.target = value
-                codeRepo.setTarget(redeemCode, args.drop(3))
+                codeRepo.setTarget(redeemCode, args.drop(4))
                 config.sendMsg(JMessage.Commands.Modify.Target.SET, placeHolder)
             }
 
-            Tab.Modify.AddTarget.value -> {
-                if (args.size < 4) return config.sendMsg(JMessage.Commands.Modify.INVALID_SYNTAX, placeHolder) != Unit
+            JTab.Modify.AddTarget.value -> {
+                if (args.size < 5) return config.sendMsg(JMessage.Commands.Help.UNKNOWN_COMMAND, placeHolder) != Unit
                 placeHolder.target = value
                 codeRepo.addTarget(redeemCode, value)
                 config.sendMsg(JMessage.Commands.Modify.Target.ADD, placeHolder)
             }
 
-            Tab.Modify.RemoveTarget.value -> {
-                if (args.size < 4) return config.sendMsg(JMessage.Commands.Modify.INVALID_SYNTAX, placeHolder) != Unit
+            JTab.Modify.RemoveTarget.value -> {
+                if (args.size < 5) return config.sendMsg(JMessage.Commands.Help.UNKNOWN_COMMAND, placeHolder) != Unit
                 placeHolder.target = value
                 codeRepo.removeTarget(redeemCode, value)
                 config.sendMsg(JMessage.Commands.Modify.Target.REMOVE, placeHolder)
             }
 
-            Tab.Modify.SetCommand.value -> {
-                val commands = args.drop(3).joinToString(" ")
+            JTab.Modify.SetCommand.value -> {
+                val commands = args.drop(4).joinToString(" ")
                 placeHolder.command = commands
                 if (commands.isBlank()) return config.sendMsg(
                     JMessage.Commands.Modify.INVALID_COMMAND, placeHolder
@@ -220,8 +226,8 @@ class ModifySubCommand(private val plugin: RedeemX) : JSubCommand {
                 config.sendMsg(JMessage.Commands.Modify.SUCCESS, placeHolder)
             }
 
-            Tab.Modify.AddCommand.value -> {
-                val command = args.drop(3).joinToString(" ")
+            JTab.Modify.AddCommand.value -> {
+                val command = args.drop(4).joinToString(" ")
                 placeHolder.command = command
                 if (command.isBlank()) return config.sendMsg(
                     JMessage.Commands.Modify.INVALID_COMMAND, placeHolder
@@ -230,7 +236,7 @@ class ModifySubCommand(private val plugin: RedeemX) : JSubCommand {
                 config.sendMsg(JMessage.Commands.Modify.SUCCESS, placeHolder)
             }
 
-            Tab.Modify.RemoveCommand.value -> {
+            JTab.Modify.RemoveCommand.value -> {
                 placeHolder.commandId = value
                 val id = value.toIntOrNull() ?: return config.sendMsg(
                     JMessage.Commands.Modify.INVALID_ID, placeHolder
@@ -239,13 +245,13 @@ class ModifySubCommand(private val plugin: RedeemX) : JSubCommand {
                 config.sendMsg(JMessage.Commands.Modify.SUCCESS, placeHolder)
             }
 
-            Tab.Modify.ListCommand.value -> {
+            JTab.Modify.ListCommand.value -> {
                 val commandsList = redeemCode.commands.values.joinToString("\n")
                 sender.sendMessage(commandsList)
                 config.sendMsg(JMessage.Commands.Modify.LIST, placeHolder)
             }
 
-            Tab.GeneralActions.Usage.value -> {
+            JTab.GeneralActions.Usage.value -> {
                 sender.sendMessage(redeemCode.target.joinToString("\n"))
             }
 
@@ -256,10 +262,6 @@ class ModifySubCommand(private val plugin: RedeemX) : JSubCommand {
 
         }
         // Save updated redeem code
-        val success = codeRepo.upsertCode(redeemCode)
-        if (!success) {
-            config.sendMsg(JMessage.Commands.Modify.FAILED, placeHolder)
-        }
-        return success
+        return update(redeemCode, placeHolder)
     }
 }

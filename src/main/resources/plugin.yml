@@ -2,13 +2,13 @@ name: RedeemX
 version: 1.0-EAP
 main: me.justlime.redeemX.RedeemX
 api-version: 1.13
+softdepend: ["PlaceholderAPI"]
 
 commands:
   rcx:
     usage: "/rcx <subcommand>"
     description: Main command for managing redeemable codes.
-    permission: redeemx.admin.use
-    aliases: [redeemx]
+    aliases: [redeemx,redeemcodex]
 
   redeem:
     usage: "/redeem <code>"
@@ -26,7 +26,6 @@ permissions:
       redeemx.admin.use.modify: true
       redeemx.admin.use.delete: true
       redeemx.admin.use.delete_all: true
-      redeemx.admin.use.info: true
       redeemx.admin.use.renew: true
       redeemx.admin.use.reload: true
 
@@ -42,12 +41,12 @@ permissions:
     description: Permission to delete a specific redeemable code.
     default: op
 
-  redeemx.admin.use.delete_all:
-    description: Permission to delete all redeemable codes.
+  redeemx.admin.use.preview:
+    description: Permission to preview redeemable codes.
     default: op
 
-  redeemx.admin.use.info:
-    description: Permission to view plugin information.
+  redeemx.admin.use.usage:
+    description: Permission to view code usage.
     default: op
 
   redeemx.admin.use.renew:
@@ -57,6 +56,10 @@ permissions:
   redeemx.admin.use.reload:
     description: Permission to reload the plugin configuration.
     default: op
+
+  redeemx.admin.use.info:
+    description: Permission to view plugin information.
+    default: true
 
   redeemx.use:
     description: Permission to redeem codes.

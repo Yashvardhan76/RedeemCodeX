@@ -26,6 +26,7 @@ class ConfigRepository(val plugin: RedeemX) {
         }
     }
 
+
     /**Get a Simple Text Message**/
     fun getMessage(message: String,placeHolder: CodePlaceHolder): String {
         return config.getMessage(message, placeHolder)
@@ -81,8 +82,8 @@ class ConfigRepository(val plugin: RedeemX) {
         return config.deleteTemplate(name)
     }
 
-    fun deleteEntireTemplates(): Boolean {
-        return config.deleteEntireTemplates()
+    fun deleteAllTemplates(): Boolean {
+        return config.deleteAllTemplates()
     }
 
     fun reloadConfig(jFiles: JFiles): Boolean {

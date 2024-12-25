@@ -11,7 +11,9 @@ redeemed-message:
   usage: "Usage: /redeem <code> [pin]"
 
   success:
-    chat: "&aYou have successfully redeemed the code: &b{code}"
+    chat:
+      - "&aYou have successfully redeemed the code: &b{code}"
+      - "Thanks for redeemed"
     title:
       text: "&aRedeemed &b{code}"
       subtitle: "&7Successfully redeemed the code: &b{code}"
@@ -64,8 +66,8 @@ redeemed-message:
 
   # Message for when a code has reached its maximum redemption limit
   max-player-redeemed:
-    chat: "&cYou have already redeemed the maximum amount of code"
-    actionbar: "&cYou have already redeemed the maximum amount of code"
+    chat: "&cThe code &b{code} &chas reached its maximum player redemptions."
+    actionbar: "&cMaximum players have already redeemed this code."
 
   max-redemptions:
     chat: "&cThe code &b{code} &chas reached its maximum redemptions."
@@ -77,36 +79,34 @@ commands:
 
   gen:
     success: "&aGenerated new code: &e{code}&a."
-    invalid-syntax: "&cUsage: /redeem gen <CUSTOM | SIZE | TEMPLATE> [Template-name]"
-    invalid-options: "&cError: Invalid options for generating a code."
+    invalid-syntax:
+      - "&eUsages ➡ &aRequired &c<> &aOptional &b[]"
+      - "&a/rcx gen code &c<&fCUSTOM&c> &b[&7TEMPLATE&b]"
+      - "&a/rcx gen code &c<&fSIZE&c> &b[&7TEMPLATE&b] [&7AMOUNT&b]"
+      - "&a/rcx gen template &c<&fTEMPLATE&c>"
     invalid-range: "&cError: Invalid range for generating a code. Range must be between {min} and {max}."
+    invalid-template: "&e{template} &cnot found. &cFallback to &edefault&c Template for generating codes..."
     no-permission: "&cYou do not have permission to generate codes."
-    missing-parameters: "&cError: Please specify all required parameters for code generation."
+    missing: "&cError: Default template configuration missing; fallback defaults applied."
     length-error: "Unable to generate a unique code of length ${code}. Please try a different length or name."
     code-already-exist: "The code '{code}' already exists. Please choose a unique code."
     failed: "&cFailed To Generate the code &7[Database Error&7]"
     error: "&cAn error occurred while generating the code {code}."
   gen_template:
     success: "&aGenerated new template: &e{template}&a."
-    invalid-syntax: "&cUsage: /redeem gen_template <template-name>"
     no-permission: "&cYou do not have permission to generate templates."
     code-already-exist: "The template '{template}' already exists. Please choose a unique template name."
     failed: "&cFailed To Generate the template &7[Database Error&7]"
     length-error: "Unable to generate a unique template {template}. Please try a different length or name."
     invalid-range: "&cError: Invalid range for generating a template. Range must be between {min} and {max}."
-    missing-parameters: "&cError: Please specify all required parameters for template generation."
+    missing: "&cError: Default template configuration missing; fallback defaults applied."
     error: "&cAn error occurred while generating the template {template}."
 
   modify:
     success: "&aCode &e{code}&a has been modified successfully."
     failed: "&cAn error occurred while modifying the code &e{code}&c. Please try again later."
-    invalid-syntax: "&cUsage: /redeem modify <code> <property> <value> [additional values]"
     invalid-value: "&cInvalid value provided for property &e{property}&c. Please check the documentation."
     not-found: "&cCode &e{code}&c not found."
-    no-permission: "&cYou do not have permission to modify codes."
-    unknown-property: "&cUnknown property &e{property}&c. Please check the documentation."
-    invalid-command: "&cInvalid command provided. Please provide a valid command."
-    invalid-id: "&cInvalid ID provided. Please provide a valid ID."
 
 
     template_empty: "&cThe template for code &e{code}&c is empty. Please set a template first."
@@ -117,7 +117,6 @@ commands:
     unset_permission: "&aPermission for code &e{code} &ahas been unset."
     set_permission: "&aPermission for code &e{code} &ahas been set to &e{permission}&a."
     cooldown: "&aCode &e{code} &ahas been set to &e{cooldown}&a"
-
 
     list:
       - "&a&l{code} Properties"
@@ -133,7 +132,6 @@ commands:
       - "&aTemplate Locked: &b{templateLocked}"
       - "&aCooldown: &b{cooldown}"
 
-
     invalid-set: "&cInvalid set command. Please provide a valid ID and command."
     unknown-method: "&cUnknown method. Please check the documentation."
     set_pin: "&aPin for code &e{code} &ahas been set to &e{pin}&a."
@@ -143,39 +141,35 @@ commands:
     permission: "&aPermission for code &e{code} &ahas been set to &e{permission}&a."
     permission-disabled: "&a Permission for code &e{code} &ahas been disabled"
     enabled: "&aEnabled status for code &e{code} &ahas been set to &e{enabled}&a."
-    commandId: "{commandId}"
-    command:
-      add: "&aCommand &e{command}&a added to code &e{code}&a."
-      set: "&aCommand for code &e{code}&a with ID &e{commandId}&a has been set to &e{command}&a."
-      remove: "&aCommand with ID &e{commandId}&a removed from code &e{code}&a."
-      list: "&aCommands for code &e{code}&a:\n{commands}"
-      preview: "&aPreviewing commands for code &e{code}&a..."
-      unknown-method: "&cUnknown command method. Please check the documentation."
 
-    target:
-      add: "&aTarget &e{target}&a added to code &e{code}&a."
-      set: "&aTarget for code &e{code}&a has been set to &e{target}&a."
-      remove: "&aTarget &e{target}&a removed from code &e{code}&a."
-      remove_all: "&aAll targets removed from code &e{code}&a."
-      list: "&aTargets for code &e{code}&a:\n{targets}"
-      unknown-method: "&cUnknown target method. Please check the documentation."
+  modify_template:
+    success: "&aTemplate &e{template}&a has been modified successfully."
+    failed: "&cAn error occurred while modifying the template &e{template}&c. Please try again later."
+    invalid-value: "&cInvalid value provided for property &e{property}&c. Please check the documentation."
+    not-found: "&cTemplate &e{template}&c not found."
+    CODES_MODIFIED: "&aCodes {code} associated with template &e{template} &ahave been modified successfully."
 
   delete:
-    usage: "/rxc delete <code>"
-    success: "&aCode &e{code}&a has been deleted."
-    not-found: "&cError: Code &e{code}&c could not be found for deletion."
-    no-permission: "&cYou do not have permission to delete codes."
-    confirmation-needed: "&cPlease confirm the deletion by adding '-confirm' to the command."
-    cancellation: "&cAction cancelled. No codes were deleted."
-    invalid-syntax: "&cUsage: /redeem delete <code>"
+    success:
+      codes: "&aCode &e{code}&a has been deleted successfully."
+      all: "&aAll codes have been deleted successfully."
+    not-found:
+      codes: "&cCode &e{code}&c not found."
+      all: "&cNo codes found to delete."
+    confirmation-needed: "&#34d4b2Type '&#3474df/rcx delete * CONFIRM&#34d4b2' to confirm the deletion of all codes."
+    invalid-syntax:
+      - "&eUsages ➡ &aRequired &c<> &aOptional &b[]"
+      - "&a/rcx delete code &c<&fCODE&c> &b[&7CODES&b]"
+      - "&a/rcx delete code &c<&f*&c> &c<&fCONFIRM&c>"
+      - "&a/rcx delete template &c<&fTEMPLATE&c> &b[&7TEMPLATES&b]"
+      - "&a/rcx delete template &c<&f*&c> &c<&fCONFIRM&c>"
 
-  delete_all:
-    usage: "/rxc delete_all CONFIRM"
-    confirmation: "&cAre you sure you want to delete all codes? This action cannot be undone."
-    success: "&aAll codes have been deleted successfully."
-    no-permission: "&cYou do not have permission to delete all codes."
-    cancellation: "&cAction cancelled. No codes were deleted."
-    invalid-syntax: "&cUsage: /redeem delete_all CONFIRM"
+  delete_template:
+    success: "&aTemplate &e{code}&a has been deleted successfully."
+    failed: "&cUnable to delete template &e{code}&c."
+    not-found: "&cTemplate &e{code}&c not found."
+
+    success_all: "&aAll templates have been deleted successfully."
 
   renew:
     success: "&aCode &e{code}&a has been renewed."
@@ -186,6 +180,51 @@ commands:
     failed: "&cAn error occurred while renewing the code &e{code}&c. Please try again later."
     player-not-found: "&cError: Player &e{player}&c has never redeemed this code."
 
+  preview:
+    success: "&aPreviewed code &e{code}&a successfully."
+    no-permission: "&cYou do not have permission to preview codes."
+    not-found: "&cError: Code &e{code}&c could not be found for preview."
+    invalid-syntax: "&cUsage: /rcx preview code <code> [command|reward|message]"
+    failed: "&cAn error occurred while previewing the code &e{code}&c. Please try again later."
+
+  usage:
+    code:
+      chat:
+        - ""
+        - ""
+        - ""
+        - ""
+        - "&6=== &eCode Usage Details &6==="
+        - "&aCode: &e{code}"
+        - "&aEnabled: &b{enabled}"
+        - "&aTemplate: &b{template}"
+        - "&aLocked: &b{locked}"
+        - "&aMax Redeems: &e{max_redemption}"
+        - "&aPlayers Limit: &e{max_player_limit}"
+        - "&aPin: &e{pin}"
+        - "&aPermission: &e{permission}"
+        - "&aDuration: &e{duration}"
+        - "&aTarget: &e{target}"
+        - "&aCommands: &e{commands}"
+      actionbar: "&aViewing usage details for code &e{code}&a."
+    template:
+      chat:
+        - ""
+        - ""
+        - ""
+        - "&6=== &eTemplate Usage Details &6==="
+        - "&aTemplate: &e{template}"
+        - "&aDefaultLocked: &b{locked}"
+        - "&aMax Redeems: &e{max_redemption}"
+        - "&aPlayers Limit: &e{max_player_limit}"
+        - "&aPin: &e{pin}"
+        - "&aPermission: &e{permission}"
+        - "&aDuration: &e{duration}"
+        - "&aCommands: &e{commands}"
+      actionbar: "&aViewing usage details for template &e{template}&a."
+    no-permission: "&cYou do not have permission to view code usage."
+    not-found: "&cError: Code &e{code}&c could not be found for usage details."
+    invalid-syntax: "&cUsage: /rcx usage code <code> [command|target]"
 
   info:
     details: "&aCode Details: &e{code}&a. Expiry: &e{expiry}&a."
@@ -195,49 +234,146 @@ commands:
 
 
   help:
-    header: "&aAvailable Commands: /redeem <gen|modify|delete|delete_all|info|renew|help>"
-    command-detail:
-      gen: "&e/gen <CUSTOM | SIZE> [options] &f- Generates a new redeemable code."
-      modify: "&e/modify <code> <options> &f- Modifies an existing code with new attributes."
-      delete: "&e/delete <code> &f- Deletes a specific code."
-      delete_all: "&e/delete_all &f- Deletes all codes with a confirmation."
-      renew: "&e/renew <code> &f- Renews an expired code."
-      info: "&e/info <code> &f- Displays information about a specific code."
-    footer: "&aUse &e/redeem help <command>&a for more details on each command."
+    general:
+      chat:
+        - "&6=== &eGeneral Commands &6==="
+        - "&a/redeem &7- Redeem a code. Use CONFIRM if required."
+        - "&a/rcx gen &7- Generate codes or template."
+        - "&a/rcx modify &7- Modify codes or templates."
+        - "&a/rcx delete &7- Delete codes or templates."
+        - "&a/rcx preview &7- Preview details for a code."
+        - "&a/rcx renew &7- Renew the expiration for a code."
+        - "&a/rcx info &7- Get plugin information and statistics."
+        - "&a/rcx reload &7- Reload the plugin's configuration files."
+      actionbar: "&aUse &b/rcx help &ato view more commands."
+
+    redeem:
+      chat:
+        - "&6=== &eRedemption Commands &6==="
+        - "&a/redeem <code> [CONFIRM]"
+        - "&7Redeem a code. Use CONFIRM if required."
+
+    generation:
+      chat:
+        - "&6=== &eGeneration Commands &6==="
+        - "&a/rcx gen code <CUSTOM> [TEMPLATE]"
+        - "&7Generate a custom code with an optional template."
+        - "&a/rcx gen code <DIGIT> [TEMPLATE] [AMOUNT]"
+        - "&7Generate numeric codes with optional template and amount."
+        - "&a/rcx gen template <template>"
+        - "&7Generate a new template."
+      actionbar: "&aUse &b/rcx gen &ato start generating codes."
+
+    modification:
+      chat:
+        - "&6=== &eModification Commands &6==="
+        - "&a/rcx modify code <code> <toggle-property> [codes]"
+        - "&7Toggle a property for codes."
+        - "&a/rcx modify code <code> <property> <value> ([codes])"
+        - "&7Set a property value for codes."
+        - "&a/rcx modify template <code> <toggle-property> [codes]"
+        - "&7Toggle a property for templates."
+        - "&a/rcx modify template <code> <property> <value> ([codes])"
+        - "&7Set a property value for templates."
+      actionbar: "&aUse &b/rcx modify &ato customize your codes."
+
+    deletion:
+      chat:
+        - "&6=== &eDeletion Commands &6==="
+        - "&a/rcx delete code <code> [codes]"
+        - "&7Delete a specific code or list of codes."
+        - "&a/rcx delete code * CONFIRM"
+        - "&7Delete all codes. Requires confirmation."
+        - "&a/rcx delete template <template> [Templates]"
+        - "&7Delete a specific template or list of templates."
+        - "&a/rcx delete template * CONFIRM"
+        - "&7Reset all templates to default. Requires confirmation."
+      actionbar: "&aUse &b/rcx delete &ato manage deletions."
+
+    renewal:
+      chat:
+        - "&6=== &eRenewal Commands &6==="
+        - "&a/rcx renew code <code>"
+        - "&7Renew a code's expiration."
+      actionbar: "&aUse &b/rcx renew &ato extend code validity."
+
+    preview:
+      chat:
+        - "&6=== &ePreview Commands &6==="
+        - "&a/rcx preview code <code> [command|reward|message]"
+        - "&7Preview details for a code."
+        - "&a/rcx preview template <template> [command|reward|message]"
+        - "&7Preview details for a template."
+      actionbar: "&aUse &b/rcx preview &ato preview code details."
+
+    usage:
+      chat:
+        - "&6=== &eUsage Commands &6==="
+        - "&a/rcx usage code <code> [command|target]"
+        - "&7View usage details for a specific code."
+        - "&a/rcx usage template <template-name> [command]"
+        - "&7View usage details for a template."
+      actionbar: "&aUse &b/rcx usage &ato track code usage."
+
+    reload:
+      chat:
+        - "&6=== &eReload Commands &6==="
+        - "&a/rcx reload"
+        - "&7Reload the plugin's configuration files."
+      actionbar: "&aUse &b/rcx reload &ato refresh the configuration."
+
+    permissions:
+      chat:
+        - "&6=== &ePermissions &6==="
+        - "&aPermission: &bredeemx.use"
+        - "&7Allows players to redeem codes. &f(Default: true)"
+        - "&aPermission: &bredeemx.admin.use.gen"
+        - "&7Allows admins to generate codes or templates."
+        - "&aPermission: &bredeemx.admin.use.modify"
+        - "&7Allows admins to modify codes or templates."
+        - "&aPermission: &bredeemx.admin.use.delete"
+        - "&7Allows admins to delete codes or templates."
+        - "&aPermission: &bredeemx.admin.use.info"
+        - "&7Allows access to plugin information. &f(Default: true)"
+        - "&aPermission: &bredeemx.admin.use.renew"
+        - "&7Allows admins to renew codes."
+        - "&aPermission: &bredeemx.admin.use.reload"
+        - "&7Allows admins to reload the plugin configuration."
+      actionbar: "&aConfigure permissions in Permissions Manager. such as &bLuckPerms"
+
 
   reload:
     success: "&aThe configuration files have been reloaded."
     failed: "&cAn error occurred while reloading the configuration files."
     no-permission: "&cYou do not have permission to delete codes."
-  unknown-command: "&cUnknown SubCommand. Please try again."
+  unknown-command: "&cUnknown command. Use /rcx help [command] for a list of commands."
 
 
 # Placeholder variables to be used within messages [Note: It cannot be changed only for view purpose :D]
 placeholders:
-  code: "{code}"
-  player: "{player}"
-  pin: "{pin}"
-  target: "{target}"
-  max_redeems: "{max_redeems}"
-  max_players: "{max_players}"
-  permission: "{permission}"
-  duration: "{duration}"
-  enabled: "{enabled}"
-  commands: "{commands}"
-  expiry: "{expiry}"
-  redeemed_by: "{redeemed_by}"
-  min: "{min}"
-  max: "{max}"
-  template: "{template}"
-  storedTime: "{storedTime}"
-  usage: "{usage}"
-  usageCount: "{usageCount}"
-
-  bot:
-    enabled: "{enabled}"
-    token: "{token}"
-    channel: "{channel}"
-    message: "{message}"
-
+  - { code }: The redeem code itself.
+  - { sender }: The player or console that generated the code.
+  - { args }: Any additional arguments provided during code generation.
+  - { commands }: The commands associated with the code.
+  - { id }: The unique ID of the code.
+  - { duration }: The duration of the code's validity.
+  - { enabled }: Whether the code is enabled or disabled.
+  - { redemption }: The number of times the code can be redeemed.
+  - { limit }: The maximum number of players who can redeem the code.
+  - { permission }: The permission required to redeem the code.
+  - { pin }: The PIN required to redeem the code.
+  - { target }: The target players or groups allowed to redeem the code.
+  - { usage }: The number of times the code has been used.
+  - { template }: The template used to generate the code.
+  - { locked }: Whether the code's template is locked.
+  - { cooldown }: The cooldown period for the code.
+  - { expired }: Whether the code has expired.
+  - { minLength }: The minimum length of the code.
+  - { maxLength }: The maximum length of the code.
+  - { code_generate_digit }: The number of digits to generate for the code.
+  - { property }: The property being modified.
+  - { player }: The player who redeemed the code.
+  - { redeemed_by }: The number of players who have already redeemed the code.
+  - { expiry }: The expiry date of the code.
 
 

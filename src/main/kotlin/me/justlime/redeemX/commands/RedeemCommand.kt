@@ -5,19 +5,25 @@ import me.justlime.redeemX.data.repository.ConfigRepository
 import me.justlime.redeemX.data.repository.RedeemCodeRepository
 import me.justlime.redeemX.enums.JMessage
 import me.justlime.redeemX.models.CodePlaceHolder
-import me.justlime.redeemX.utilities.RedeemCodeService
 import org.bukkit.command.Command
 import org.bukkit.command.CommandExecutor
 import org.bukkit.command.CommandSender
 import org.bukkit.command.TabCompleter
 import org.bukkit.entity.Player
 
-class RedeemCommand(private val plugin: RedeemX) : CommandExecutor, TabCompleter {
-
+class RedeemCommand(
+    private val plugin: RedeemX,
+) : CommandExecutor,
+    TabCompleter {
     private val config = ConfigRepository(plugin)
     private val codeRepo = RedeemCodeRepository(plugin)
 
-    override fun onCommand(sender: CommandSender, command: Command, label: String, args: Array<out String>): Boolean {
+    override fun onCommand(
+        sender: CommandSender,
+        command: Command,
+        label: String,
+        args: Array<out String>,
+    ): Boolean {
         val placeHolder = CodePlaceHolder(sender, args.toMutableList())
         if (sender !is Player) {
             config.sendMsg(JMessage.RESTRICTED_TO_PLAYERS, placeHolder)
@@ -81,7 +87,6 @@ class RedeemCommand(private val plugin: RedeemX) : CommandExecutor, TabCompleter
         }
 
         val code = codeValidation.code
-        val service = RedeemCodeService()
         if (codeValidation.isCooldown(placeHolder)) {
             config.sendMsg(JMessage.Redeemed.ON_COOLDOWN, placeHolder)
             return true
@@ -101,15 +106,14 @@ class RedeemCommand(private val plugin: RedeemX) : CommandExecutor, TabCompleter
         }
         config.sendTemplateMsg(code.template, placeHolder)
 
-
         config.sendMsg(JMessage.Redeemed.SUCCESS, placeHolder)
         return true
-
     }
 
-    override fun onTabComplete(sender: CommandSender, command: Command, label: String, args: Array<out String>
-    ): List<String> {
-        return emptyList()
-    }
-
+    override fun onTabComplete(
+        sender: CommandSender,
+        command: Command,
+        label: String,
+        args: Array<out String>,
+    ): List<String> = emptyList()
 }

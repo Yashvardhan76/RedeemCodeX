@@ -1,10 +1,13 @@
 package me.justlime.redeemX.commands.subcommands
 
 import me.justlime.redeemX.RedeemX
+import me.justlime.redeemX.commands.CommandManager
 import me.justlime.redeemX.data.repository.ConfigRepository
 import me.justlime.redeemX.data.repository.RedeemCodeRepository
 import me.justlime.redeemX.enums.JMessage
+import me.justlime.redeemX.enums.JPermission
 import me.justlime.redeemX.enums.JSubCommand
+import me.justlime.redeemX.enums.JTab
 import me.justlime.redeemX.models.CodePlaceHolder
 import org.bukkit.command.CommandSender
 
@@ -12,54 +15,87 @@ class DeleteSubCommand(private val plugin: RedeemX) : JSubCommand {
     private val config = ConfigRepository(plugin)
     private val codeRepo = RedeemCodeRepository(plugin)
     override var codeList: List<String> = emptyList()
+    override val permission: String = JPermission.Admin.DELETE
+
+    private fun deleteCode(code: String, placeHolder: CodePlaceHolder) {
+        if (codeRepo.deleteCode(code)) config.sendMsg(JMessage.Commands.Delete.Success.CODES, placeHolder)
+        else config.sendMsg(JMessage.Commands.Delete.NotFound.CODES, placeHolder)
+    }
+
+    private fun deleteCodes(codes: List<String>, placeHolder: CodePlaceHolder) {
+        if (codeRepo.deleteCodes(codes)) config.sendMsg(JMessage.Commands.Delete.Success.CODES, placeHolder)
+        else config.sendMsg(JMessage.Commands.Delete.NotFound.CODES, placeHolder)
+    }
+
+    private fun deleteAllCodes(placeHolder: CodePlaceHolder) {
+        codeRepo.deleteAllCodes()
+        config.sendMsg(JMessage.Commands.Delete.Success.ALL, placeHolder)
+    }
+
+    private fun deleteTemplate(template: String, placeHolder: CodePlaceHolder): Boolean {
+        if (template == "default") {
+            config.sendMsg(JMessage.Commands.DeleteTemplate.FAILED, placeHolder)
+            return false
+        }
+        if (config.getTemplate(template) == null) {
+            config.sendMsg(JMessage.Commands.DeleteTemplate.NOT_FOUND, placeHolder)
+            return false
+        }
+        config.deleteTemplate(template)
+        config.sendMsg(JMessage.Commands.DeleteTemplate.SUCCESS, placeHolder)
+        return true
+    }
+
+    private fun deleteAllTemplates(template: String,placeHolder: CodePlaceHolder): Boolean {
+        config.deleteAllTemplates()
+        config.sendMsg(JMessage.Commands.DeleteTemplate.SUCCESS_ALL, placeHolder)
+        return true
+    }
+
     override fun execute(sender: CommandSender, args: MutableList<String>): Boolean {
         val placeHolder = CodePlaceHolder(sender)
+        if (!hasPermission(sender)){
+            config.sendMsg(JMessage.NO_PERMISSION, placeHolder)
+            return true
+        }
+        if (args.size < 3) {
+            config.sendMsg(JMessage.Commands.Help.UNKNOWN_COMMAND, placeHolder)
+            return true
+        }
 
-        if (args.size < 2 && args[0].equals("delete", ignoreCase = true)) {
-            config.sendMsg(JMessage.Commands.Delete.INVALID_SYNTAX, placeHolder)
-            return false
-        }
-        if (args.size < 2 && args[0].equals("delete_all", ignoreCase = true)) {
-            config.sendMsg(JMessage.Commands.DeleteAll.INVALID_SYNTAX, placeHolder)
-            return false
-        }
-        when (args[0].lowercase()) {
-            "delete" -> {
-                val code = args[1]
+        when (args[1].lowercase()) {
+            JTab.Type.Code.value -> if (args[2] == JTab.Delete.All.value) {
+                if (args.size < 4 || args[3] != JTab.Delete.Confirm.value) return config.sendMsg(
+                    JMessage.Commands.Delete.CONFIRMATION_NEEDED, placeHolder
+                ) != Unit
+                if (args.size < 4 || args[3] == JTab.Delete.Confirm.value) {
+                    deleteAllCodes(placeHolder)
+                    codeList = mutableListOf("*")
+                    return true
+                }
+                if (!args.getOrNull(3).isNullOrBlank()) {
+                    val codes = args.subList(2, args.size)
+                    placeHolder.code = codes.joinToString(" ")
+                    deleteCodes(codes, placeHolder)
+                    codeList = codes
+                    return true
+                }
+                val code = args[2]
                 placeHolder.code = code
-                val redeemCode = codeRepo.getCode(code)
-
-                if (redeemCode == null) {
-                    config.sendMsg(JMessage.Commands.Delete.NOT_FOUND, placeHolder)
-                    return false
-                }
-                val success = codeRepo.deleteCode(code)
-                if (!success) {
-                    config.sendMsg(JMessage.Commands.Delete.FAILED, placeHolder)
-                    return false
-                }
-                config.sendMsg(JMessage.Commands.Delete.SUCCESS, placeHolder)
+                deleteCode(code, placeHolder)
+                codeList = mutableListOf(code)
                 return true
             }
 
-            "delete_all" -> {
-
-                if (args[1] != "CONFIRM") {
-                    config.sendMsg(JMessage.Commands.DeleteAll.CONFIRMATION, placeHolder)
-                    return false
-                }
-                val success = codeRepo.deleteEntireCodes()
-                if (!success) {
-                    config.sendMsg(JMessage.Commands.DeleteAll.FAILED, placeHolder)
-                    return false
-                }
-                config.sendMsg(JMessage.Commands.DeleteAll.SUCCESS, placeHolder)
-                return true
+            JTab.Type.Template.value -> {
+                val template = args[2]
+                placeHolder.template = template
+                deleteTemplate(template, placeHolder)
             }
-
-            else -> config.sendMsg(JMessage.Commands.UNKNOWN_COMMAND, placeHolder)
         }
-        return false
+
+        CommandManager(plugin).tabCompleterList.fetched()
+        return true
     }
 }
 

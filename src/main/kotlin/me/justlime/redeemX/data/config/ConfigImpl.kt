@@ -110,13 +110,12 @@ class ConfigImpl(private val plugin: RedeemX) : ConfigDao {
             name = template,
             commands = templateSection.getStringList("commands").toIndexedMap(),
             duration = templateSection.getString("duration") ?: "0s",
-            maxRedeems = templateSection.getInt("redemption", 1),
-            maxPlayers = templateSection.getInt("limit", 1),
+            redemption = templateSection.getInt("redemption", 1),
+            playerLimit = templateSection.getInt("limit", 1),
             permissionRequired = templateSection.getBoolean("permission.required", false),
             permissionValue = templateSection.getString("permission.value","") ?: "",
             pin = templateSection.getInt("pin", 0),
-            codeGenerateDigit = templateSection.getInt("digit", 5),
-            templateLocked = templateSection.getBoolean("locked", false),
+            locked = templateSection.getBoolean("locked", false),
             cooldown = templateSection.getString("cooldown") ?: "0s",
             message = templateSection.getString("messages")?.split(",")?.toMutableList() ?: mutableListOf()
         )
@@ -135,13 +134,12 @@ class ConfigImpl(private val plugin: RedeemX) : ConfigDao {
             val section = config.getConfigurationSection(template.name)
             section?.set("commands", template.commands)
             section?.set("duration", template.duration)
-            section?.set("redemption", template.maxRedeems)
-            section?.set("limit", template.maxPlayers)
+            section?.set("redemption", template.redemption)
+            section?.set("limit", template.playerLimit)
             section?.set("permission.required", template.permissionRequired)
             section?.set("permission.value", template.permissionValue)
             section?.set("pin", template.pin)
-            section?.set("digit", template.codeGenerateDigit)
-            section?.set("locked", template.templateLocked)
+            section?.set("locked", template.locked)
             section?.set("cooldown", template.cooldown)
             section?.set("messages", template.message)
             config.save(File(plugin.dataFolder, JFiles.TEMPLATE.filename))
@@ -152,6 +150,7 @@ class ConfigImpl(private val plugin: RedeemX) : ConfigDao {
     }
 
     override fun deleteTemplate(name: String): Boolean {
+        if (name == "default") return false
         try {
             val config = configManager.getConfig(JFiles.TEMPLATE)
             config.set(name, null)
@@ -162,18 +161,18 @@ class ConfigImpl(private val plugin: RedeemX) : ConfigDao {
         }
     }
 
-    override fun deleteEntireTemplates(): Boolean {
+    override fun deleteAllTemplates(): Boolean {
         val config = configManager.getConfig(JFiles.TEMPLATE)
         if (config.getKeys(false).isEmpty()) return true
         try {
             config.getKeys(false).forEach { config.set(it, null) }
+            config.options().copyDefaults(true)
             config.save(File(plugin.dataFolder, JFiles.TEMPLATE.filename))
             return true
         } catch (e: Exception) {
             plugin.logger.log(Level.SEVERE, "Could not delete templates: ${e.message}")
             return false
         }
-
     }
 
     override fun upsertConfig(configFile: JFiles, path: String, value: String): Boolean {

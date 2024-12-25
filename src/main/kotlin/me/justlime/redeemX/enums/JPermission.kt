@@ -2,14 +2,15 @@ package me.justlime.redeemX.enums
 
 sealed interface JPermission {
     data object Admin : JPermission {
-        const val USE = "redeemx.admin.use"
+        private const val USE = "redeemx.admin.use"
         const val GEN = "$USE.gen"
-        const val GEN_TEMPLATE = "$USE.gen_template"
         const val MODIFY = "$USE.modify"
         const val DELETE = "$USE.delete"
+        const val PREVIEW = "$USE.preview"
         const val INFO = "$USE.info"
         const val RENEW = "$USE.renew"
         const val RELOAD = "$USE.reload"
+        const val USAGE = "$USE.usage"
     }
 
     data object Player : JPermission {

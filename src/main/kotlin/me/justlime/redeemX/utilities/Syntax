@@ -1,0 +1,60 @@
+/redeem <code> [CONFIRM]
+
+/rcx gen code <CUSTOM> [TEMPLATE]
+/rcx gen code <DIGIT> [TEMPLATE] [AMOUNT]
+/rcx gen template <template>
+
+/rcx modify code <code> <toggle-property> [codes]
+/rcx modify code <code> <property> <value> ([codes] //Except SetCommand, AddCommand, SetMessage, AddMessage)
+/rcx modify template <code> <toggle-property> [codes]
+/rcx modify template <code> <property> <value> ([codes] //Except SetCommand, AddCommand, SetMessage, AddMessage)
+
+/rcx delete code <code> [codes]
+/rcx delete code * CONFIRM
+/rcx delete template <template> [Templates]
+/rcx delete template * CONFIRM //Reset Default
+
+/rcx preview code <code> [command|reward|message]
+/rcx preview template <template> [command|reward|message]
+
+/rcx usage code <code> [command|target]
+/rcx usage template <template-name> [command]
+
+/rcx renew <code>
+
+/rcx info
+/rcx reload
+
+PERMISSION
+redeemx.use
+redeemx.admin.use.gen
+redeemx.admin.use.modify
+redeemx.admin.use.delete
+redeemx.admin.use.preview
+redeemx.admin.use.info
+redeemx.admin.use.renew
+redeemx.admin.use.reload
+
+
+PLACEHOLDER
+
+code
+locked
+enabled
+template
+duration
+cooldown
+permission_required
+permission
+pin_Required
+pin
+max_redemption
+max_player_limit
+total_redeemed
+total_player_player
+target_required
+targets
+redeemed_by
+last_redeemed
+code_last_modified
+code_created

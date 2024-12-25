@@ -7,13 +7,13 @@ import me.justlime.redeemX.models.RedeemCode
 import org.bukkit.command.CommandSender
 import org.bukkit.entity.Player
 
-class CodeValidation(val plugin: RedeemX, private val userCode: String,private val sender: CommandSender) {
+class CodeValidation(val plugin: RedeemX, private val userCode: String, private val sender: CommandSender) {
     private val service = plugin.service
     private val repo = RedeemCodeRepository(plugin)
     lateinit var code: RedeemCode
 
     fun isValidCode(code: String): Boolean {
-        return code.matches(Regex("^[a-zA-Z0-9]{4,100}$"))
+        return code.matches(Regex("^[a-zA-Z0-9]{1,100}$"))
     }
 
     fun isCodeExist(): Boolean {
@@ -24,19 +24,20 @@ class CodeValidation(val plugin: RedeemX, private val userCode: String,private v
 
     fun isReachedMaximumRedeem(sender: CommandSender): Boolean {
         if (code.redemption <= 0) return false
-        return (code.usedBy[sender.name] ?: 0) > code.redemption
+        return (code.usedBy[sender.name] ?: 0) >= code.redemption
     }
 
     fun isReachedMaximumPlayer(): Boolean {
-        if (code.limit <= 0) return false
-        return code.usedBy.size > code.limit
+        return if (code.usedBy[sender.name] != null) false
+        else if (code.playerLimit <= 0) false
+        else code.usedBy.size >= code.playerLimit
     }
 
     fun isCodeEnabled(): Boolean {
         return code.enabled
     }
 
-    fun requiredPermission(player: Player): Boolean{
+    fun requiredPermission(player: Player): Boolean {
         return code.permission.isNotBlank()
     }
 
@@ -51,10 +52,9 @@ class CodeValidation(val plugin: RedeemX, private val userCode: String,private v
         return service.isExpired(code)
     }
 
-    fun isPinRequired(): Boolean{
+    fun isPinRequired(): Boolean {
         return code.pin > 0
     }
-
 
     fun isCorrectPin(pin: Int): Boolean {
         return code.pin == pin
@@ -69,18 +69,18 @@ class CodeValidation(val plugin: RedeemX, private val userCode: String,private v
         return code.target.contains(player)
     }
 
-    fun isCooldown(placeHolder: CodePlaceHolder): Boolean{
-        if (service.onCoolDown(code.cooldown,code.lastRedeemed,sender.name)) {
+    fun isCooldown(placeHolder: CodePlaceHolder): Boolean {
+        if (service.onCoolDown(code.cooldown, code.lastRedeemed, sender.name)) {
             val lastRedeemedTime = code.lastRedeemed[sender.name]?.time
             if (lastRedeemedTime != null) {
                 val currentTimeMillis = service.getCurrentTime().time
                 val elapsedTimeInSeconds = (lastRedeemedTime / 1000) + service.parseDurationToSeconds(code.cooldown) - (currentTimeMillis / 1000)
-                val duration = service.adjustDuration(service.formatSecondsToDuration(elapsedTimeInSeconds),"0s", true)
+                val duration = service.adjustDuration(service.formatSecondsToDuration(elapsedTimeInSeconds), "0s", true)
                 placeHolder.cooldown = duration
             }
             return true
         }
-        repo.setLastRedeemedTime(code,sender.name)
+        repo.setLastRedeemedTime(code, sender.name)
         return false
     }
 

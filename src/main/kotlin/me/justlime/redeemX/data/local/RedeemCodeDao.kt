@@ -7,8 +7,9 @@ interface RedeemCodeDao {
     fun createTable()
     fun upsertCode(redeemCode: RedeemCode): Boolean
     fun upsertCodes(redeemCodes: List<RedeemCode>): Boolean
-    fun deleteEntireCodes(): Boolean
     fun deleteByCode(code: String): Boolean
+    fun deleteByCodes(codes: List<String>): Boolean
+    fun deleteAllCodes(): Boolean
     fun get(code: String): RedeemCode?
     fun fetch()
     fun getCachedCodes(): List<String>
@@ -16,6 +17,6 @@ interface RedeemCodeDao {
     fun getCachedUsages(): MutableMap<String, MutableMap<String,Int>>
     fun getByProperty(property: JProperty, value: String): List<RedeemCode>
     fun getEntireCodes(): List<RedeemCode>
-    fun getTemplateCodes(template: String): List<RedeemCode>
+    fun getTemplateCodes(template: String, byLocked: Boolean): List<RedeemCode>
 
 }

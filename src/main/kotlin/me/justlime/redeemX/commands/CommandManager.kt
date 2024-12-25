@@ -11,6 +11,7 @@ class CommandManager(plugin: RedeemX) {
         plugin.getCommand("rcx")?.apply {
             setExecutor(rcxCommand)
             tabCompleter = tabCompleterList
+            tabCompleterList.fetched()
         }
 
         // Register "redeem" command

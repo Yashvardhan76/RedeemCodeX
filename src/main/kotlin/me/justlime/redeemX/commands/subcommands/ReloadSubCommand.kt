@@ -13,6 +13,7 @@ import org.bukkit.command.CommandSender
 class ReloadSubCommand(val plugin: RedeemX) : JSubCommand {
     private val db = plugin.redeemCodeDB
     override var codeList: List<String> = emptyList()
+    override val permission: String = JPermission.Admin.RELOAD
 
     override fun execute(sender: CommandSender,args: MutableList<String>): Boolean {
         val config = ConfigRepository(plugin)

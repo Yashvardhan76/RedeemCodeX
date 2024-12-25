@@ -10,12 +10,11 @@ enum class JProperty(val property: String) {
     PERMISSION("permission"),
     PIN("pin"),
     REDEMPTION("redemption"),
-    LIMIT("playerLimit"),
+    PLAYER_LIMIT("playerLimit"),
     USED_BY("usedBy"),
     VALID_FROM("validFrom"),
     LAST_REDEEMED("lastRedeemed"),
     TARGET("target"),
     COMMANDS("commands"),
-    CREATED("created_at"),
-    MODIFIED("last_modified")
+    MODIFIED("modified") //Last Modified at
 }

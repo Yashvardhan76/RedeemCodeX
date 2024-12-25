@@ -40,6 +40,10 @@ class RedeemCodeRepository(plugin: RedeemX) {
         return redeemCodeDao.getByProperty(property, value)
     }
 
+    fun getCodesByTemplate(template: String, byLocked: Boolean): List<RedeemCode>{
+        return redeemCodeDao.getTemplateCodes(template,byLocked)
+    }
+
     fun getAllCodes(): List<RedeemCode> {
         return redeemCodeDao.getEntireCodes()
     }
@@ -75,7 +79,7 @@ class RedeemCodeRepository(plugin: RedeemX) {
      * @return `true` if the operation was successful, `false` otherwise.
      */
     fun setMaxPlayers(redeemCode: RedeemCode, maxPlayers: Int): Boolean {
-        redeemCode.limit = maxPlayers
+        redeemCode.playerLimit = maxPlayers
         return true
     }
 
@@ -97,8 +101,8 @@ class RedeemCodeRepository(plugin: RedeemX) {
         if (template.name.isBlank()) redeemCode.template = "default"
         redeemCode.apply {
             this.template = template.name
-            redemption = template.maxRedeems
-            limit = template.maxPlayers
+            redemption = template.redemption
+            playerLimit = template.playerLimit
             permission = template.permissionValue
             permission = if (template.permissionRequired) template.permissionValue else ""
             pin = template.pin
@@ -110,6 +114,7 @@ class RedeemCodeRepository(plugin: RedeemX) {
             this.locked = locked
             lastRedeemed = mutableMapOf()
             cooldown = template.cooldown
+            modified = service.getCurrentTime()
         }
         return true
     }
@@ -250,8 +255,12 @@ class RedeemCodeRepository(plugin: RedeemX) {
         return redeemCodeDao.deleteByCode(code)
     }
 
-    fun deleteEntireCodes(): Boolean {
-        return redeemCodeDao.deleteEntireCodes()
+    fun deleteCodes(codes: List<String>): Boolean {
+        return redeemCodeDao.deleteByCodes(codes)
+    }
+
+    fun deleteAllCodes(): Boolean {
+        return redeemCodeDao.deleteAllCodes()
     }
 
     private inline fun filterCodes(predicate: (RedeemCode) -> Boolean): List<RedeemCode> {

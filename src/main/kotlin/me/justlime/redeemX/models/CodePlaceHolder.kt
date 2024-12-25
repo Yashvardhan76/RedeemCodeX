@@ -8,17 +8,15 @@ data class CodePlaceHolder(
     val args: List<String> = emptyList(),
     var code: String = "none",
     var template: String = "none",
+    var templateLocked: String = "none",
     var command: String = "none",
     var commandId: String = "none",
     var duration: String = "none",
     var isEnabled: String = "none",
-    var redemption: String = "none",
-    var playerLimit: String = "none",
+
     var permission: String = "none",
     var pin: String = "none",
     var target: String = "none",
-    var usage: String = "none",
-    var templateLocked: String = "none",
     var cooldown: String = "none",
     val isExpired: String = "none",
     var minLength: String = "none",
@@ -26,6 +24,17 @@ data class CodePlaceHolder(
     var codeGenerateDigit: String = "none",
     var property: String = "none",
     var player: String = "none",
+
+    var redemptionLimit: String = "none",
+    var playerLimit: String = "none",
+    var usedBy: String = "none",
+    var redeemedBy: String = "none",
+    var totalPlayerUsage: String = "none",
+    var totalRedemption: String = "none",
+
+    var validTo: String = "none",
+    var validFrom: String = "none",
+    var lastRedeemed: String = "none"
 ) {
 
     companion object {
@@ -51,12 +60,12 @@ data class CodePlaceHolder(
                 command = redeemCode.commands.toString().removeSurrounding("{", "}").trim(),
                 duration = if (redeemCode.duration.isEmpty()) "none" else formattedDuration,
                 isEnabled = redeemCode.enabled.toString(),
-                redemption = redeemCode.redemption.toString(),
-                playerLimit = redeemCode.limit.toString(),
+                redemptionLimit = redeemCode.redemption.toString(),
+                playerLimit = redeemCode.playerLimit.toString(),
                 permission = redeemCode.permission,
                 pin = if (redeemCode.pin <= 0) "none" else redeemCode.pin.toString(),
                 target = redeemCode.target.toString(),
-                usage = redeemCode.usedBy.toString(),
+                usedBy = redeemCode.usedBy.toString(),
                 template = redeemCode.template,
                 templateLocked = redeemCode.locked.toString(),
                 cooldown = redeemCode.cooldown,
@@ -65,31 +74,50 @@ data class CodePlaceHolder(
                 maxLength = plugin.config.getConfigValue("code-maximum-digit"),
                 codeGenerateDigit = plugin.config.getConfigValue("default.code-generate-digit")
             )
-        }
-        fun applyByRedeemCode(redeemCode: RedeemCode,sender: CommandSender): CodePlaceHolder{
-           return CodePlaceHolder(
-               sender = sender,
+        } //TODO Remove it
+
+        fun applyByRedeemCode(redeemCode: RedeemCode, sender: CommandSender): CodePlaceHolder {
+            return CodePlaceHolder(
+                sender = sender,
                 code = redeemCode.code,
                 command = redeemCode.commands.toString().removeSurrounding("{", "}").trim(),
                 duration = redeemCode.duration,
                 isEnabled = redeemCode.enabled.toString(),
-                redemption = redeemCode.redemption.toString(),
-                playerLimit = redeemCode.limit.toString(),
+                redemptionLimit = redeemCode.redemption.toString(),
+                playerLimit = redeemCode.playerLimit.toString(),
                 permission = redeemCode.permission,
                 pin = if (redeemCode.pin <= 0) "none" else redeemCode.pin.toString(),
                 target = redeemCode.target.toString(),
-                usage = redeemCode.usedBy.toString(),
+                usedBy = redeemCode.usedBy.map {
+                    "${it.key} = ${it.value}"
+                }.joinToString(", "),
                 template = redeemCode.template,
                 templateLocked = redeemCode.locked.toString(),
                 cooldown = redeemCode.cooldown,
-                minLength = "6",
-                maxLength = "10",
-                codeGenerateDigit = "6"
-           )
+                minLength = "none",
+                maxLength = "none",
+                codeGenerateDigit = "6",
+            )
         }
 
-
-
+        fun applyByTemplate(template: RedeemTemplate, sender: CommandSender): CodePlaceHolder {
+            return CodePlaceHolder(
+                sender = sender,
+                template = template.name,
+                templateLocked = template.locked.toString(),
+                command = template.commands.toString().removeSurrounding("{", "}").trim(),
+                duration = template.duration,
+                isEnabled = "none",
+                redemptionLimit = template.redemption.toString(),
+                playerLimit = template.playerLimit.toString(),
+                permission = template.permissionValue,
+                pin = if (template.pin <= 0) "none" else template.pin.toString(),
+                cooldown = template.cooldown,
+                minLength = "none",
+                maxLength = "none",
+                codeGenerateDigit = "none"
+            )
+        }
 
     }
 }
