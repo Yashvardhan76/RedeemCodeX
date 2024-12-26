@@ -1,8 +1,10 @@
 package me.justlime.redeemX.utilities
 
+import me.clip.placeholderapi.PlaceholderAPI
 import me.justlime.redeemX.models.CodePlaceHolder
 import me.justlime.redeemX.models.RedeemCode
 import org.bukkit.ChatColor
+import org.bukkit.entity.Player
 import java.sql.Timestamp
 import java.time.Instant
 import java.util.regex.Pattern
@@ -131,7 +133,7 @@ class RedeemCodeService {
         return plainMessage
     }
 
-    fun applyPlaceholders(message: String, placeholder: CodePlaceHolder): String {
+    fun applyPlaceholders(message: String, placeholder: CodePlaceHolder, isPlaceholderHooked: ()->Boolean = { false }): String {
         val placeholders: Map<String, String> = mapOf(
             "code" to placeholder.code,
             "sender" to placeholder.sender.name,
@@ -161,8 +163,10 @@ class RedeemCodeService {
             "property" to placeholder.property,
             "player" to placeholder.player
         )
-        return placeholders.entries.fold(message) { msg, (placeholder, value) ->
+        val text = placeholders.entries.fold(message) { msg, (placeholder, value) ->
             msg.replace("{$placeholder}", value)
         }
+
+        return if (isPlaceholderHooked()) PlaceholderAPI.setPlaceholders(placeholder.sender as Player, text) else text
     }
 }

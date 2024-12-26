@@ -7,6 +7,7 @@ import me.justlime.redeemX.data.repository.ConfigRepository
 import java.io.File
 import java.sql.Connection
 import java.sql.SQLException
+import java.util.logging.Logger
 
 class DatabaseManager(val plugin: RedeemX) {
 
@@ -21,11 +22,15 @@ class DatabaseManager(val plugin: RedeemX) {
             isAutoCommit = true
             connectionTestQuery = "SELECT 1"
         }
-
+        // Suppress all HikariCP logs
         hikariDataSource = HikariDataSource(config)
 
         // Initialize tables or any required setup here
-        getRedeemCodeDao().createTable()
+        try {
+            getRedeemCodeDao().createTable()
+        } catch (e: SQLException) {
+            Logger.getLogger(javaClass.name).severe("Failed to initialize database: ${e.message}")
+        }
     }
 
     companion object {

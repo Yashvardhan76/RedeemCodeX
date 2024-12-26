@@ -7,12 +7,11 @@ import me.justlime.redeemX.data.config.ConfigManager
 import me.justlime.redeemX.data.local.DatabaseManager
 import me.justlime.redeemX.data.local.RedeemCodeDaoImpl
 import me.justlime.redeemX.data.repository.ConfigRepository
-import me.justlime.redeemX.hook.PlaceHolderAPIHook
 import me.justlime.redeemX.utilities.RedeemCodeService
 import org.bukkit.Bukkit
-import org.bukkit.ChatColor
 import org.bukkit.plugin.java.JavaPlugin
-import java.io.Console
+import java.util.logging.Level
+import java.util.logging.Logger
 
 class RedeemX : JavaPlugin() {
     lateinit var redeemCodeDB: RedeemCodeDaoImpl
@@ -32,16 +31,14 @@ class RedeemX : JavaPlugin() {
         config = ConfigRepository(this)
         service = RedeemCodeService()
         CommandManager(this)
+        this.logger.info("\u001B[32mRedeemX Plugin has been enabled!\u001B[0m")
         if (Bukkit.getPluginManager().isPluginEnabled("PlaceholderAPI")) { //
-            logger.info("Redeemed!! PlacedHolderAPI Successfully")
-            PlaceHolderAPIHook(this).register(); //
+            this.logger.info("\u001B[32mPlacedHolderAPI Redeemed\u001B[0m")
         }
-        logger.info("RedeemX Plugin haspapi p been enabled!")
     }
 
     override fun onDisable() {
         DatabaseManager.getInstance(this).closePool()
-//        bot.stopBot()
         logger.info("RedeemX Plugin has been disabled!")
     }
 }

@@ -4,7 +4,7 @@ import me.justlime.redeemX.RedeemX
 import org.bukkit.command.CommandSender
 
 data class CodePlaceHolder(
-    val sender: CommandSender,
+    var sender: CommandSender,
     val args: List<String> = emptyList(),
     var code: String = "none",
     var template: String = "none",

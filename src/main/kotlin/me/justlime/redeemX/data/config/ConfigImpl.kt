@@ -53,10 +53,14 @@ class ConfigImpl(private val plugin: RedeemX) : ConfigDao {
     }
 
     override fun getFormattedMessage(message: String, placeholders: CodePlaceHolder): String {
-        return service.applyPlaceholders(getString(message, JFiles.MESSAGES, true) ?: return "", placeholders)
+        return service.applyPlaceholders(getString(message, JFiles.MESSAGES, true) ?: return "", placeholders){
+            plugin.server.pluginManager.isPluginEnabled("PlaceholderAPI")
+        }
     }
     override fun getFormattedTemplateMessage(message: String, placeholders: CodePlaceHolder): String {
-        return service.applyPlaceholders(getString(message, JFiles.TEMPLATE, true) ?: return "", placeholders)
+        return service.applyPlaceholders(getString(message, JFiles.TEMPLATE, true) ?: return "", placeholders){
+            plugin.server.pluginManager.isPluginEnabled("PlaceholderAPI")
+        }
     }
 
 
@@ -80,14 +84,16 @@ class ConfigImpl(private val plugin: RedeemX) : ConfigDao {
         // Send action bar message
         actionBarMessage.let {
             if (placeHolder.sender is Player && actionBarMessage.isNotEmpty()) {
-                placeHolder.sender.spigot().sendMessage(ChatMessageType.ACTION_BAR, TextComponent(it))
+                val player = placeHolder.sender as Player
+                player.spigot().sendMessage(ChatMessageType.ACTION_BAR, TextComponent(it))
             }
         }
 
         // Send title message
         titleMessage.let {
             if (placeHolder.sender is Player && it.isNotEmpty()) {
-                placeHolder.sender.sendTitle(it, subtitleMessage, fadeIn, stay, fadeOut)
+                val player = placeHolder.sender as Player
+                player.sendTitle(it, subtitleMessage, fadeIn, stay, fadeOut)
             }
         }
 

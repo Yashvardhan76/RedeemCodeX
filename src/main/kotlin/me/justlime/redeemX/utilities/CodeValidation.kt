@@ -1,4 +1,4 @@
-package me.justlime.redeemX.commands
+package me.justlime.redeemX.utilities
 
 import me.justlime.redeemX.RedeemX
 import me.justlime.redeemX.data.repository.RedeemCodeRepository

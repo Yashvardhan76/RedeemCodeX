@@ -1,10 +1,12 @@
 package me.justlime.redeemX.commands
 
+import me.clip.placeholderapi.PlaceholderAPI
 import me.justlime.redeemX.RedeemX
 import me.justlime.redeemX.data.repository.ConfigRepository
 import me.justlime.redeemX.data.repository.RedeemCodeRepository
 import me.justlime.redeemX.enums.JMessage
 import me.justlime.redeemX.models.CodePlaceHolder
+import me.justlime.redeemX.utilities.CodeValidation
 import org.bukkit.command.Command
 import org.bukkit.command.CommandExecutor
 import org.bukkit.command.CommandSender
@@ -34,6 +36,7 @@ class RedeemCommand(
             config.sendMsg(JMessage.Redeemed.USAGE, placeHolder)
             return true
         }
+        placeHolder.sender = sender
         placeHolder.code = args[0].uppercase()
         val codeValidation = CodeValidation(plugin, args[0].uppercase(), sender)
         if (!codeValidation.isCodeExist()) {
@@ -102,7 +105,11 @@ class RedeemCommand(
         }
         val console = plugin.server.consoleSender
         code.commands.values.forEach {
-            plugin.server.dispatchCommand(console, it)
+            val cmd = plugin.service.applyPlaceholders(it, CodePlaceHolder.applyByRedeemCode(code, placeHolder.sender)){
+                plugin.server.pluginManager.isPluginEnabled("PlaceholderAPI")
+            }
+            //set using placeholder api
+            plugin.server.dispatchCommand(console, cmd)
         }
         config.sendTemplateMsg(code.template, placeHolder)
 
