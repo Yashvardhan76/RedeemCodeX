@@ -1,6 +1,7 @@
 package me.justlime.redeemX.models
 
 import me.justlime.redeemX.RedeemX
+import me.justlime.redeemX.utilities.JService
 import org.bukkit.command.CommandSender
 
 data class CodePlaceHolder(
@@ -69,7 +70,7 @@ data class CodePlaceHolder(
                 template = redeemCode.template,
                 templateLocked = redeemCode.locked.toString(),
                 cooldown = redeemCode.cooldown,
-                isExpired = plugin.service.isExpired(redeemCode).toString(),
+                isExpired = JService.isExpired(redeemCode).toString(),
                 minLength = plugin.config.getConfigValue("code-minimum-digit"),
                 maxLength = plugin.config.getConfigValue("code-maximum-digit"),
                 codeGenerateDigit = plugin.config.getConfigValue("default.code-generate-digit")

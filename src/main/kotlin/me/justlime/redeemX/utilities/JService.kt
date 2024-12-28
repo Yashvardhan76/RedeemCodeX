@@ -9,7 +9,7 @@ import java.sql.Timestamp
 import java.time.Instant
 import java.util.regex.Pattern
 
-class RedeemCodeService {
+object JService {
 
     fun getCurrentTime(): Timestamp {
         return Timestamp.from(Instant.now())
@@ -84,30 +84,6 @@ class RedeemCodeService {
 
     }
 
-    fun parseToId(string: String?): String {
-        if (string.isNullOrBlank()) return ""
-        return string.trim().split(",").mapIndexed { index, entry -> "$index: ${entry.trim()}" }.joinToString(", ")
-    }
-
-    fun parseToMapId(string: String?, separator: String = ":"): MutableMap<Int, String> {
-        if (string.isNullOrBlank()) return mutableMapOf()
-        val input = string.trim()
-        val resultMap = mutableMapOf<Int, String>()
-
-        for (entry in input.split(",")) {
-            val parts = entry.split(separator)
-            if (parts.size == 2) {
-                val key = parts[0].trim().toIntOrNull()
-                val value = parts[1].takeIf { it.isNotBlank() }
-                if (key != null && value != null) {
-                    resultMap[key] = value
-                }
-            }
-        }
-
-        return resultMap
-    }
-
     fun applyColors(message: String): String {
         var coloredMessage = ChatColor.translateAlternateColorCodes('&', message)
         val hexPattern = Pattern.compile("&#[a-fA-F0-9]{6}")
@@ -149,8 +125,8 @@ class RedeemCodeService {
             "target" to placeholder.target,
             "usedBy" to placeholder.usedBy,
             "redeemed_by" to placeholder.redeemedBy,
-            "total_Player_Redeemed" to placeholder.totalPlayerUsage,
-            "total_Redemption" to placeholder.totalRedemption,
+            "total_player_redeemed" to placeholder.totalPlayerUsage,
+            "total_redemption" to placeholder.totalRedemption,
             "expiry" to placeholder.validTo,
 
             "template" to placeholder.template,
@@ -167,6 +143,6 @@ class RedeemCodeService {
             msg.replace("{$placeholder}", value)
         }
 
-        return if (isPlaceholderHooked()) PlaceholderAPI.setPlaceholders(placeholder.sender as Player, text) else text
+        return if (placeholder.sender is Player && isPlaceholderHooked()) PlaceholderAPI.setPlaceholders(placeholder.sender as Player, text) else text
     }
 }

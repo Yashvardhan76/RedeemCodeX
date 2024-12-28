@@ -8,11 +8,10 @@ import org.bukkit.command.CommandSender
 import org.bukkit.entity.Player
 
 class CodeValidation(val plugin: RedeemX, private val userCode: String, private val sender: CommandSender) {
-    private val service = plugin.service
     private val repo = RedeemCodeRepository(plugin)
     lateinit var code: RedeemCode
 
-    fun isValidCode(code: String): Boolean {
+    private fun isValidCode(code: String): Boolean {
         return code.matches(Regex("^[a-zA-Z0-9]{1,100}$"))
     }
 
@@ -37,19 +36,19 @@ class CodeValidation(val plugin: RedeemX, private val userCode: String, private 
         return code.enabled
     }
 
-    fun requiredPermission(player: Player): Boolean {
+    private fun requiredPermission(): Boolean {
         return code.permission.isNotBlank()
     }
 
     fun hasPermission(player: Player): Boolean {
-        if (!requiredPermission(player)) return true
+        if (!requiredPermission()) return true
         return player.hasPermission(code.permission)
     }
 
     fun isCodeExpired(): Boolean {
         if (code.duration.isBlank()) return false
         if (code.duration == "0s") return false
-        return service.isExpired(code)
+        return JService.isExpired(code)
     }
 
     fun isPinRequired(): Boolean {
@@ -60,7 +59,7 @@ class CodeValidation(val plugin: RedeemX, private val userCode: String, private 
         return code.pin == pin
     }
 
-    fun isTargetRequired(): Boolean {
+    private fun isTargetRequired(): Boolean {
         return code.target.isNotEmpty()
     }
 
@@ -70,12 +69,12 @@ class CodeValidation(val plugin: RedeemX, private val userCode: String, private 
     }
 
     fun isCooldown(placeHolder: CodePlaceHolder): Boolean {
-        if (service.onCoolDown(code.cooldown, code.lastRedeemed, sender.name)) {
+        if (JService.onCoolDown(code.cooldown, code.lastRedeemed, sender.name)) {
             val lastRedeemedTime = code.lastRedeemed[sender.name]?.time
             if (lastRedeemedTime != null) {
-                val currentTimeMillis = service.getCurrentTime().time
-                val elapsedTimeInSeconds = (lastRedeemedTime / 1000) + service.parseDurationToSeconds(code.cooldown) - (currentTimeMillis / 1000)
-                val duration = service.adjustDuration(service.formatSecondsToDuration(elapsedTimeInSeconds), "0s", true)
+                val currentTimeMillis = JService.getCurrentTime().time
+                val elapsedTimeInSeconds = (lastRedeemedTime / 1000) + JService.parseDurationToSeconds(code.cooldown) - (currentTimeMillis / 1000)
+                val duration = JService.adjustDuration(JService.formatSecondsToDuration(elapsedTimeInSeconds), "0s", true)
                 placeHolder.cooldown = duration
             }
             return true

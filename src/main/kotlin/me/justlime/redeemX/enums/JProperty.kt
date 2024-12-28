@@ -16,5 +16,8 @@ enum class JProperty(val property: String) {
     LAST_REDEEMED("lastRedeemed"),
     TARGET("target"),
     COMMANDS("commands"),
+    REWARDS("rewards"),
+    Message("messages"),
+    Sound("sound"),
     MODIFIED("modified") //Last Modified at
 }

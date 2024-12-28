@@ -3,6 +3,7 @@ package me.justlime.redeemX.data.repository
 import me.justlime.redeemX.RedeemX
 import me.justlime.redeemX.data.config.ConfigDao
 import me.justlime.redeemX.data.config.ConfigImpl
+import me.justlime.redeemX.enums.JConfig
 import me.justlime.redeemX.enums.JFiles
 import me.justlime.redeemX.models.CodePlaceHolder
 import me.justlime.redeemX.models.RedeemTemplate
@@ -15,6 +16,14 @@ class ConfigRepository(val plugin: RedeemX) {
     private val config: ConfigDao = ConfigImpl(plugin)
     fun getConfigValue(key: String): String{
         return config.getString(key, JFiles.CONFIG, false) ?: ""
+    }
+
+    fun getCodeLengthRange(placeHolder: CodePlaceHolder): Pair<Int, Int> {
+        val minLength = getConfigValue(JConfig.Code.MINIMUM_DIGIT).toIntOrNull() ?: 3
+        val maxLength = getConfigValue(JConfig.Code.MAXIMUM_DIGIT).toIntOrNull() ?: 25
+        placeHolder.minLength = minLength.toString()
+        placeHolder.maxLength = maxLength.toString()
+        return minLength to maxLength
     }
 
     fun setConfigValue(key: String): Boolean{

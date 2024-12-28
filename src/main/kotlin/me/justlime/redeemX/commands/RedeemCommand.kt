@@ -1,12 +1,14 @@
 package me.justlime.redeemX.commands
 
-import me.clip.placeholderapi.PlaceholderAPI
 import me.justlime.redeemX.RedeemX
 import me.justlime.redeemX.data.repository.ConfigRepository
 import me.justlime.redeemX.data.repository.RedeemCodeRepository
+import me.justlime.redeemX.enums.JConfig
 import me.justlime.redeemX.enums.JMessage
 import me.justlime.redeemX.models.CodePlaceHolder
 import me.justlime.redeemX.utilities.CodeValidation
+import me.justlime.redeemX.utilities.JService
+import org.bukkit.Sound
 import org.bukkit.command.Command
 import org.bukkit.command.CommandExecutor
 import org.bukkit.command.CommandSender
@@ -33,88 +35,116 @@ class RedeemCommand(
         }
 
         if (args.isEmpty()) {
-            config.sendMsg(JMessage.Redeemed.USAGE, placeHolder)
+            config.sendMsg(JMessage.Redeem.USAGE, placeHolder)
             return true
         }
         placeHolder.sender = sender
         placeHolder.code = args[0].uppercase()
         val codeValidation = CodeValidation(plugin, args[0].uppercase(), sender)
         if (!codeValidation.isCodeExist()) {
-            config.sendMsg(JMessage.Redeemed.INVALID_CODE, placeHolder)
+            config.sendMsg(JMessage.Redeem.INVALID_CODE, placeHolder)
             return true
         }
 
         if (codeValidation.isReachedMaximumRedeem(sender)) {
-            config.sendMsg(JMessage.Redeemed.MAX_REDEMPTIONS, placeHolder)
+            config.sendMsg(JMessage.Redeem.MAX_REDEMPTIONS, placeHolder)
             return true
         }
 
         if (codeValidation.isReachedMaximumPlayer()) {
-            config.sendMsg(JMessage.Redeemed.MAX_PLAYER_REDEEMED, placeHolder)
+            config.sendMsg(JMessage.Redeem.MAX_PLAYER_REDEEMED, placeHolder)
             return true
         }
 
         if (!codeValidation.hasPermission(sender)) {
-            config.sendMsg(JMessage.Redeemed.NO_PERMISSION, placeHolder)
+            placeHolder.permission = codeValidation.code.permission
+            config.sendMsg(JMessage.Redeem.NO_PERMISSION, placeHolder)
             return true
         }
 
         if (!codeValidation.isCodeEnabled()) {
-            config.sendMsg(JMessage.Redeemed.DISABLED, placeHolder)
+            config.sendMsg(JMessage.Redeem.DISABLED, placeHolder)
             return true
         }
 
         if (codeValidation.isCodeExpired()) {
-            config.sendMsg(JMessage.Redeemed.EXPIRED_CODE, placeHolder)
+            config.sendMsg(JMessage.Redeem.EXPIRED_CODE, placeHolder)
             return true
         }
 
         // Target validation
         if (!codeValidation.isTargetValid(sender.name)) {
-            config.sendMsg(JMessage.Redeemed.INVALID_TARGET, placeHolder)
+            config.sendMsg(JMessage.Redeem.INVALID_TARGET, placeHolder)
             return true
         }
 
         if (codeValidation.isPinRequired()) {
             if (args.size < 2) {
-                config.sendMsg(JMessage.Redeemed.MISSING_PIN, placeHolder)
+                config.sendMsg(JMessage.Redeem.MISSING_PIN, placeHolder)
                 return true
             }
 
             val pin = args[1].toIntOrNull() ?: 0
             placeHolder.pin = pin.toString()
             if (!codeValidation.isCorrectPin(pin)) {
-                config.sendMsg(JMessage.Redeemed.INVALID_PIN, placeHolder)
+                config.sendMsg(JMessage.Redeem.INVALID_PIN, placeHolder)
                 return true
             }
         }
 
         val code = codeValidation.code
         if (codeValidation.isCooldown(placeHolder)) {
-            config.sendMsg(JMessage.Redeemed.ON_COOLDOWN, placeHolder)
+            config.sendMsg(JMessage.Redeem.ON_COOLDOWN, placeHolder)
+            return true
+        }
+
+        if (code.rewards.size > getEmptySlotSize(sender) && config.getConfigValue(JConfig.Rewards.DROP) == "false"){
+            config.sendMsg(JMessage.Redeem.FULL_INVENTORY, placeHolder)
             return true
         }
 
         // MAIN STUFF
+
+
         code.usedBy[sender.name] = (code.usedBy[sender.name]?.plus(1)) ?: 1
         codeRepo.setLastRedeemedTime(code, sender.name)
         val success = codeRepo.upsertCode(code)
         if (!success) {
-            config.sendMsg(JMessage.Redeemed.FAILED, placeHolder)
+            config.sendMsg(JMessage.Redeem.FAILED, placeHolder)
             return false
         }
+
+        //Execute Command
         val console = plugin.server.consoleSender
-        code.commands.values.forEach {
-            val cmd = plugin.service.applyPlaceholders(it, CodePlaceHolder.applyByRedeemCode(code, placeHolder.sender)){
+        code.commands.forEach {
+            val cmd = JService.applyPlaceholders(it, CodePlaceHolder.applyByRedeemCode(code, placeHolder.sender)){
                 plugin.server.pluginManager.isPluginEnabled("PlaceholderAPI")
             }
             //set using placeholder api
             plugin.server.dispatchCommand(console, cmd)
         }
+
+        //Received Messages
         config.sendTemplateMsg(code.template, placeHolder)
 
-        config.sendMsg(JMessage.Redeemed.SUCCESS, placeHolder)
+        //Received Rewards
+        code.rewards.forEach{item ->
+            val remaining = sender.inventory.addItem(item)
+            if (remaining.isEmpty()) return@forEach
+            if(config.getConfigValue(JConfig.Rewards.SOUND) == "true")
+            sender.playSound(sender.location, Sound.ENTITY_ITEM_PICKUP, 1f, 1f)
+
+            // If there are remaining items (inventory was full), drop them
+            remaining.values.forEach { droppedItem ->
+                sender.world.dropItem(sender.location, droppedItem)
+            }
+        }
+        config.sendMsg(JMessage.Redeem.SUCCESS, placeHolder)
         return true
+    }
+
+    private fun getEmptySlotSize(sender: Player): Int{
+       return sender.inventory.filter { it == null }.size
     }
 
     override fun onTabComplete(

@@ -2,7 +2,7 @@ package me.justlime.redeemX.models
 
 data class RedeemTemplate(
     var name: String, //TODO Implement Template Rename
-    var commands: MutableMap<Int,String>,
+    var commands: MutableList<String>,
     var duration: String,
     var cooldown: String,
     var pin: Int = 0,

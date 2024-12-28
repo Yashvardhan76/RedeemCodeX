@@ -1,30 +1,80 @@
 # Plugin message prefix
-prefix: "&6[RCX] &r>> "
+prefix: "&#57884A&l&nR&#79A06E&l&ne&#9AB892&l&nd&#BCCFB7&l&ne&#DDE7DB&l&ne&#FFFFFF&l&nm&#FFE7E0&l&nC&#FECFC1&l&no&#FEB8A1&l&nd&#FDA082&l&ne&#FD8863&l&nX &r>> "
 
 restricted-to-players: "&cThis command can only be executed by Players in-game."
 
 no-permission: "&cYou don't have permission to use this command."
 
+##########
+##Format##
+##########
+key:
+  chat:
+  - "&#6CE1DA&n{code}&r - Hex Example"
+  - "&cExample Message."
+  - "Go " #use this for blank
+  title:
+    main: "&aRedeemed &b{code}"
+    subtitle: "You have Redeemed the Code ➡ &#6CE1DA&n{code}&r"
+    fade-in: 10      # Duration in ticks (20 ticks = 1 second)
+    stay: 70
+    fade-out: 10
+  actionbar: "&aYou have Redeemed &b{code}"
 
-# Messages for redeeming codes
+############
+
+placeholders:
+  - { code }: The redeem code itself.
+  - { sender }: The player or console that generated the code.
+  - { args }: Any additional arguments provided during code generation.
+  - { commands }: The commands associated with the code.
+  - { id }: The unique ID of the code.
+  - { duration }: The duration of the code's validity.
+  - { enabled }: Whether the code is enabled or disabled.
+  - { redemption }: The number of times the code can be redeemed.
+  - { limit }: The maximum number of players who can redeem the code.
+  - { permission }: The permission required to redeem the code.
+  - { pin }: The PIN required to redeem the code.
+  - { target }: The target players or groups allowed to redeem the code.
+  - { usage }: The number of times the code has been used.
+  - { template }: The template used to generate the code.
+  - { locked }: Whether the code's template is locked.
+  - { cooldown }: The cooldown period for the code.
+  - { expired }: Whether the code has expired.
+  - { minLength }: The minimum length of the code.
+  - { maxLength }: The maximum length of the code.
+  - { code_generate_digit }: The number of digits to generate for the code.
+  - { property }: The property being modified.
+  - { player }: The player who redeemed the code.
+  - { redeemed_by }: The number of players who have already redeemed the code.
+  - { expiry }: The expiry date of the code.
+# Placeholder variables to be used within messages [Note: It cannot be changed only for view purpose :P]
+
+#################################
+## Messages for redeeming codes##
+#################################
 redeemed-message:
   usage: "Usage: /redeem <code> [pin]"
-
   success:
     chat:
-      - "&aYou have successfully redeemed the code: &b{code}"
-      - "Thanks for redeemed"
+      - ""
+      - "{prefix} &#E19728Y&#E39726o&#E59824u &#E79821h&#E9981Fa&#EB991Dv&#ED991Be &#EF9919r&#F19A16e&#F39A14d&#F59A12e&#F79B10e&#F99B0Em&#FB9B0Be&#FD9C09d &#FF9C07➡ &#6CE1DA&n{code}&r"
+      - ""
     title:
-      text: "&aRedeemed &b{code}"
-      subtitle: "&7Successfully redeemed the code: &b{code}"
+      main: "&aRedeemed &b{code}"
+      subtitle: "You have Redeemed the Code ➡ &#6CE1DA&n{code}&r"
       fade-in: 10      # Duration in ticks (20 ticks = 1 second)
       stay: 70
       fade-out: 10
-    actionbar: "&aCode &b{code} &ahas been redeemed successfully!"
+    actionbar: "&aYou have Redeemed &b{code}"
   failed:
     chat: "&cAn error occurred while redeeming your code. Please try again later."
     actionbar: "&cUnexpected error. Please contact support."
     title: "&cFailed"
+
+  full-inventory:
+    chat: "&cYour inventory is full! Please make some space before redeeming."
+    actionbar: "&cInventory full! Make space to redeem."
 
   on-cooldown:
     chat:
@@ -38,14 +88,15 @@ redeemed-message:
     actionbar: "&cCode &e{code} &cis on cooldown. Please wait {cooldown}."
 
   invalid-code:
-    chat: "&cInvalid code. Please try again or contact support."
+    chat: "&cInvalid code."
     actionbar: "&cCode not found. Please enter a valid code."
 
-  no-permission: "&cYou don't have permission to Redeemed this code {code}."
+  no-permission: "&cYou don't have {permission} permission to Redeemed {code}."
 
-  disabled: "The code {code} is disabled."
+  disabled: "&cThe code {code} is disabled."
 
-  # Message shown if the code has expired
+  invalid-target: "&c This Code can only redeemed by {target}"
+
   expired-code:
     chat: "&eThe code &b{code} &ehas expired and cannot be redeemed."
     actionbar: "&eThe code &b{code} &eis expired."
@@ -53,18 +104,15 @@ redeemed-message:
   missing-pin:
     chat: "This code {code} requires a pin. Usage: /redeem <code> <pin>"
 
-  invalid-target: "&c This Code can only redeemed by {target}"
 
   invalid-pin:
     chat: "&cInvalid pin. Please Try again"
     actionbar: "&cInvalid pin. Please Try again"
 
-  # Message shown if the code has already been redeemed by the player
   already-redeemed:
     chat: "&cYou have already redeemed this code: &b{code}"
     actionbar: "&cYou have already used this code!"
 
-  # Message for when a code has reached its maximum redemption limit
   max-player-redeemed:
     chat: "&cThe code &b{code} &chas reached its maximum player redemptions."
     actionbar: "&cMaximum players have already redeemed this code."
@@ -72,51 +120,64 @@ redeemed-message:
   max-redemptions:
     chat: "&cThe code &b{code} &chas reached its maximum redemptions."
     actionbar: "&cThe code &b{code} &chas no remaining uses."
-  # General error message in case of any unexpected issue
 
 
 commands:
-
   gen:
-    success: "&aGenerated new code: &e{code}&a."
-    invalid-syntax:
-      - "&eUsages ➡ &aRequired &c<> &aOptional &b[]"
-      - "&a/rcx gen code &c<&fCUSTOM&c> &b[&7TEMPLATE&b]"
-      - "&a/rcx gen code &c<&fSIZE&c> &b[&7TEMPLATE&b] [&7AMOUNT&b]"
-      - "&a/rcx gen template &c<&fTEMPLATE&c>"
-    invalid-range: "&cError: Invalid range for generating a code. Range must be between {min} and {max}."
-    invalid-template: "&e{template} &cnot found. &cFallback to &edefault&c Template for generating codes..."
-    no-permission: "&cYou do not have permission to generate codes."
     missing: "&cError: Default template configuration missing; fallback defaults applied."
-    length-error: "Unable to generate a unique code of length ${code}. Please try a different length or name."
-    code-already-exist: "The code '{code}' already exists. Please choose a unique code."
-    failed: "&cFailed To Generate the code &7[Database Error&7]"
-    error: "&cAn error occurred while generating the code {code}."
-  gen_template:
-    success: "&aGenerated new template: &e{template}&a."
-    no-permission: "&cYou do not have permission to generate templates."
-    code-already-exist: "The template '{template}' already exists. Please choose a unique template name."
-    failed: "&cFailed To Generate the template &7[Database Error&7]"
-    length-error: "Unable to generate a unique template {template}. Please try a different length or name."
-    invalid-range: "&cError: Invalid range for generating a template. Range must be between {min} and {max}."
-    missing: "&cError: Default template configuration missing; fallback defaults applied."
-    error: "&cAn error occurred while generating the template {template}."
+    invalid-amount: "&cThe amount must be a positive integer."
+
+    code:
+      success: "&aGenerated new code: &e{code}&a."
+      failed: "&cAn error occurred while generating the code {code}."
+      code-already-exist: "The code '{code}' already exists. Please choose a unique code."
+      invalid-range: "&cError: Invalid range for generating a code. Range must be between {min} and {max}."
+      invalid-template: "&e{template} &cnot found. &cFallback to &edefault&c Template for generating codes..."
+      invalid-length: "Unable to generate a unique code of length ${code}. Please try a different length or name."
+
+    template:
+      success: "&aGenerated new template: &e{template}&a."
+      template-already-exist: "The template '{template}' already exists. Please choose a unique template name."
+      not-found: "The template '{template}' does not exist."
+      failed: "&cAn error occurred while generating the template {template}."
 
   modify:
-    success: "&aCode &e{code}&a has been modified successfully."
-    failed: "&cAn error occurred while modifying the code &e{code}&c. Please try again later."
-    invalid-value: "&cInvalid value provided for property &e{property}&c. Please check the documentation."
-    not-found: "&cCode &e{code}&c not found."
+    invalid-value: "&cInvalid value provided for property &e{property}&c."
+    code:
+      success: "&aCode &e{code}&a has been modified successfully."
+      locked: "&cThe Code is Locked for template {template}."
+      not-found: "&cCode &e{code}&c not found."
+      failed: "&cAn error occurred while modifying the code &e{code}&c. Please try again later."
+
+      set: "&aTemplate for code &e{code} &ahas set to &e{template}&a."
+      locked-status: "&aTemplate locked status for code &e{code} &ahas set to &e{locked}&a."
+      set_permission: "&aPermission for code &e{code} &ahas been set to &e{permission}&a."
+      cooldown: "&aCode &e{code} &ahas been set to &e{cooldown}&a"
 
 
-    template_empty: "&cThe template for code &e{code}&c is empty. Please set a template first."
-    template_invalid: "&cInvalid template &e{template}&c provided."
-    template_set: "&aTemplate for code &e{code} &ahas been set to &e{template}&a."
-    template_unset: "&aTemplate for code &e{code} &ahas been unset."
-    template_locked: "&aTemplate locked status for code &e{code} &ahas been set to &e{templateLocked}&a."
-    unset_permission: "&aPermission for code &e{code} &ahas been unset."
-    set_permission: "&aPermission for code &e{code} &ahas been set to &e{permission}&a."
-    cooldown: "&aCode &e{code} &ahas been set to &e{cooldown}&a"
+      edit:
+        rewards: "&aRewards for code &e{code} &ahas been modified."
+        message: "&aMessage for code &e{code} &ahas been modified."
+        sound: "&aSound for code &e{code} &ahas been modified."
+
+    template:
+      success: "&aTemplate &e{template}&a has been modified."
+
+      empty: "&cThe template for code &e{code}&c is empty. Please set a template first."
+      not-found: "&cTemplate &e{template}&c not found."
+      failed: "&cAn error occurred while modifying the template &e{template}&c. Please try again later."
+
+      set: "&aTemplate &e{template}&a has been modified successfully."
+      set_permission: "&aPermission for template &e{template} &ahas been set to &e{permission}&a."
+      property: "&a{property} for template &e{template} &ahas been set to &e{value}&a"
+
+      permission: "&aPermission for template &e{template} &ahas been set to &e{permission}&a."
+      locked-status: "&aDefault Locked status for template &e{template} &ahas set to &e{locked}&a."
+
+      edit:
+        rewards: "&aRewards for template &e{template} &ahas been modified."
+        message: "&aMessage for template &e{template} &ahas been modified."
+        sound: "&aSound for template &e{template} &ahas been modified."
 
     list:
       - "&a&l{code} Properties"
@@ -136,8 +197,8 @@ commands:
     unknown-method: "&cUnknown method. Please check the documentation."
     set_pin: "&aPin for code &e{code} &ahas been set to &e{pin}&a."
     duration: "&aDuration for code &e{code} &ahas been set to &e{duration}&a."
-    max_redeems: "&aMax Redeems for code &e{code} &ahas been set to &e{max_redeems}&a."
-    max_players: "&aMax Players for code &e{code} &ahas been set to &e{max_players}&a."
+    max_redeems: "&aMax Redeems for code &e{code} &ahas been set to &e{max_redemption}&a."
+    max_players: "&aMax Players for code &e{code} &ahas been set to &e{max_player_limit}&a."
     permission: "&aPermission for code &e{code} &ahas been set to &e{permission}&a."
     permission-disabled: "&a Permission for code &e{code} &ahas been disabled"
     enabled: "&aEnabled status for code &e{code} &ahas been set to &e{enabled}&a."
@@ -148,6 +209,8 @@ commands:
     invalid-value: "&cInvalid value provided for property &e{property}&c. Please check the documentation."
     not-found: "&cTemplate &e{template}&c not found."
     CODES_MODIFIED: "&aCodes {code} associated with template &e{template} &ahave been modified successfully."
+    max_redeems: "&aMax Redeems for template &e{template} &ahas been set to &e{max_redemption}&a."
+    max_players: "&aMax Players for template &e{template} &ahas been set to &e{max_player_limit}&a."
 
   delete:
     success:
@@ -199,13 +262,13 @@ commands:
         - "&aEnabled: &b{enabled}"
         - "&aTemplate: &b{template}"
         - "&aLocked: &b{locked}"
-        - "&aMax Redeems: &e{max_redemption}"
-        - "&aPlayers Limit: &e{max_player_limit}"
+        - "&aMax Redeems: &e{total_redemption}/&e{max_redemption}"
+        - "&aPlayers Limit: &e{total_player_redeemed}/&e{max_player_limit}"
         - "&aPin: &e{pin}"
         - "&aPermission: &e{permission}"
         - "&aDuration: &e{duration}"
         - "&aTarget: &e{target}"
-        - "&aCommands: &e{commands}"
+        - "&aCommands: &b{commands}"
       actionbar: "&aViewing usage details for code &e{code}&a."
     template:
       chat:
@@ -349,31 +412,6 @@ commands:
   unknown-command: "&cUnknown command. Use /rcx help [command] for a list of commands."
 
 
-# Placeholder variables to be used within messages [Note: It cannot be changed only for view purpose :D]
-placeholders:
-  - { code }: The redeem code itself.
-  - { sender }: The player or console that generated the code.
-  - { args }: Any additional arguments provided during code generation.
-  - { commands }: The commands associated with the code.
-  - { id }: The unique ID of the code.
-  - { duration }: The duration of the code's validity.
-  - { enabled }: Whether the code is enabled or disabled.
-  - { redemption }: The number of times the code can be redeemed.
-  - { limit }: The maximum number of players who can redeem the code.
-  - { permission }: The permission required to redeem the code.
-  - { pin }: The PIN required to redeem the code.
-  - { target }: The target players or groups allowed to redeem the code.
-  - { usage }: The number of times the code has been used.
-  - { template }: The template used to generate the code.
-  - { locked }: Whether the code's template is locked.
-  - { cooldown }: The cooldown period for the code.
-  - { expired }: Whether the code has expired.
-  - { minLength }: The minimum length of the code.
-  - { maxLength }: The maximum length of the code.
-  - { code_generate_digit }: The number of digits to generate for the code.
-  - { property }: The property being modified.
-  - { player }: The player who redeemed the code.
-  - { redeemed_by }: The number of players who have already redeemed the code.
-  - { expiry }: The expiry date of the code.
+
 
 

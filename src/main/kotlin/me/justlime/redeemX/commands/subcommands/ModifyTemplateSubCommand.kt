@@ -8,7 +8,7 @@ import me.justlime.redeemX.enums.JTab
 import me.justlime.redeemX.models.CodePlaceHolder
 import me.justlime.redeemX.models.RedeemCode
 import me.justlime.redeemX.models.RedeemTemplate
-import me.justlime.redeemX.utilities.RedeemCodeService
+import me.justlime.redeemX.utilities.JService
 import org.bukkit.command.CommandSender
 
 class ModifyTemplateSubCommand(plugin: RedeemX) : JSubCommand {
@@ -20,13 +20,13 @@ class ModifyTemplateSubCommand(plugin: RedeemX) : JSubCommand {
 
     private fun upsertTemplate(template: RedeemTemplate): Boolean {
         val success = config.modifyTemplate(template)
-        if (upsetCodes(template)) config.sendMsg(JMessage.Commands.ModifyTemplate.CODES_MODIFIED, placeHolder)
+        if (upsetCodes(template)) config.sendMsg(JMessage.RCX.ModifyTemplate.CODES_MODIFIED, placeHolder)
 
         if (success) {
-            config.sendMsg(JMessage.Commands.ModifyTemplate.SUCCESS, placeHolder)
+            config.sendMsg(JMessage.RCX.ModifyTemplate.SUCCESS, placeHolder)
             return true
         } else {
-            config.sendMsg(JMessage.Commands.ModifyTemplate.FAILED, placeHolder)
+            config.sendMsg(JMessage.RCX.ModifyTemplate.FAILED, placeHolder)
             return false
         }
     }
@@ -47,28 +47,28 @@ class ModifyTemplateSubCommand(plugin: RedeemX) : JSubCommand {
             config.sendMsg(JMessage.NO_PERMISSION, CodePlaceHolder(sender, args))
             return true
         }
-        if (args.size < 3) return config.sendMsg(JMessage.Commands.UNKNOWN_COMMAND, CodePlaceHolder(sender)) != Unit
+        if (args.size < 3) return config.sendMsg(JMessage.RCX.UNKNOWN_COMMAND, CodePlaceHolder(sender)) != Unit
         placeHolder = CodePlaceHolder(sender, args, template = args[2], property = args[3])
 
         val property = args[3]
-        val template = config.getTemplate(args[2]) ?: return config.sendMsg(JMessage.Commands.ModifyTemplate.NOT_FOUND, placeHolder) != Unit
-        if (args.size < 5) return config.sendMsg(JMessage.Commands.UNKNOWN_COMMAND, placeHolder) != Unit
+        val template = config.getTemplate(args[2]) ?: return config.sendMsg(JMessage.RCX.ModifyTemplate.NOT_FOUND, placeHolder) != Unit
+        if (args.size < 5) return config.sendMsg(JMessage.RCX.UNKNOWN_COMMAND, placeHolder) != Unit
         val value = args[4]
         when (property) {
             JTab.Template.SetRedemption.value -> {
-                val maxRedeems = value.toIntOrNull() ?: return config.sendMsg(JMessage.Commands.ModifyTemplate.INVALID_VALUE, placeHolder) != Unit
+                val maxRedeems = value.toIntOrNull() ?: return config.sendMsg(JMessage.RCX.ModifyTemplate.INVALID_VALUE, placeHolder) != Unit
                 template.redemption = maxRedeems
                 upsertTemplate(template)
             }
 
             JTab.Template.SetPlayerLimit.value -> {
-                val maxPlayers = value.toIntOrNull() ?: return config.sendMsg(JMessage.Commands.ModifyTemplate.INVALID_VALUE, placeHolder) != Unit
+                val maxPlayers = value.toIntOrNull() ?: return config.sendMsg(JMessage.RCX.ModifyTemplate.INVALID_VALUE, placeHolder) != Unit
                 template.playerLimit = maxPlayers
                 upsertTemplate(template)
             }
 
             JTab.Template.SetPin.value -> {
-                val pin = value.toIntOrNull() ?: return config.sendMsg(JMessage.Commands.ModifyTemplate.INVALID_VALUE, placeHolder) != Unit
+                val pin = value.toIntOrNull() ?: return config.sendMsg(JMessage.RCX.ModifyTemplate.INVALID_VALUE, placeHolder) != Unit
                 template.pin = pin
                 upsertTemplate(template)
             }
@@ -86,59 +86,61 @@ class ModifyTemplateSubCommand(plugin: RedeemX) : JSubCommand {
             }
 
             JTab.Template.SetDuration.value -> {
-                if (!RedeemCodeService().isDurationValid(value)) return config.sendMsg(
-                    JMessage.Commands.ModifyTemplate.INVALID_VALUE, placeHolder
+                if (!JService.isDurationValid(value)) return config.sendMsg(
+                    JMessage.RCX.ModifyTemplate.INVALID_VALUE, placeHolder
                 ) != Unit
                 template.duration = value
                 upsertTemplate(template)
             }
 
             JTab.Template.AddDuration.value -> {
-                if (!RedeemCodeService().isDurationValid(value)) return config.sendMsg(
-                    JMessage.Commands.ModifyTemplate.INVALID_VALUE, placeHolder
+                if (!JService.isDurationValid(value)) return config.sendMsg(
+                    JMessage.RCX.ModifyTemplate.INVALID_VALUE, placeHolder
                 ) != Unit
-                template.duration = RedeemCodeService().adjustDuration(template.duration, value, true)
+                template.duration = JService.adjustDuration(template.duration, value, true)
                 upsertTemplate(template)
             }
 
             JTab.Template.RemoveDuration.value -> {
-                if (!RedeemCodeService().isDurationValid(value)) return config.sendMsg(
-                    JMessage.Commands.ModifyTemplate.INVALID_VALUE, placeHolder
+                if (!JService.isDurationValid(value)) return config.sendMsg(
+                    JMessage.RCX.ModifyTemplate.INVALID_VALUE, placeHolder
                 ) != Unit
-                template.duration = RedeemCodeService().adjustDuration(template.duration, value, false)
+                template.duration = JService.adjustDuration(template.duration, value, false)
                 upsertTemplate(template)
             }
 
 
             JTab.Template.SetCooldown.value -> {
-                if (!RedeemCodeService().isDurationValid(value)) return config.sendMsg(
-                    JMessage.Commands.ModifyTemplate.INVALID_VALUE, placeHolder
+                if (!JService.isDurationValid(value)) return config.sendMsg(
+                    JMessage.RCX.ModifyTemplate.INVALID_VALUE, placeHolder
                 ) != Unit
                 template.cooldown = value
                 upsertTemplate(template)
             }
 
             JTab.Template.SetCommand.value -> {
-                if (value.isBlank()) return config.sendMsg(JMessage.Commands.ModifyTemplate.INVALID_VALUE, placeHolder) != Unit
-                val id = template.commands.keys.maxOrNull() ?: 0
-                template.commands[id + 1] = value
+                if (value.isBlank()) return config.sendMsg(JMessage.RCX.ModifyTemplate.INVALID_VALUE, placeHolder) != Unit
+                val id = value.toIntOrNull() ?: return config.sendMsg(JMessage.RCX.ModifyTemplate.INVALID_VALUE, placeHolder) != Unit
+                if (id>template.commands.size) return config.sendMsg(JMessage.RCX.ModifyTemplate.INVALID_VALUE, placeHolder) != Unit
+                template.commands[id] = args.drop(5).joinToString(" ")
+                upsertTemplate(template)
             }
 
             JTab.Template.AddCommand.value -> {
-                if (value.isBlank()) return config.sendMsg(JMessage.Commands.ModifyTemplate.INVALID_VALUE, placeHolder) != Unit
-                val id = template.commands.keys.maxOrNull() ?: 0
-                template.commands[id + 1] = value
+                if (value.isBlank()) return config.sendMsg(JMessage.RCX.ModifyTemplate.INVALID_VALUE, placeHolder) != Unit
+                template.commands.add(args.drop(4).joinToString(" "))
                 upsertTemplate(template)
             }
 
             JTab.Template.RemoveCommand.value -> {
-                val id = value.toIntOrNull() ?: return config.sendMsg(JMessage.Commands.ModifyTemplate.INVALID_VALUE, placeHolder) != Unit
-                template.commands.remove(id)
+                val id = value.toIntOrNull() ?: return config.sendMsg(JMessage.RCX.ModifyTemplate.INVALID_VALUE, placeHolder) != Unit
+                if (id>template.commands.size) return config.sendMsg(JMessage.RCX.ModifyTemplate.INVALID_VALUE, placeHolder) != Unit
+                template.commands.removeAt(id)
                 upsertTemplate(template)
             }
 
             JTab.Template.ListCommand.value -> {
-                val commands = template.commands.map { "${it.key}: ${it.value}" }.joinToString("\n")
+                val commands = template.commands.withIndex().joinToString("\n")
                 placeHolder.sender.sendMessage(commands)
                 return true
             }
@@ -149,7 +151,7 @@ class ModifyTemplateSubCommand(plugin: RedeemX) : JSubCommand {
             }
 
             else -> {
-                config.sendMsg(JMessage.Commands.UNKNOWN_COMMAND, placeHolder)
+                config.sendMsg(JMessage.RCX.UNKNOWN_COMMAND, placeHolder)
                 return false
             }
         }

@@ -1,39 +1,64 @@
-# Maximum number of attempts for code generation to avoid infinite loops. Recommended less then 2500
+#Maximum number of attempts for code generation to avoid infinite loops.
+#[What's That?] if you generate all combination of 3-digit code when you try to generate it again
+#It can stick in infinite loop because it repeats until it get a unique code to avoid we use maximum-attempts
 max-attempts: 1000
 
-modify:
-  permission: "redeemx.use.{code}" #You can customize default permission syntax here.
+code:
+  #When Generating Codes in bulk how much amount of codes you want to see
+  display-amount: 40
 
-code-minimum-digit: 3             #The minimum digit of code required to generate, default 3 if not specified
-code-maximum-digit: 10            #The maximum digit of code required to generate, default 10 if not specified
+  #The minimum digit of code required to generate, default 3 if not specified
+  minimum-digit: 3
 
-auto-delete-expired-codes: true   #It will only done when server got restart as it is a heavy operation
-auto-delete-redeemed-code-: false
-auto-remove-permission-when-redeemed: false
+  #The maximum digit of code required to generate, default 25 if not specified
+  maximum-digit: 25
 
+redeem-command:
+  #Set cooldown for using /redeem
+  cooldown: "0s" #TODO
 
-#Set cooldown for using /redeem
-cooldown: 3s
+auto-delete:
+  #It will only be done when server got restart.
+  expired-codes: true
+
+  #it will only delete those codes who's both redemption and player limit is reached.
+  redeemed-codes: false
+
+rewards:
+  #What to do if inventory full if you set it to false player can't redeem code until there is some space in inventory
+  drop: true
+
+  #Weather to play sound of item drop or not
+  sound: true
+
+  #Equip the Armor on redeemed?
+  equip-armor: false #TODO
 
 renew:
+  #Extend again for specified duration
   reset-expired: true
+
+  #Reset the ongoing Cooldown for all player
   reset-delay: true
+
+  #it will reset the player limit
   clear-usage: true
-  clear-rewards: false #TODO
+
+  #Clear the Rewards that you saved. Not work if Locked
+  clear-rewards: false
+
+  #Clear the Commands that you added. Not work if Locked
   clear-commands: false
+
+  #Change permission requirement to false. Not work if Locked
   remove-permission-required: false
 
 #TODO
 logger:
-  generate: true  #Log The Code with created Time
-  modify: false   #Log The Code with Modified Time
+  generate: true  #Log The Code with created Time. [Recommended] Set it True if You generate Bulk Codes.
+  modify: false #Log The Code with Modified Time
   delete: true #Log The Code with deleted Time
 
-bot:
-  enabled: false
-  token: "YOUR_BOT_TOKEN_HERE"
-
-maximum-pool-size: 1  # Adjust the pool size as necessary for your server load
-
 #Don't change it unless you know what you are doing
-database-version: 1.0
+database:
+  version: 1.0

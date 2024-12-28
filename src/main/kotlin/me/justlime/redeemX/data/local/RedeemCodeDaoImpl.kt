@@ -40,6 +40,9 @@ class RedeemCodeDaoImpl(private val dbManager: DatabaseManager) : RedeemCodeDao 
                         ${JProperty.LAST_REDEEMED.property} TIMESTAMP,
                         ${JProperty.TARGET.property} TEXT,
                         ${JProperty.COMMANDS.property} TEXT,
+                        ${JProperty.REWARDS.property} TEXT,
+                        ${JProperty.Message.property} TEXT,
+                        ${JProperty.Sound.property} TEXT,
                         ${JProperty.MODIFIED.property} TIMESTAMP,
                         created TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 );
@@ -170,7 +173,10 @@ class RedeemCodeDaoImpl(private val dbManager: DatabaseManager) : RedeemCodeDao 
         statement.setString(13, mappedData.lastRedeemed)
         statement.setString(14, mappedData.target)
         statement.setString(15, mappedData.commands)
-        statement.setTimestamp(16, mappedData.last_modified)
+        statement.setString(16, mappedData.rewards)
+        statement.setString(17, mappedData.messages)
+        statement.setString(18, mappedData.sound)
+        statement.setTimestamp(19, mappedData.last_modified)
     }
 
     override fun get(code: String): RedeemCode? {

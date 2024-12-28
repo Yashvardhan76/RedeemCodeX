@@ -5,14 +5,13 @@ import me.justlime.redeemX.data.local.RedeemCodeDao
 import me.justlime.redeemX.enums.JProperty
 import me.justlime.redeemX.models.RedeemCode
 import me.justlime.redeemX.models.RedeemTemplate
-import me.justlime.redeemX.utilities.RedeemCodeService
+import me.justlime.redeemX.utilities.JService
 
 /**
  * This repository class is responsible for managing redeem codes from database.
  */
 class RedeemCodeRepository(plugin: RedeemX) {
     private val redeemCodeDao: RedeemCodeDao = plugin.redeemCodeDB
-    private val service = RedeemCodeService()
 
     fun getCode(code: String): RedeemCode? {
         return redeemCodeDao.get(code)
@@ -106,7 +105,7 @@ class RedeemCodeRepository(plugin: RedeemX) {
             permission = template.permissionValue
             permission = if (template.permissionRequired) template.permissionValue else ""
             pin = template.pin
-            validFrom = service.getCurrentTime()
+            validFrom = JService.getCurrentTime()
             duration = template.duration
             usedBy = mutableMapOf()
             target = mutableListOf()
@@ -114,7 +113,7 @@ class RedeemCodeRepository(plugin: RedeemX) {
             this.locked = locked
             lastRedeemed = mutableMapOf()
             cooldown = template.cooldown
-            modified = service.getCurrentTime()
+            modified = JService.getCurrentTime()
         }
         return true
     }
@@ -158,55 +157,38 @@ class RedeemCodeRepository(plugin: RedeemX) {
         return false
     }
 
-    fun setCommands(redeemCode: RedeemCode, commands: MutableMap<Int, String>): Boolean {
-        redeemCode.commands = commands
-        return true
-    }
-
-    fun addCommand(redeemCode: RedeemCode, command: String): Boolean {
-        if (command.isBlank()) return false
-        val id = redeemCode.commands.keys.maxOrNull() ?: 0
-        redeemCode.commands[id + 1] = command
-        return true
-    }
-
-    fun removeCommand(redeemCode: RedeemCode, id: Int): Boolean {
-        redeemCode.commands.remove(id)
-        return true
-    }
-
     fun clearCommands(redeemCode: RedeemCode): Boolean {
         redeemCode.commands.clear()
         return true
     }
 
     fun setStoredTime(redeemCode: RedeemCode): Boolean {
-        redeemCode.validFrom = service.getCurrentTime()
+        redeemCode.validFrom = JService.getCurrentTime()
         return true
     }
 
     fun modifyDuration(code: RedeemCode,duration: String,isAdding: Boolean): Boolean{
-        if (!service.isDurationValid(duration)) return false
-        code.duration = service.adjustDuration(code.duration, duration, isAdding)
+        if (!JService.isDurationValid(duration)) return false
+        code.duration = JService.adjustDuration(code.duration, duration, isAdding)
         return true
     }
 
     fun addDuration(code: RedeemCode, duration: String): Boolean {
-        if (!service.isDurationValid(duration)) return false
+        if (!JService.isDurationValid(duration)) return false
         val existingDuration = code.duration
-        code.duration = service.adjustDuration(existingDuration, duration, isAdding = true)
+        code.duration = JService.adjustDuration(existingDuration, duration, isAdding = true)
         return true
     }
 
     fun removeDuration(code: RedeemCode, duration: String): Boolean {
-        if (!service.isDurationValid(duration)) return false
+        if (!JService.isDurationValid(duration)) return false
         val existingDuration = code.duration
-        code.duration = service.adjustDuration(existingDuration, duration, isAdding = false)
+        code.duration = JService.adjustDuration(existingDuration, duration, isAdding = false)
         return true
     }
 
     fun setDuration(code: RedeemCode, duration: String): Boolean {
-        if (!service.isDurationValid(duration)) return false
+        if (!JService.isDurationValid(duration)) return false
         code.duration = duration
         return true
     }
@@ -217,7 +199,7 @@ class RedeemCodeRepository(plugin: RedeemX) {
     }
 
     fun setLastRedeemedTime(redeemCode: RedeemCode, player: String): Boolean {
-        redeemCode.lastRedeemed[player] = service.getCurrentTime()
+        redeemCode.lastRedeemed[player] = JService.getCurrentTime()
         return true
     }
 
@@ -227,7 +209,7 @@ class RedeemCodeRepository(plugin: RedeemX) {
 
     fun setCooldown(redeemCode: RedeemCode, cooldown: String): Boolean {
         //check is coldown string valid
-        if (!service.isDurationValid(cooldown)) return false
+        if (!JService.isDurationValid(cooldown)) return false
         redeemCode.cooldown = cooldown
         if (cooldown.isBlank()) redeemCode.cooldown = ""
         return true

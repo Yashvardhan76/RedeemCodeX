@@ -18,37 +18,37 @@ class DeleteSubCommand(private val plugin: RedeemX) : JSubCommand {
     override val permission: String = JPermission.Admin.DELETE
 
     private fun deleteCode(code: String, placeHolder: CodePlaceHolder) {
-        if (codeRepo.deleteCode(code)) config.sendMsg(JMessage.Commands.Delete.Success.CODES, placeHolder)
-        else config.sendMsg(JMessage.Commands.Delete.NotFound.CODES, placeHolder)
+        if (codeRepo.deleteCode(code)) config.sendMsg(JMessage.RCX.Delete.Success.CODES, placeHolder)
+        else config.sendMsg(JMessage.RCX.Delete.NotFound.CODES, placeHolder)
     }
 
     private fun deleteCodes(codes: List<String>, placeHolder: CodePlaceHolder) {
-        if (codeRepo.deleteCodes(codes)) config.sendMsg(JMessage.Commands.Delete.Success.CODES, placeHolder)
-        else config.sendMsg(JMessage.Commands.Delete.NotFound.CODES, placeHolder)
+        if (codeRepo.deleteCodes(codes)) config.sendMsg(JMessage.RCX.Delete.Success.CODES, placeHolder)
+        else config.sendMsg(JMessage.RCX.Delete.NotFound.CODES, placeHolder)
     }
 
     private fun deleteAllCodes(placeHolder: CodePlaceHolder) {
         codeRepo.deleteAllCodes()
-        config.sendMsg(JMessage.Commands.Delete.Success.ALL, placeHolder)
+        config.sendMsg(JMessage.RCX.Delete.Success.ALL, placeHolder)
     }
 
     private fun deleteTemplate(template: String, placeHolder: CodePlaceHolder): Boolean {
         if (template == "default") {
-            config.sendMsg(JMessage.Commands.DeleteTemplate.FAILED, placeHolder)
+            config.sendMsg(JMessage.RCX.DeleteTemplate.FAILED, placeHolder)
             return false
         }
         if (config.getTemplate(template) == null) {
-            config.sendMsg(JMessage.Commands.DeleteTemplate.NOT_FOUND, placeHolder)
+            config.sendMsg(JMessage.RCX.DeleteTemplate.NOT_FOUND, placeHolder)
             return false
         }
         config.deleteTemplate(template)
-        config.sendMsg(JMessage.Commands.DeleteTemplate.SUCCESS, placeHolder)
+        config.sendMsg(JMessage.RCX.DeleteTemplate.SUCCESS, placeHolder)
         return true
     }
 
     private fun deleteAllTemplates(template: String,placeHolder: CodePlaceHolder): Boolean {
         config.deleteAllTemplates()
-        config.sendMsg(JMessage.Commands.DeleteTemplate.SUCCESS_ALL, placeHolder)
+        config.sendMsg(JMessage.RCX.DeleteTemplate.SUCCESS_ALL, placeHolder)
         return true
     }
 
@@ -59,14 +59,14 @@ class DeleteSubCommand(private val plugin: RedeemX) : JSubCommand {
             return true
         }
         if (args.size < 3) {
-            config.sendMsg(JMessage.Commands.Help.UNKNOWN_COMMAND, placeHolder)
+            config.sendMsg(JMessage.RCX.Help.UNKNOWN_COMMAND, placeHolder)
             return true
         }
 
         when (args[1].lowercase()) {
             JTab.Type.Code.value -> if (args[2] == JTab.Delete.All.value) {
                 if (args.size < 4 || args[3] != JTab.Delete.Confirm.value) return config.sendMsg(
-                    JMessage.Commands.Delete.CONFIRMATION_NEEDED, placeHolder
+                    JMessage.RCX.Delete.CONFIRMATION_NEEDED, placeHolder
                 ) != Unit
                 if (args.size < 4 || args[3] == JTab.Delete.Confirm.value) {
                     deleteAllCodes(placeHolder)

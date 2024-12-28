@@ -38,6 +38,7 @@ sealed interface JTab {
     }
 
     enum class Modify(val value: String) {
+
         Enabled("enabled"), // Can be toggled
         Locked("locked"),   // Can be toggled
         SetRedemption("redemption"), SetPlayerLimit("playerLimit"),
@@ -51,9 +52,16 @@ sealed interface JTab {
 
         SetTarget("setTarget"), AddTarget("addTarget"), RemoveTarget("removeTarget"), ListTarget("listTarget"),
 
-        SetTemplate("template"), Cooldown("cooldown")
-    }
+        SetTemplate("template"), Cooldown("cooldown");
 
+        enum class Edit(val value: String): JTab {
+            It("edit"),
+            Reward("rewards"),
+            Message("messages"),
+            Sound("sound")
+        }
+
+    }
     enum class Template(val value: String) {
         SetRedemption("redemption"), SetPlayerLimit("playerLimit"),
 

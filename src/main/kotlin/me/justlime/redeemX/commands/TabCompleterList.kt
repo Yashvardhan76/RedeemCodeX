@@ -33,6 +33,8 @@ class TabCompleterList(val plugin: RedeemX) : TabCompleter {
         if (sender.hasPermission(JPermission.Admin.RENEW)) generalOptions.add(JTab.GeneralActions.Renew.value)
         if (sender.hasPermission(JPermission.Admin.INFO)) generalOptions.add(JTab.GeneralActions.Info.value)
         if (sender.hasPermission(JPermission.Admin.RELOAD)) generalOptions.add(JTab.GeneralActions.Reload.value)
+        if (sender.hasPermission(JPermission.Admin.USAGE)) generalOptions.add(JTab.GeneralActions.Usage.value)
+        if (sender.hasPermission(JPermission.Admin.PREVIEW)) generalOptions.add(JTab.GeneralActions.Preview.value)
         // Handle argument completions based on argument size
 
         when (args.size) {
@@ -50,7 +52,8 @@ class TabCompleterList(val plugin: RedeemX) : TabCompleter {
                         completions.addAll(generalOptions)
                         completions.add("permissions")
                     }
-                    JTab.GeneralActions.Usage.value -> if(sender.hasPermission(JPermission.Admin.USAGE)) completions.addAll(typeOptions)
+
+                    JTab.GeneralActions.Usage.value -> if (sender.hasPermission(JPermission.Admin.USAGE)) completions.addAll(typeOptions)
 
                 }
             }
@@ -64,12 +67,13 @@ class TabCompleterList(val plugin: RedeemX) : TabCompleter {
                         completions.addAll(cachedCodes)
                         if (cachedCodes.isNotEmpty()) completions.addAll(deleteOptions)
                     }
-                    JTab.GeneralActions.Usage.value -> if(sender.hasPermission(JPermission.Admin.USAGE)) completions.addAll(cachedCodes)
+
+                    JTab.GeneralActions.Usage.value -> if (sender.hasPermission(JPermission.Admin.USAGE)) completions.addAll(cachedCodes)
                 }
                 if (args[1] == JTab.Type.Template.value) when (args[0]) {
                     JTab.GeneralActions.Modify.value -> if (sender.hasPermission(JPermission.Admin.MODIFY)) completions.addAll(cachedTemplate)
                     JTab.GeneralActions.Delete.value -> if (sender.hasPermission(JPermission.Admin.DELETE)) completions.addAll(cachedTemplate)
-                    JTab.GeneralActions.Usage.value -> if(sender.hasPermission(JPermission.Admin.USAGE)) completions.addAll(cachedTemplate)
+                    JTab.GeneralActions.Usage.value -> if (sender.hasPermission(JPermission.Admin.USAGE)) completions.addAll(cachedTemplate)
                 }
             }
 
@@ -90,6 +94,12 @@ class TabCompleterList(val plugin: RedeemX) : TabCompleter {
 
             5 -> {
                 if (args[0] == JTab.GeneralActions.Gen.value && args[1] == JTab.Type.Code.value && args[2].toIntOrNull() != null) completions.add(JTab.Generate.Amount.value)
+                val editList = JTab.Modify.Edit.entries.filter { it != JTab.Modify.Edit.It }.map { it.value }
+                if (sender.hasPermission(JPermission.Admin.MODIFY)) {
+                    when (args[3]) {
+                        JTab.Modify.Edit.It.value -> if (sender.hasPermission(JPermission.Admin.MODIFY)) completions.addAll(editList)
+                    }
+                }
             }
 
             6 -> {

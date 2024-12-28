@@ -5,8 +5,7 @@ import me.justlime.redeemX.enums.JFiles
 import me.justlime.redeemX.enums.JMessage
 import me.justlime.redeemX.models.CodePlaceHolder
 import me.justlime.redeemX.models.RedeemTemplate
-import me.justlime.redeemX.utilities.RedeemCodeService
-import me.justlime.redeemX.utilities.toIndexedMap
+import me.justlime.redeemX.utilities.JService
 import net.md_5.bungee.api.ChatMessageType
 import net.md_5.bungee.api.chat.TextComponent
 import org.bukkit.configuration.file.FileConfiguration
@@ -18,7 +17,6 @@ import java.util.logging.Level
 class ConfigImpl(private val plugin: RedeemX) : ConfigDao {
     private val configFiles = mutableMapOf<JFiles, FileConfiguration>()
     private val configManager = plugin.configManager
-    private val service = RedeemCodeService()
 
     companion object {
         private const val DEFAULT_FADE_IN = 10
@@ -29,19 +27,18 @@ class ConfigImpl(private val plugin: RedeemX) : ConfigDao {
     override fun getString(path: String, configFile: JFiles, applyColor: Boolean): String? {
         val fileConfig = configManager.getConfig(configFile)
         val message = fileConfig.getString(path) ?: return null
-        return if (applyColor) service.applyColors(message) else message
+        return if (applyColor) JService.applyColors(message) else message
     }
 
-    //TODO Implement the method which remove the 'HEX' color code from the message
     override fun getMessage(message: String): String {
         //I have used formatted Message cause of redundant.
         val placeholders = CodePlaceHolder(plugin.server.consoleSender)
-        return service.removeColors(getFormattedMessage(message, placeholders))
+        return JService.removeColors(getFormattedMessage(message, placeholders))
     }
 
     override fun getMessage(message: String, placeholders: CodePlaceHolder): String {
         //I have used formatted Message cause of redundant.
-        return service.removeColors(getFormattedMessage(message, placeholders))
+        return JService.removeColors(getFormattedMessage(message, placeholders))
     }
 
     override fun getTemplateMessage(template: String): String {
@@ -53,12 +50,12 @@ class ConfigImpl(private val plugin: RedeemX) : ConfigDao {
     }
 
     override fun getFormattedMessage(message: String, placeholders: CodePlaceHolder): String {
-        return service.applyPlaceholders(getString(message, JFiles.MESSAGES, true) ?: return "", placeholders){
+        return JService.applyPlaceholders(getString(message, JFiles.MESSAGES, true) ?: return "", placeholders){
             plugin.server.pluginManager.isPluginEnabled("PlaceholderAPI")
-        }
+        }.replace("{prefix}",getString(JMessage.PREFIX,JFiles.MESSAGES,true)?: "")
     }
     override fun getFormattedTemplateMessage(message: String, placeholders: CodePlaceHolder): String {
-        return service.applyPlaceholders(getString(message, JFiles.TEMPLATE, true) ?: return "", placeholders){
+        return JService.applyPlaceholders(getString(message, JFiles.TEMPLATE, true) ?: return "", placeholders){
             plugin.server.pluginManager.isPluginEnabled("PlaceholderAPI")
         }
     }
@@ -111,10 +108,10 @@ class ConfigImpl(private val plugin: RedeemX) : ConfigDao {
 
     override fun getTemplate(template: String): RedeemTemplate {
         val config = configManager.getConfig(JFiles.TEMPLATE)
-        val templateSection = config.getConfigurationSection(template) ?: throw Exception(getMessage(JMessage.Commands.ModifyTemplate.NOT_FOUND,CodePlaceHolder(plugin.server.consoleSender)))
+        val templateSection = config.getConfigurationSection(template) ?: throw Exception(getMessage(JMessage.RCX.ModifyTemplate.NOT_FOUND,CodePlaceHolder(plugin.server.consoleSender)))
         return RedeemTemplate(
             name = template,
-            commands = templateSection.getStringList("commands").toIndexedMap(),
+            commands = templateSection.getStringList("commands"),
             duration = templateSection.getString("duration") ?: "0s",
             redemption = templateSection.getInt("redemption", 1),
             playerLimit = templateSection.getInt("limit", 1),
@@ -123,7 +120,7 @@ class ConfigImpl(private val plugin: RedeemX) : ConfigDao {
             pin = templateSection.getInt("pin", 0),
             locked = templateSection.getBoolean("locked", false),
             cooldown = templateSection.getString("cooldown") ?: "0s",
-            message = templateSection.getString("messages")?.split(",")?.toMutableList() ?: mutableListOf()
+            message = templateSection.getStringList("messages")
         )
     }
 

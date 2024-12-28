@@ -5,24 +5,27 @@ add pagination system for cachedCode Limit of 600
 /rcx modify_template - setup
 ADD Prefix
 
-TOP Priority
-Add Rewards
-ADD Other Plugin Placeholder Support
+
 
 TODO GEN
 add BulkCustomNameSupport Like CODE1 CODE2 CODE@AZ6F
 add direct property to option
 
 TODO Delete
-fetch delete codes
-/rcx delete * CONFIRM
-/rcx delete CODE <code> [codes]
-/rcx delete TEMPLATE <Template> [Templates]
 /rcx delete LAST <Template> <Amount> CONFIRM /Delete Codes from last Added where template ="" ?: Default
 
 
 TODO MODIFY
-target list add + placeholder support for list
+TOP Priority
+Add Rewards, sound, messages0* :-
+/rcx modify code <code> edit messages
+/rcx modify code <code> edit sound
+/rcx modify code <code> edit rewards
+/rcx modify code <code> edit item
+/rcx modify template <code> edit messages
+/rcx modify template <code> edit sound
+/rcx modify template <code> edit rewards
+/rcx modify template <code> edit item
 
 TODO DISCORD
 revisit

@@ -1,5 +1,6 @@
 package me.justlime.redeemX.models
 
+import org.bukkit.inventory.ItemStack
 import java.sql.Timestamp
 
 data class RedeemCode(
@@ -22,6 +23,11 @@ data class RedeemCode(
     var validFrom: Timestamp,
     var lastRedeemed: MutableMap<String, Timestamp>,
     var target: MutableList<String>, //Blank for disabled
-    var commands: MutableMap<Int, String>, //Empty list for disabled
+    var commands: MutableList<String>, //Empty list for disabled
+
+    var rewards: MutableList<ItemStack> = mutableListOf(),
+    var messages: String = "",
+    var sound: String = "",
+
     var modified: Timestamp
 )

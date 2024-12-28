@@ -27,10 +27,22 @@ class RCXCommand(private val plugin: RedeemX) : CommandExecutor {
     ): Boolean {
         placeHolder = CodePlaceHolder(sender, oldArgs.toMutableList())
         if (oldArgs.isEmpty()) {
-            config.sendMsg(JMessage.Commands.Help.UNKNOWN_COMMAND, placeHolder)
+            config.sendMsg(JMessage.RCX.Help.UNKNOWN_COMMAND, placeHolder)
             return true
         }
         val args = oldArgs.toMutableList()
+        val permissionList = listOf(
+            JPermission.Admin.GEN,
+            JPermission.Admin.MODIFY,
+            JPermission.Admin.DELETE,
+            JPermission.Admin.PREVIEW,
+            JPermission.Admin.RENEW,
+            JPermission.Admin.RELOAD
+        )
+        if (!permissionList.any { sender.hasPermission(it) }) {
+            config.sendMsg(JMessage.NO_PERMISSION, placeHolder)
+            return true
+        }
 
         when (args[0].lowercase()) {
             JTab.GeneralActions.Gen.value -> {
@@ -42,14 +54,14 @@ class RCXCommand(private val plugin: RedeemX) : CommandExecutor {
 
                 if (args.size > 1 && args[1] == JTab.Type.Code.value) ModifySubCommand(plugin).execute(sender, args)
                 else if (args.size > 1 && args[1] == JTab.Type.Template.value) ModifyTemplateSubCommand(plugin).execute(sender, args)
-                else config.sendMsg(JMessage.Commands.Help.UNKNOWN_COMMAND, placeHolder)
+                else config.sendMsg(JMessage.RCX.Help.UNKNOWN_COMMAND, placeHolder)
             }
 
             JTab.GeneralActions.Delete.value -> DeleteSubCommand(plugin).execute(sender, args)
 
             JTab.GeneralActions.Preview.value -> {}
 
-            JTab.GeneralActions.Usage.value -> UsageSubCommand(plugin).execute(sender,args)
+            JTab.GeneralActions.Usage.value -> UsageSubCommand(plugin).execute(sender, args)
 
             JTab.GeneralActions.Info.value -> InfoSubCommand(plugin).execute(sender, args)
 
@@ -64,10 +76,10 @@ class RCXCommand(private val plugin: RedeemX) : CommandExecutor {
                         JPermission.Admin.RELOAD
                     )
                 ) HelpSubCommand(plugin).execute(sender, args)
-                else config.sendMsg(JMessage.Commands.Help.REDEEM, placeHolder)
+                else config.sendMsg(JMessage.RCX.Help.REDEEM, placeHolder)
             }
 
-            else -> config.sendMsg(JMessage.Commands.UNKNOWN_COMMAND, placeHolder)
+            else -> config.sendMsg(JMessage.RCX.UNKNOWN_COMMAND, placeHolder)
         }
         return true
     }

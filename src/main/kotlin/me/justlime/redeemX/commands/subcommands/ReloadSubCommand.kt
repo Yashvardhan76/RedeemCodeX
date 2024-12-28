@@ -11,7 +11,6 @@ import me.justlime.redeemX.models.CodePlaceHolder
 import org.bukkit.command.CommandSender
 
 class ReloadSubCommand(val plugin: RedeemX) : JSubCommand {
-    private val db = plugin.redeemCodeDB
     override var codeList: List<String> = emptyList()
     override val permission: String = JPermission.Admin.RELOAD
 
@@ -27,11 +26,11 @@ class ReloadSubCommand(val plugin: RedeemX) : JSubCommand {
             config.reloadConfig(JFiles.MESSAGES)
             config.reloadConfig(JFiles.TEMPLATE)
             CommandManager(plugin).tabCompleterList.fetched()
-            config.sendMsg(JMessage.Commands.Reload.SUCCESS, placeHolder)
+            config.sendMsg(JMessage.RCX.Reload.SUCCESS, placeHolder)
             return true
 
         } catch (e: Exception) {
-            config.sendMsg(JMessage.Commands.Reload.FAILED, placeHolder)
+            config.sendMsg(JMessage.RCX.Reload.FAILED, placeHolder)
             return false
         }
     }

@@ -7,9 +7,10 @@ sealed interface JMessage {
         const val NO_PERMISSION = "no-permission"
     }
 
-    sealed class Redeemed : JMessage {
+    sealed class Redeem : JMessage {
         companion object {
             private const val REDEEMED = "redeemed-message"
+            const val FULL_INVENTORY = "$REDEEMED.full-inventory"
 
             const val SUCCESS = "$REDEEMED.success"
             const val FAILED = "$REDEEMED.failed"
@@ -28,21 +29,30 @@ sealed interface JMessage {
         }
     }
 
-    sealed class Commands : JMessage {
-        data object Gen : Commands() {
+    sealed class RCX : JMessage {
+        data object Gen : RCX() {
             private const val GEN = "commands.gen"
-            const val SUCCESS = "$GEN.success"
-            const val INVALID_RANGE = "$GEN.invalid-range"
-            const val INVALID_AMOUNT = "$GEN.invalid-amount"
-            const val LENGTH_ERROR = "$GEN.length-error"
-            const val CODE_ALREADY_EXIST = "$GEN.code-already-exist"
-            const val FAILED = "$GEN.failed"
-            const val ERROR = "$GEN.error"
-            const val INVALID_TEMPLATE = "$GEN.invalid-template"
             const val MISSING = "$GEN.missing"
+            const val INVALID_AMOUNT = "$GEN.invalid-amount"
+            data object Code : RCX(){
+                const val SUCCESS = "$GEN.code.success"
+                const val FAILED = "$GEN.code.failed"
+                const val ALREADY_EXIST = "$GEN.code.already-exist"
+                const val INVALID_CODE = "$GEN.code.invalid-code"
+                const val INVALID_TEMPLATE = "$GEN.code.invalid-template"
+                const val INVALID_LENGTH = "$GEN.code.invalid-length"
+                const val INVALID_RANGE = "$GEN.code.invalid-range"
+            }
+
+            data object Template : RCX(){
+                const val SUCCESS = "$GEN.template.success"
+                const val FAILED = "$GEN.template.failed"
+                const val ALREADY_EXIST = "$GEN.template.already-exist"
+                const val TEMPLATE_NOT_FOUND = "$GEN.template.not-found "
+            }
         }
 
-        data object GenTemplate : Commands() {
+        data object GenTemplate : RCX() {
             private const val GEN_TEMPLATE = "commands.gen_template"
             const val SUCCESS = "$GEN_TEMPLATE.success"
             const val FAILED = "$GEN_TEMPLATE.failed"
@@ -51,7 +61,7 @@ sealed interface JMessage {
             const val ALREADY_EXIST = "$GEN_TEMPLATE.already_exist"
         }
 
-        data object Modify : Commands() {
+        data object Modify : RCX() {
             private const val MODIFY = "commands.modify"
             const val SUCCESS = "$MODIFY.success"
             const val FAILED = "$MODIFY.failed"
@@ -65,6 +75,7 @@ sealed interface JMessage {
             const val UNKNOWN_METHOD = "$MODIFY.unknown-method"
             const val ENABLED = "$MODIFY.enabled"
             const val EXPIRED_CODE = "$MODIFY.expired-code"
+            const val LOCKED = "$MODIFY.locked"
 
             object Target {
                 private const val TARGET = "commands.modify.target"
@@ -90,9 +101,16 @@ sealed interface JMessage {
 
             const val CODE_GENERATE_DIGIT = "$MODIFY.code_generate_digit"
             const val DURATION = "$MODIFY.duration"
+
+            object Edit {
+                private const val EDIT = "commands.modify.edit"
+                const val REWARDS = "$EDIT.rewards"
+                const val MESSAGE = "$EDIT.message"
+                const val SOUND = "$EDIT.sound"
+            }
         }
 
-        data object ModifyTemplate : Commands() {
+        data object ModifyTemplate : RCX() {
             private const val MODIFY_TEMPLATE = "commands.modify_template"
             const val SUCCESS = "$MODIFY_TEMPLATE.success"
             const val FAILED = "$MODIFY_TEMPLATE.failed"
@@ -120,7 +138,7 @@ sealed interface JMessage {
             const val DURATION = "$MODIFY_TEMPLATE.duration"
         }
 
-        data object Delete : Commands() {
+        data object Delete : RCX() {
             private const val DELETE = "commands.delete"
 
             object Success {
@@ -137,7 +155,7 @@ sealed interface JMessage {
             const val FAILED = "$DELETE.failed"
         }
 
-        data object DeleteTemplate : Commands() {
+        data object DeleteTemplate : RCX() {
             private const val DELETE_TEMPLATE = "commands.delete_template"
             const val SUCCESS = "$DELETE_TEMPLATE.success"
             const val SUCCESS_ALL = "$DELETE_TEMPLATE.success_all"
@@ -145,7 +163,7 @@ sealed interface JMessage {
             const val NOT_FOUND = "$DELETE_TEMPLATE.not-found"
         }
 
-        data object Renew : Commands() {
+        data object Renew : RCX() {
             private const val RENEW = "commands.renew"
             const val SUCCESS = "$RENEW.success"
             const val NOT_FOUND = "$RENEW.not-found"
@@ -154,7 +172,7 @@ sealed interface JMessage {
         }
 
 
-        data object Help : Commands() {
+        data object Help : RCX() {
             private const val HELP = "commands.help"
             const val UNKNOWN_COMMAND = "$HELP.unknown-command"
             const val GENERAL = "$HELP.general"
@@ -170,7 +188,7 @@ sealed interface JMessage {
             const val INFO = "commands.info"
         }
 
-        data object Usage: Commands(){
+        data object Usage: RCX(){
             private const val USAGE = "commands.usage"
             const val CODE = "$USAGE.code"
             const val TEMPLATE = "$USAGE.template"
@@ -178,7 +196,7 @@ sealed interface JMessage {
             const val TEMPLATE_NOT_FOUND ="$USAGE.template-not-found"
         }
 
-        data object Reload : Commands() {
+        data object Reload : RCX() {
             private const val RELOAD = "commands.reload"
             const val SUCCESS = "$RELOAD.success"
             const val FAILED = "$RELOAD.failed"
