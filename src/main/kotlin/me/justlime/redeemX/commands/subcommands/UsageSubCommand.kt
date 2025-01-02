@@ -12,28 +12,36 @@ import me.justlime.redeemX.utilities.JService
 import org.bukkit.command.CommandSender
 
 class UsageSubCommand(plugin: RedeemX) : JSubCommand {
-    override var codeList: List<String> = emptyList()
+    override var jList: List<String> = emptyList()
     override val permission: String = JPermission.Admin.USAGE
     val config = ConfigRepository(plugin)
     private val codeRepo = RedeemCodeRepository(plugin)
+    lateinit var placeHolder: CodePlaceHolder
 
     override fun execute(sender: CommandSender, args: MutableList<String>): Boolean {
-        var placeHolder = CodePlaceHolder(sender, args)
+        placeHolder = CodePlaceHolder(sender, args)
         if (!hasPermission(sender)) {
-            config.sendMsg(JMessage.NO_PERMISSION, placeHolder)
+            config.sendMsg(JMessage.Command.NO_PERMISSION, placeHolder)
             return false
         }
 
         if (args.size < 3) {
-            config.sendMsg(JMessage.RCX.Help.UNKNOWN_COMMAND, CodePlaceHolder(sender))
+            config.sendMsg(JMessage.Command.UNKNOWN_COMMAND, CodePlaceHolder(sender))
             return false
         }
         val type = args[1]
+        fun commandPrinter(commands: List<String>): String{
+            val commandsBuilder = StringBuilder()
+            commands.forEachIndexed { index, command ->
+                commandsBuilder.append("[$index] $command\n")
+            }
+            return commandsBuilder.toString()
+        }
         when (type) {
-            JTab.Type.Code.value -> {
+            JTab.Type.CODE -> {
                 val redeemCode = codeRepo.getCode(args[2])
                 if (redeemCode == null) {
-                    config.sendMsg(JMessage.RCX.Usage.CODE_NOT_FOUND, placeHolder)
+                    config.sendMsg(JMessage.Code.NOT_FOUND, placeHolder)
                     return false
                 }
                 placeHolder = CodePlaceHolder.applyByRedeemCode(redeemCode, sender)
@@ -42,34 +50,51 @@ class UsageSubCommand(plugin: RedeemX) : JSubCommand {
                 placeHolder.usedBy = redeemCode.usedBy.map {
                     "${it.key} = ${it.value}"
                 }.joinToString(", ")
-                val commandsBuilder = StringBuilder()
-                redeemCode.commands.forEachIndexed { index, command ->
-                    commandsBuilder.append("[$index] $command\n")
-                }
-                placeHolder.command = commandsBuilder.toString()
-                if(placeHolder.pin == "none") placeHolder.pin = JService.applyColors("&cdisabled")
-                if (placeHolder.permission == "") placeHolder.permission = JService.applyColors("&cdisabled")
+                placeHolder.target = redeemCode.target.joinToString(", ")
+                placeHolder.command = commandPrinter(redeemCode.commands)
+                if(placeHolder.pin == "none") placeHolder.pin = config.getMessage(JMessage.Code.Placeholder.DISABLED,placeHolder)
+                if (placeHolder.permission == "") placeHolder.permission = JService.applyColors(config.getMessage(JMessage.Code.Placeholder.DISABLED,
+                    placeHolder))
 
-
-                config.sendMsg(JMessage.RCX.Usage.CODE, placeHolder)
+                config.sendMsg(JMessage.Code.Usages.USAGE, placeHolder)
             }
 
-            JTab.Type.Template.value -> {
+            JTab.Type.TEMPLATE -> {
                 val template = config.getTemplate(args[2])
                 if (template == null) {
-                    config.sendMsg(JMessage.RCX.Usage.TEMPLATE_NOT_FOUND, placeHolder)
+                    config.sendMsg(JMessage.Template.NOT_FOUND, placeHolder)
                     return false
                 }
                 placeHolder = CodePlaceHolder.applyByTemplate(template, sender)
-                config.sendMsg(JMessage.RCX.Usage.TEMPLATE, placeHolder)
+                placeHolder.command = commandPrinter(template.commands)
+                if(placeHolder.pin == "none") placeHolder.pin = config.getMessage(JMessage.Code.Placeholder.DISABLED,placeHolder)
+                if (placeHolder.permission == "") placeHolder.permission = JService.applyColors(config.getMessage(JMessage.Code.Placeholder.DISABLED,
+                    placeHolder))
+
+                config.sendMsg(JMessage.Template.USAGE, placeHolder)
             }
 
             else -> {
-                config.sendMsg(JMessage.RCX.Usage.TEMPLATE, placeHolder)
+                config.sendMsg(JMessage.Template.USAGE, placeHolder)
                 return false
             }
         }
 
         return true
+    }
+
+    override fun tabCompleter(sender: CommandSender, args: MutableList<String>): MutableList<String> {
+        val cachedCodes = codeRepo.getCachedCode()
+        val cachedTemplate = config.getAllTemplates().map { it.name }
+        return when (args.size) {
+            2 -> mutableListOf(JTab.Type.CODE, JTab.Type.TEMPLATE)
+            3 -> {
+                val list = mutableListOf<String>()
+                if (args[1] == JTab.Type.CODE) list.addAll(cachedCodes)
+                if (args[1] == JTab.Type.TEMPLATE) list.addAll(cachedTemplate)
+                list
+            }
+            else -> mutableListOf()
+        }
     }
 }

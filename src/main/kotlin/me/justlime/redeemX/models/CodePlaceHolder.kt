@@ -7,13 +7,15 @@ import org.bukkit.command.CommandSender
 data class CodePlaceHolder(
     var sender: CommandSender,
     val args: List<String> = emptyList(),
+    var sentMessage:String = "",
+
     var code: String = "none",
     var template: String = "none",
     var templateLocked: String = "none",
     var command: String = "none",
     var commandId: String = "none",
     var duration: String = "none",
-    var isEnabled: String = "none",
+    var status: String = "none",
 
     var permission: String = "none",
     var pin: String = "none",
@@ -24,7 +26,6 @@ data class CodePlaceHolder(
     var maxLength: String = "none",
     var codeGenerateDigit: String = "none",
     var property: String = "none",
-    var player: String = "none",
 
     var redemptionLimit: String = "none",
     var playerLimit: String = "none",
@@ -60,7 +61,7 @@ data class CodePlaceHolder(
                 code = code,
                 command = redeemCode.commands.toString().removeSurrounding("{", "}").trim(),
                 duration = if (redeemCode.duration.isEmpty()) "none" else formattedDuration,
-                isEnabled = redeemCode.enabled.toString(),
+                status = redeemCode.enabledStatus.toString(),
                 redemptionLimit = redeemCode.redemption.toString(),
                 playerLimit = redeemCode.playerLimit.toString(),
                 permission = redeemCode.permission,
@@ -68,7 +69,7 @@ data class CodePlaceHolder(
                 target = redeemCode.target.toString(),
                 usedBy = redeemCode.usedBy.toString(),
                 template = redeemCode.template,
-                templateLocked = redeemCode.locked.toString(),
+                templateLocked = redeemCode.sync.toString(),
                 cooldown = redeemCode.cooldown,
                 isExpired = JService.isExpired(redeemCode).toString(),
                 minLength = plugin.config.getConfigValue("code-minimum-digit"),
@@ -83,7 +84,7 @@ data class CodePlaceHolder(
                 code = redeemCode.code,
                 command = redeemCode.commands.toString().removeSurrounding("{", "}").trim(),
                 duration = redeemCode.duration,
-                isEnabled = redeemCode.enabled.toString(),
+                status = redeemCode.enabledStatus.toString(),
                 redemptionLimit = redeemCode.redemption.toString(),
                 playerLimit = redeemCode.playerLimit.toString(),
                 permission = redeemCode.permission,
@@ -93,7 +94,7 @@ data class CodePlaceHolder(
                     "${it.key} = ${it.value}"
                 }.joinToString(", "),
                 template = redeemCode.template,
-                templateLocked = redeemCode.locked.toString(),
+                templateLocked = redeemCode.sync.toString(),
                 cooldown = redeemCode.cooldown,
                 minLength = "none",
                 maxLength = "none",
@@ -105,19 +106,22 @@ data class CodePlaceHolder(
             return CodePlaceHolder(
                 sender = sender,
                 template = template.name,
-                templateLocked = template.locked.toString(),
-                command = template.commands.toString().removeSurrounding("{", "}").trim(),
+                status = template.defaultEnabledStatus.toString(),
+                templateLocked = template.defaultSync.toString(),
+
                 duration = template.duration,
-                isEnabled = "none",
+                cooldown = template.cooldown,
+
                 redemptionLimit = template.redemption.toString(),
                 playerLimit = template.playerLimit.toString(),
+
                 permission = template.permissionValue,
                 pin = if (template.pin <= 0) "none" else template.pin.toString(),
-                cooldown = template.cooldown,
                 minLength = "none",
                 maxLength = "none",
-                codeGenerateDigit = "none"
-            )
+                codeGenerateDigit = "none",
+                command = template.commands.toString().removeSurrounding("{", "}").trim()
+                )
         }
 
     }

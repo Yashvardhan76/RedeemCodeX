@@ -7,9 +7,10 @@ import me.justlime.redeemX.enums.JConfig
 import me.justlime.redeemX.enums.JFiles
 import me.justlime.redeemX.models.CodePlaceHolder
 import me.justlime.redeemX.models.RedeemTemplate
+import org.checkerframework.checker.units.qual.t
 
 /**
- * This repository class is responsible for managing configurations. Such as config.yml, messages.yml, and templates.yml.
+ * This repository class is responsible for managing configurations. Such as config.yml, messages_en.yml, and templates.yml.
  */
 class ConfigRepository(val plugin: RedeemX) {
 
@@ -54,7 +55,11 @@ class ConfigRepository(val plugin: RedeemX) {
         config.sendTemplateMsg(template, placeHolder)
     }
 
-    fun getTemplate(template: String = "default"): RedeemTemplate? {
+    fun loadDefaultTemplateValues(template: String): RedeemTemplate {
+        return config.loadDefaultTemplateValues(template)
+    }
+
+    fun getTemplate(template: String = "DEFAULT"): RedeemTemplate? {
         return try {
             config.getTemplate(template)
         } catch (e:Exception){

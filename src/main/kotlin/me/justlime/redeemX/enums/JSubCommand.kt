@@ -3,7 +3,7 @@ package me.justlime.redeemX.enums
 import org.bukkit.command.CommandSender
 
 interface JSubCommand {
-    var codeList: List<String> // Stores the list of codes for the command
+    var jList: List<String> // Stores the list of codes for the command
     val permission: String // Defines the required permission for this command
 
     /**
@@ -24,5 +24,7 @@ interface JSubCommand {
     fun hasPermission(sender: CommandSender): Boolean {
         return sender.hasPermission(permission)
     }
+
+    fun tabCompleter(sender: CommandSender, args: MutableList<String>): MutableList<String>?
 }
 

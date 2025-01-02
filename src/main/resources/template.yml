@@ -1,37 +1,46 @@
-default:
+DEFAULT:
   enabled: true
-  digit: 5
-  commands:
-    - "say redeemed"
-  duration: "0s"
+  duration: 0s
+  cooldown: 0s
   redemption: 1
-  limit: 1
+  player-limit: 1
   permission:
     required: false
-    value: "redeemx.use.{code}"   #default Permission Template
-  pin: -1                         #set -1 to disabled pin
+    value: ''
+  pin: 0
+  default-sync: false
+  commands: [ ]
   messages:
     - "&aThanks for redeeming!"
+  sound: ''
+  rewards: ''
+  sync:
+    enabled-status: false
+    locked-status: false
+    target: false
+    # [Default-locked-status-recommendation]
+    # It is recommended to keep this set to `false` for the default template.
+    # If you want to prevent the property from being unlocked, set this to `true`.
+    commands: true
+    duration: true
+    cooldown: true
+    pin: true
+    redemption: true
+    player-limit: true
 
-template-1:
-  code-generate-digit: 4
-  commands:
-    - "say redeemed"
-  code-expired-duration: "30s"
-  enabled: true
-  max_redeems: 1
-  max_player: 1
-  permission:
-    required: true
-    value: "redeemx.use.{code}"
+    permission: false
+    messages: true
+    sound: true
+    rewards: true
 
+# [sync-description]
+# Determines whether a property is to sync with the template or not.
+# Set this to `true` to lock the property and prevent direct modifications through `/rcx modify code`.
+# Set this to `false` to allow modifications via `/rcx modify code`.
+#
+# [Note]
+# - Setting this to `false` does not stop the property from inheriting the specified value during code creation (e.g., `/rcx gen`).
+# - This type of restriction applies only to the `/rcx modify code` command.
+#
+# This serves as a basic "Sync System" for templates, indicating whether the property should synchronize with the template file or remain independent.
 
-template-2:
-  code-generate-digit: 6
-  commands:
-    - "say redeemed from temple 2"
-    - "eco give {player} 100"
-  code-expired-duration: "1h"
-  enabled: true
-  max_redeems: 1
-  max_player: 3

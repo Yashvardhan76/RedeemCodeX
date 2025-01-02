@@ -17,23 +17,21 @@ import java.sql.ResultSet
 import java.sql.Timestamp
 import java.util.*
 
-class Converter {
+object Converter {
     private val gson = GsonBuilder().registerTypeAdapter(Timestamp::class.java, JsonSerializer<Timestamp> { src, _, _ ->
         JsonPrimitive(src.toInstant().toString())
     }).create()
 
-    companion object {
-        val listType: Type = object : TypeToken<MutableList<String>>() {}.type
-        val usedByType: Type = object : TypeToken<MutableMap<String, Int>>() {}.type
-        val lastRedeemedType: Type = object : TypeToken<MutableMap<String, Timestamp>>() {}.type
-    }
+    private val listType: Type = object : TypeToken<MutableList<String>>() {}.type
+    private val usedByType: Type = object : TypeToken<MutableMap<String, Int>>() {}.type
+    private val lastRedeemedType: Type = object : TypeToken<MutableMap<String, Timestamp>>() {}.type
 
     fun mapResultSetToRedeemCode(result: ResultSet): RedeemCode {
         return RedeemCode(
             code = result.getString(JProperty.CODE.property),
-            enabled = result.getBoolean(JProperty.ENABLED.property),
+            enabledStatus = result.getBoolean(JProperty.ENABLED.property),
             template = result.getString(JProperty.TEMPLATE.property),
-            locked = result.getBoolean(JProperty.LOCKED.property),
+            sync = result.getBoolean(JProperty.SYNC.property),
             duration = result.getString(JProperty.DURATION.property),
             cooldown = result.getString(JProperty.COOLDOWN.property),
             permission = result.getString(JProperty.PERMISSION.property),
@@ -56,7 +54,7 @@ class Converter {
             commands = gson.toJson(redeemCode.commands),
             validFrom = redeemCode.validFrom,
             duration = redeemCode.duration,
-            enabled = redeemCode.enabled,
+            enabled = redeemCode.enabledStatus,
             redemption = redeemCode.redemption,
             playerLimit = redeemCode.playerLimit,
             permission = redeemCode.permission,
@@ -64,7 +62,7 @@ class Converter {
             target = gson.toJson(redeemCode.target),
             usedBy = gson.toJson(redeemCode.usedBy),
             template = redeemCode.template,
-            locked = redeemCode.locked,
+            sync = redeemCode.sync,
             lastRedeemed = gson.toJson(redeemCode.lastRedeemed),
             cooldown = redeemCode.cooldown,
             rewards = serializeItemStackList(redeemCode.rewards),
@@ -92,12 +90,11 @@ class Converter {
         return if (this.wasNull()) null else value
     }
 
-
-    private fun serializeItemStackList(items: MutableList<ItemStack>): String {
+    fun serializeItemStackList(items: MutableList<ItemStack>): String {
         return items.joinToString(",") { serializeItemStack(it) }
     }
 
-    private fun deserializeItemStackList(data: String?): MutableList<ItemStack>? {
+    fun deserializeItemStackList(data: String?): MutableList<ItemStack>? {
         return data?.split(",")?.mapNotNull { deserializeItemStack(it) }?.toMutableList()
     }
 
@@ -118,6 +115,5 @@ class Converter {
             null
         }
     }
-
 
 }

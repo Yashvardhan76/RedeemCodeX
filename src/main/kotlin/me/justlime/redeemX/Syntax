@@ -6,8 +6,8 @@
 
 /rcx modify code <code> <toggle-property> [codes]
 /rcx modify code <code> <property> <value> ([codes] //Except SetCommand, AddCommand, SetMessage, AddMessage)
-/rcx modify template <code> <toggle-property> [codes]
-/rcx modify template <code> <property> <value> ([codes] //Except SetCommand, AddCommand, SetMessage, AddMessage)
+/rcx modify template <template> <toggle-property> [codes]
+/rcx modify template <template> <property> <value> ([codes] //Except SetCommand, AddCommand, SetMessage, AddMessage)
 
 /rcx delete code <code> [codes]
 /rcx delete code * CONFIRM

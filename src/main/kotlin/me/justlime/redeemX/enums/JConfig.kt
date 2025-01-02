@@ -2,6 +2,10 @@ package me.justlime.redeemX.enums
 
 sealed interface JConfig {
 
+    companion object {
+        const val LANG = "lang"
+    }
+
     data object Code : JConfig {
         private const val CODE = "code"
         const val DISPLAY_AMOUNT = "$CODE.display-amount"

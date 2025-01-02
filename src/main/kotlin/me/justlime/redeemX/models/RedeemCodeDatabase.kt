@@ -6,7 +6,7 @@ data class RedeemCodeDatabase(
     val code: String,
     val enabled: Boolean,
     val template: String,
-    val locked: Boolean,
+    val sync: Boolean,
     val duration: String,
     val cooldown: String,
     val permission: String,

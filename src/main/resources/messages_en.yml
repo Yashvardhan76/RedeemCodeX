@@ -1,0 +1,611 @@
+#############
+## PREFIX ##
+#############
+prefix: "                           &e⭐ &d&l&nRedeemCodeX&r&e ⭐"
+
+############
+## FORMAT ##
+############
+key:
+  chat:
+    - "&#6CE1DA&n{code}&r - Hex Example"
+    - "&cExample Message."
+    - "Go " #use this for blank
+  title:
+    main: "&aTitle Example"
+    subtitle: "Subtitle Example"
+    fade-in: 10      # Duration in ticks (20 ticks = 1 second)
+    stay: 70
+    fade-out: 10
+  actionbar: "This will display on actionbar. Hex Not Supported"
+#Format View Purpose Only!
+
+#################
+## PLACEHOLDER ##
+#################
+placeholders:
+  - { code }: The redeem code itself.
+  - { sender }: The player or console that generated the code.
+  - { args }: Any additional arguments provided during code generation.
+  - { commands }: The commands associated with the code.
+  - { id }: The unique ID of the code.
+  - { duration }: The duration of the code's validity.
+  - { enabled }: Whether the code is enabled or disabled.
+  - { redemption }: The number of times the code can be redeemed.
+  - { limit }: The maximum number of players who can redeem the code.
+  - { permission }: The permission required to redeem the code.
+  - { pin }: The PIN required to redeem the code.
+  - { target }: The target players or groups allowed to redeem the code.
+  - { usage }: The number of times the code has been used.
+  - { template }: The template used to generate the code.
+  - { locked }: Whether the code's template is locked.
+  - { cooldown }: The cooldown period for the code.
+  - { expired }: Whether the code has expired.
+  - { minLength }: The minimum length of the code.
+  - { maxLength }: The maximum length of the code.
+  - { code_generate_digit }: The number of digits to generate for the code.
+  - { property }: The property being modified.
+  - { player }: The player who redeemed the code.
+  - { redeemed_by }: The number of players who have already redeemed the code.
+  - { expiry }: The expiry date of the code.
+# Placeholder variables to be used within messages [Note: It cannot be changed only for view purpose :p]
+
+############
+## REDEEM ##
+############
+redeem:
+
+  usage:
+    chat:
+    - "{prefix}"
+    - ""
+    - " &b&nUsage: /redeem <code> [pin]"
+    - ""
+  success:
+    chat:
+      - "{prefix}"
+      - ""
+      - "&#E19728Y&#E39726o&#E59824u &#E79821h&#E9981Fa&#EB991Dv&#ED991Be &#EF9919r&#F19A16e&#F39A14d&#F59A12e&#F79B10e&#F99B0Em&#FB9B0Be&#FD9C09d &#FF9C07➡ &#6CE1DA&n{code}&r"
+      - ""
+    title:
+      main: "&aRedeemed &b{code}"
+      subtitle: "You have Redeemed the Code ➡ &#6CE1DA&n{code}&r"
+      fade-in: 10      # Duration in ticks (20 ticks = 1 second)
+      stay: 70
+      fade-out: 10
+    actionbar: "&aYou have Redeemed &b{code}"
+  failed:
+    chat: "&cAn error occurred while redeeming your code. Please try again later."
+    actionbar: "&cUnexpected error. Please contact support."
+
+  full-inventory:
+    chat: "&cYour inventory is full! Please make some space before redeeming."
+    actionbar: "&cInventory full! Make space to redeem."
+
+  on-cooldown:
+    chat:
+      - "&cCode &e{code} &cis currently on cooldown. Please try again later."
+    title:
+      main: "&cOn Cooldown"
+      sub: "&ePlease wait {cooldown} before trying again."
+      fade-in: 10
+      stay: 70
+      fade-out: 10
+    actionbar: "&cCode &e{code} &cis on cooldown. Please wait {cooldown}."
+
+  invalid-code:
+    chat: "&cInvalid code."
+    actionbar: "&cCode not found. Please enter a valid code."
+
+  no-permission: "&cYou don't have {permission} permission to Redeemed {code}."
+
+  disabled: "&cThe code {code} is disabled."
+
+  invalid-target: "&c This Code can only redeemed by {target}"
+
+  expired-code:
+    chat: "&eThe code &b{code} &ehas expired and cannot be redeemed."
+    actionbar: "&eThe code &b{code} &eis expired."
+
+  missing-pin:
+    chat: "This code {code} requires a pin. Usage: /redeem <code> <pin>"
+
+
+  invalid-pin:
+    chat: "&cInvalid pin. Please Try again"
+    actionbar: "&cInvalid pin. Please Try again"
+
+  already-redeemed:
+    chat: "&cYou have already redeemed this code: &b{code}"
+    actionbar: "&cYou have already used this code!"
+
+  max-player-redeemed:
+    chat: "&cThe code &b{code} &chas reached its maximum player redemptions."
+    actionbar: "&cMaximum players have already redeemed this code."
+
+  max-redemptions:
+    chat: "&cThe code &b{code} &chas reached its maximum redemptions."
+    actionbar: "&cThe code &b{code} &chas no remaining uses."
+
+#######################
+## CODE MODIFICATION ##
+#######################
+
+code:
+  not-found: "&cThe code '{code} does not exist."
+  disabled: "&cThe code '{code}' is disabled "
+
+  placeholder:
+    disabled: "&cdisabled"
+    enabled: "&aenabled"
+
+  gen:
+    success:
+      chat:
+        - "{prefix}"
+        - ""
+        - "&aGenerated Code ➡ &e{code}&a"
+        - ""
+    failed: "&cAn error occurred while generating the code &e{code}&c. Please try again later."
+    already-exist: "&cThe code '{code}' already exists. Please choose a unique code."
+    missing: "&cError: Default template configuration missing; fallback defaults applied."
+    invalid-amount: "&cThe amount must be a positive integer."
+    invalid-range: "&cError: Invalid range for generating a code. Range must be between {min} and {max}."
+    invalid-length: "Unable to generate a unique code of length {code}. Please try a different length or name."
+
+
+  modify:
+    success: "&aCode &e{code}&a has been modified."
+    failed: "&cAn error occurred while modifying the code &e{code}&c. Please try again later."
+    sync: "&aCode &e{code} has been Sync from template {template}"
+    set-template:
+      chat:
+        - "{prefix}"
+        - ""
+        - "&aTemplate Set to &b{template} &afor &e{code}"
+        - ""
+      actionbar: "&aTemplate Set to &b{template} &afor &e{code}"
+
+    sync-locked:
+      chat:
+        - "{prefix}"
+        - ""
+        - "&cProperty &e{property}&c is locked!"
+        - "&bUse `/rcx modify template {template} {property} <value>`"
+        - "&bor disabled the specific `sync property` in &etemplate.yml"
+    invalid-value: "&cInvalid value provided. Please provide a valid integer or duration."
+    invalid-id: "&cInvalid ID provided. Please provide a valid ID."
+
+    locked-status:
+      chat:
+        - "{prefix}"
+        - ""
+        - "&aSync Status Set to &b{locked}&a for &e{code}"
+        - ""
+      actionbar: "&aLocked Status For code {code} set to {&b{locked}&a"
+
+    enabled-status:
+      chat:
+        - "{prefix}"
+        - ""
+        - "&aEnabled Status Set to &b{status}&a for &e{code}"
+        - ""
+      actionbar: "&aEnabled Status For code {code} set to &b{status}&a"
+    set-redemption:
+      chat:
+        - "{prefix}"
+        - ""
+        - "&aRedemption Set to &b{max_redemption}&a for &e{code}"
+        - ""
+      actionbar: "&aMaximum Redemption Set to &b{max_redemption} for Each Player"
+    set-player-limit:
+      chat:
+        - "{prefix}"
+        - ""
+        - "&aPlayer Limit Set to &b{max_player_limit} &afor &e{code}"
+        - ""
+      actionbar: "&aPlayer Limit Set to {max_player_limit} for &e{code}"
+    set-pin:
+      chat:
+        - "{prefix}"
+        - ""
+        - "&aPin Set to &b{pin} for &e{code}"
+        - ""
+
+    set-cooldown:
+      chat:
+        - "{prefix}"
+        - ""
+        - "&aCooldown Set to {cooldown} for &e{code}"
+        - ""
+
+    set-duration:
+      chat:
+        - "{prefix}"
+        - ""
+        - "&aDuration &b{duration} &aSet for &e{code}"
+        - ""
+    add-duration:
+      chat:
+        - "{prefix}"
+        - ""
+        - "&aDuration &b{duration} &aAdded to for &e{code}"
+        - ""
+    remove-duration:
+      chat:
+        - "{prefix}"
+        - ""
+        - "&aDuration &b{duration} &aRemoved from for &e{code}"
+        - ""
+
+
+    set-permission:
+      chat:
+        - "{prefix}"
+        - ""
+        - "&aPermission Set to {permission} for &e{code}"
+        - ""
+
+    set-target:
+      chat:
+        - "{prefix}"
+        - ""
+        - "&aCurrent Target Set for &e{code}"
+        - "&b{target}"
+        - ""
+    add-target:
+      chat:
+        - "{prefix}"
+        - ""
+        - "&aTarget Added for &e{code}"
+        - "&b{target}"
+        - ""
+    remove-target:
+      chat:
+        - "{prefix}"
+        - ""
+        - "&cTarget Removed for &e{code}"
+        - "&b{target} "
+        - ""
+
+    set-command:
+      chat:
+        - "{prefix}"
+        - ""
+        - "&aCommands ID &6{id}&r&a set to &b{command} &afor &e{code}"
+        - ""
+    add-command:
+      chat:
+        - "{prefix} "
+        - ""
+        - "&aCommand Added &b{command} &awith ID &6{id}&r &afor &e{code}"
+        - ""
+    remove-command:
+      chat:
+        - "{prefix} "
+        - ""
+        - "&cCommand Removed &b{command} &cfor &e{code}"
+        - ""
+
+
+
+  delete:
+    success:
+      chat:
+        - "{prefix} "
+        - ""
+        - "&cDeleted Code ➡ &e{code}"
+        - ""
+    success-codes:
+      chat:
+        - "{prefix}"
+        - ""
+        - "&cDeleted Code ➡ &e{code}"
+        - ""
+    success-all: "&aAll codes have been deleted successfully."
+    not-found: "&cCode &e{code}&c not found."
+    not-found-all: "&cNo codes found to delete."
+    confirmation-needed: "&#34d4b2Type '&b/rcx delete code * CONFIRM&#34d4b2' to confirm the deletion of all codes."
+
+  preview: ""
+
+  usages:
+    usage:
+      chat:
+        - ""
+        - "{prefix}"
+        - ""
+        - "&6=== &eCode Usage Details &6==="
+        - "&aCode: &e{code}"
+        - "&aEnabled: &b{status}"
+        - "&aTemplate: &b{template}"
+        - "&aLocked: &b{locked}"
+        - "&aMax Redeems: &e{max_redemption}"
+        - "&aPlayers Limit: &e{player_redeemed}/&e{max_player_limit}"
+        - "&aPin: &e{pin}"
+        - "&aPermission: &e{permission}"
+        - "&aDuration: &e{duration}"
+        - "&aCooldown: &e{cooldown}"
+        - "&aTarget: &e{target}"
+        - "&aCommands: &b\n{command}"
+      actionbar: "&aViewing usage details for code &e{code}&a."
+    commands:
+      - "&aCommands: &b{command}"
+    target-list:
+      - "&aTarget: &e{target}"
+
+  gui:
+    save-rewards: "&aRewards for code &e{code} &ahas been saved."
+    save-message: "&aMessage for code &e{code} &ahas been saved."
+    save-sound: "&aSound for code &e{code} &ahas been saved."
+
+###########################
+## TEMPLATE MODIFICATION ##
+###########################
+
+template:
+  not-found: "&cThe template '{template}' does not exist."
+
+  gen:
+    success:
+      chat:
+        - "{prefix}"
+        - ""
+        - "&aGenerated Template ➡ &b&n{template}"
+        - ""
+    failed: "&cAn error occurred while creating the template &e{template}&c. Please try again later."
+    already-exist: "&cTemplate &e{template}&c already exists."
+    invalid-amount: "&cThe amount must be a positive integer."
+    invalid-range: "&cError: Invalid range for generating a code. Range must be between {min} and {max}."
+    invalid-template: "&e{template} &cnot found. &cFallback to &edefault&c Template for generating codes..."
+    invalid-length: "Unable to generate a unique code of length ${code}. Please try a different length or name."
+
+  modify:
+    success: "&aTemplate &e{template}&a has been modified."
+    failed: "&cAn error occurred while modifying the template &e{template}&c. Please try again later."
+    codes-modified: "&aCodes {code} associated with template &e{template}&a have been modified."
+    invalid-value: "&cInvalid value provided. Please provide a valid integer or duration."
+    invalid-id: "&cInvalid ID provided. Please provide a valid integer ID."
+    locked: "&cThis template is locked. You cannot modify it."
+
+
+    set-redemption:
+      chat:
+        - ""
+        - "{prefix} &aRedemption Set to {max_redemption} for &e{template}"
+        - ""
+      actionbar: "&aMaximum Redemption Set to &b{max_redemption} for Each Player"
+
+    set-player-limit:
+      chat:
+        - ""
+        - "{prefix} &aPlayer Limit Set to {max_player_limit} for &e{template}"
+        - ""
+      actionbar: "&aPlayer Limit Set to {max_player_limit} for &e{template}"
+
+    set-pin:
+      chat:
+        - ""
+        - "{prefix} &aPin Set to {pin} for &e{template}"
+        - ""
+
+    set-duration:
+      chat:
+        - ""
+        - "{prefix} &aDuration Set to {duration} for &e{template}"
+        - ""
+    add-duration:
+      chat:
+        - ""
+        - "{prefix} {duration} Added to Duration for &e{template}"
+        - ""
+    remove-duration:
+      chat:
+        - ""
+        - "{prefix} {duration} Removed from Duration for &e{template}"
+        - ""
+
+    set-cooldown:
+      chat:
+        - ""
+        - "{prefix} &aCooldown Set to {cooldown} for &e{template}"
+        - ""
+
+    set-permission:
+      chat:
+        - ""
+        - "{prefix} &aPermission Set to {permission} for &e{template}"
+        - ""
+
+    set-command:
+      chat:
+        - ""
+        - "{prefix} &aCommands Set to {id} {command} for &e{template}"
+        - ""
+    add-command:
+      chat:
+        - ""
+        - "{prefix} &aCommands Added {id} {command} for &e{template}"
+        - ""
+    remove-command:
+      chat:
+        - ""
+        - "{prefix} &aCommands Removed {id} {command} for &e{template}"
+        - ""
+
+  delete:
+    success:
+      chat:
+        - "{prefix}"
+        - ""
+        - "&cDeleted Template ➡ &b&n{template}"
+        - ""
+    success-all:
+      chat:
+        - "{prefix}"
+        - ""
+        - "&aAll Templates have been deleted successfully."
+        - ""
+    not-found: "&cTemplate &e{template}&c not found."
+    not-found-all: "&cNo templates found to delete."
+    confirmation-needed: "&#34d4b2Type '&b/rcx delete template * CONFIRM&#34d4b2' to confirm the deletion of all templates."
+    default-delete: "&cTemplate &eDEFAULT&c Cannot be Deleted"
+  preview: ""
+
+  usage:
+    chat:
+      - ""
+      - "{prefix}"
+      - "&6=== &eTemplate Usage Details &6==="
+      - "&aTemplate: &e{template}"
+      - "&aEnabled: &b{status}"
+      - "&aDefault Sync: &b{locked}"
+      - "&aMax Redeems: &e{max_redemption}"
+      - "&aPlayers Limit: &e{max_player_limit}"
+      - "&aPin: &e{pin}"
+      - "&aPermission: &e{permission}"
+      - "&aDuration: &e{duration}"
+      - "&aCooldown: &e{cooldown}"
+      - "&aCommands: &b\n{command}"
+    actionbar: "&aViewing usage details for code &e{code}&a."
+    commands:
+      - "&aCommands: &b{command}"
+    target-list:
+      - "&aTarget: &e{target}"
+
+##############
+## COMMANDS ##
+##############
+commands:
+  unknown-command: "&cUnknown command. Use /rcx help [command] for a list of commands."
+  no-permission: "&cYou do not have permission to use this command."
+  restricted-to-players: "&cThis command can only be executed by Players in-game."
+
+  renew:
+    success: "&aCode &e{code}&a has been renewed."
+    invalid-syntax: "&cUsage: /redeem renew <code>"
+    expired-code: "&cError: Code &e{code}&c is expired and cannot be renewed."
+    failed: "&cAn error occurred while renewing the code &e{code}&c. Please try again later."
+    player-not-found: "&cError: Player &e{player}&c has never redeemed this code."
+
+  info: "&bRedeemCodeX Created By &a&nJustLime"
+
+  help:
+    general:
+      chat:
+        - ""
+        - "{prefix}"
+        - "&6=== &eGeneral Commands &6==="
+        - "&a/redeem &7- Redeem a code. Use CONFIRM if required."
+        - "&a/rcx gen &7- Generate codes or template."
+        - "&a/rcx modify &7- Modify codes or templates."
+        - "&a/rcx delete &7- Delete codes or templates."
+        - "&a/rcx preview &7- Preview details for a code."
+        - "&a/rcx renew &7- Renew the expiration for a code."
+        - "&a/rcx info &7- Get plugin information and statistics."
+        - "&a/rcx reload &7- Reload the plugin's configuration files."
+      actionbar: "&aUse &b/rcx help &ato view more commands."
+
+    redeem:
+      chat:
+        - "&6=== &eRedemption Commands &6==="
+        - "&a/redeem <code> [CONFIRM]"
+        - "&7Redeem a code. Use CONFIRM if required."
+
+    generation:
+      chat:
+        - "&6=== &eGeneration Commands &6==="
+        - "&a/rcx gen code <CUSTOM> [TEMPLATE]"
+        - "&7Generate a custom code with an optional template."
+        - "&a/rcx gen code <DIGIT> [TEMPLATE] [AMOUNT]"
+        - "&7Generate numeric codes with optional template and amount."
+        - "&a/rcx gen template <template>"
+        - "&7Generate a new template."
+      actionbar: "&aUse &b/rcx gen &ato start generating codes."
+
+    modification:
+      chat:
+        - "&6=== &eModification Commands &6==="
+        - "&a/rcx modify code <code> <toggle-property> [codes]"
+        - "&7Toggle a property for codes."
+        - "&a/rcx modify code <code> <property> <value> ([codes])"
+        - "&7Set a property value for codes."
+        - "&a/rcx modify template <code> <toggle-property> [codes]"
+        - "&7Toggle a property for templates."
+        - "&a/rcx modify template <code> <property> <value> ([codes])"
+        - "&7Set a property value for templates."
+      actionbar: "&aUse &b/rcx modify &ato customize your codes."
+
+    deletion:
+      chat:
+        - "&6=== &eDeletion Commands &6==="
+        - "&a/rcx delete code <code> [codes]"
+        - "&7Delete a specific code or list of codes."
+        - "&a/rcx delete code * CONFIRM"
+        - "&7Delete all codes. Requires confirmation."
+        - "&a/rcx delete template <template> [Templates]"
+        - "&7Delete a specific template or list of templates."
+        - "&a/rcx delete template * CONFIRM"
+        - "&7Reset all templates to default. Requires confirmation."
+      actionbar: "&aUse &b/rcx delete &ato manage deletions."
+
+    renewal:
+      chat:
+        - "&6=== &eRenewal Commands &6==="
+        - "&a/rcx renew code <code>"
+        - "&7Renew a code's expiration."
+      actionbar: "&aUse &b/rcx renew &ato extend code validity."
+
+    preview:
+      chat:
+        - "&6=== &ePreview Commands &6==="
+        - "&a/rcx preview code <code> [command|reward|message]"
+        - "&7Preview details for a code."
+        - "&a/rcx preview template <template> [command|reward|message]"
+        - "&7Preview details for a template."
+      actionbar: "&aUse &b/rcx preview &ato preview code details."
+
+    usage:
+      chat:
+        - "&6=== &eUsage Commands &6==="
+        - "&a/rcx usage code <code> [command|target]"
+        - "&7View usage details for a specific code."
+        - "&a/rcx usage template <template-name> [command]"
+        - "&7View usage details for a template."
+      actionbar: "&aUse &b/rcx usage &ato track code usage."
+
+    reload:
+      chat:
+        - "&6=== &eReload Commands &6==="
+        - "&a/rcx reload"
+        - "&7Reload the plugin's configuration files."
+      actionbar: "&aUse &b/rcx reload &ato refresh the configuration."
+
+    permissions:
+      chat:
+        - "&6=== &ePermissions &6==="
+        - "&aPermission: &bredeemx.use"
+        - "&7Allows players to redeem codes. &f(Default: true)"
+        - "&aPermission: &bredeemx.admin.use.gen"
+        - "&7Allows admins to generate codes or templates."
+        - "&aPermission: &bredeemx.admin.use.modify"
+        - "&7Allows admins to modify codes or templates."
+        - "&aPermission: &bredeemx.admin.use.delete"
+        - "&7Allows admins to delete codes or templates."
+        - "&aPermission: &bredeemx.admin.use.info"
+        - "&7Allows access to plugin information. &f(Default: true)"
+        - "&aPermission: &bredeemx.admin.use.renew"
+        - "&7Allows admins to renew codes."
+        - "&aPermission: &bredeemx.admin.use.reload"
+        - "&7Allows admins to reload the plugin configuration."
+      actionbar: "&aConfigure permissions in Permissions Manager. such as &bLuckPerms"
+
+
+  reload:
+    success: "&aThe configuration files have been reloaded."
+    failed: "&cAn error occurred while reloading the configuration files."
+
+
+
+
+

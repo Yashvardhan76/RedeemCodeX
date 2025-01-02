@@ -12,7 +12,6 @@ class RedeemCodeDaoImpl(private val dbManager: DatabaseManager) : RedeemCodeDao 
     private val getCachedCodes: MutableList<String> = mutableListOf()
     private val getCachedTargetList: MutableMap<String, MutableList<String>> = mutableMapOf() //<code,list of targets>
     private val getCachedUsageList: MutableMap<String, MutableMap<String, Int>> = mutableMapOf()
-    private val converter = Converter()
 
     init {
         createTable()
@@ -28,7 +27,7 @@ class RedeemCodeDaoImpl(private val dbManager: DatabaseManager) : RedeemCodeDao 
                         ${JProperty.CODE.property} TEXT PRIMARY KEY,
                         ${JProperty.ENABLED.property} BOOLEAN,
                         ${JProperty.TEMPLATE.property} TEXT,
-                        ${JProperty.LOCKED.property} BOOLEAN,
+                        ${JProperty.SYNC.property} BOOLEAN,
                         ${JProperty.DURATION.property} TEXT,
                         ${JProperty.COOLDOWN.property} TEXT,
                         ${JProperty.PERMISSION.property} TEXT,
@@ -157,11 +156,11 @@ class RedeemCodeDaoImpl(private val dbManager: DatabaseManager) : RedeemCodeDao 
     }
 
     private fun setStatementParameters(statement: PreparedStatement, redeemCode: RedeemCode) {
-        val mappedData: RedeemCodeDatabase = converter.mapRedeemCodeToDatabase(redeemCode)
+        val mappedData: RedeemCodeDatabase = Converter.mapRedeemCodeToDatabase(redeemCode)
         statement.setString(1, mappedData.code)
         statement.setBoolean(2, mappedData.enabled)
         statement.setString(3, mappedData.template)
-        statement.setBoolean(4, mappedData.locked)
+        statement.setBoolean(4, mappedData.sync)
         statement.setString(5, mappedData.duration)
         statement.setString(6, mappedData.cooldown)
         statement.setString(7, mappedData.permission)
@@ -185,7 +184,7 @@ class RedeemCodeDaoImpl(private val dbManager: DatabaseManager) : RedeemCodeDao 
 
     override fun fetch() {
         getCachedCodes.clear()
-        getEntireCodes().forEach { state ->
+        getAllCodes().forEach { state ->
             getCachedTargetList[state.code] = state.target
             getCachedUsageList[state.code] = state.usedBy
             getCachedCodes.add(state.code)
@@ -247,14 +246,14 @@ class RedeemCodeDaoImpl(private val dbManager: DatabaseManager) : RedeemCodeDao 
         return isDeletedAll
     }
 
-    override fun getEntireCodes(): List<RedeemCode> {
+    override fun getAllCodes(): List<RedeemCode> {
         return fetchRedeemCodes("SELECT * FROM redeem_codes")
     }
 
-    override fun getTemplateCodes(template: String, byLocked: Boolean): List<RedeemCode> {
+    override fun getTemplateCodes(template: String, syncStatus: Boolean): List<RedeemCode> {
         if (template.isBlank()) return emptyList()
-        if (byLocked) return fetchRedeemCodes("SELECT * FROM redeem_codes WHERE template = ? AND locked = 1", template)
-        return fetchRedeemCodes("SELECT * FROM redeem_codes WHERE template = ? ", template)
+        if (syncStatus) return fetchRedeemCodes("SELECT * FROM redeem_codes WHERE ${JProperty.TEMPLATE} = ? AND ${JProperty.SYNC} = 1", template)
+        return fetchRedeemCodes("SELECT * FROM redeem_codes WHERE ${JProperty.TEMPLATE} = ? ", template)
     }
 
     private fun fetchRedeemCodes(query: String, vararg params: Any): List<RedeemCode> {
@@ -266,7 +265,7 @@ class RedeemCodeDaoImpl(private val dbManager: DatabaseManager) : RedeemCodeDao 
                 }
                 val result = statement.executeQuery()
                 while (result.next()) {
-                    codes.add(converter.mapResultSetToRedeemCode(result))
+                    codes.add(Converter.mapResultSetToRedeemCode(result))
                 }
             }
         }

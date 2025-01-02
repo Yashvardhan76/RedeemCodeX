@@ -65,7 +65,7 @@ object JService {
         val pattern = Regex("""^(\d+($validUnits))+${'$'}""")
 
         // Match against the pattern and ensure numbers are valid
-        return pattern.matches(duration) && Regex("""\d+""").findAll(duration).all { it.value.toInt() > 0 }
+        return pattern.matches(duration) && Regex("""\d+""").findAll(duration).all { it.value.toInt() >= 0 }
     }
 
     fun isExpired(redeemCode: RedeemCode): Boolean {
@@ -97,11 +97,11 @@ object JService {
     }
 
     fun removeColors(message: String): String {
-        // Regex to match Minecraft color codes (§x§r§g§b§x§x§r) and simpler §x formats
-        val colorCodePattern = Regex("\u00A7[x0-9a-fA-F](\u00A7[0-9a-fA-F]){5}|\u00A7[0-9a-fA-F]")
+        // Regex to match Minecraft color codes (§x§r§g§b§x§x§r) and simpler §x formats, as well as formatting codes like §l, §n, etc.
+        val colorAndFormatCodePattern = Regex("\u00A7[x0-9a-fA-F](\u00A7[0-9a-fA-F]){5}|\u00A7[0-9a-fk-orA-FK-OR]")
 
-        // Remove any color codes
-        var plainMessage = message.replace(colorCodePattern, "")
+        // Remove any color or formatting codes
+        var plainMessage = message.replace(colorAndFormatCodePattern, "")
 
         // Remove alternate color codes like &#FFFFFF or &x
         plainMessage = plainMessage.replace(Regex("&[0-9a-fA-F]|&#[a-fA-F0-9]{6}"), "")
@@ -109,36 +109,45 @@ object JService {
         return plainMessage
     }
 
-    fun applyPlaceholders(message: String, placeholder: CodePlaceHolder, isPlaceholderHooked: ()->Boolean = { false }): String {
+
+
+    fun applyPlaceholders(message: String, placeholder: CodePlaceHolder, isPlaceholderHooked: () -> Boolean = { false }): String {
         val placeholders: Map<String, String> = mapOf(
-            "code" to placeholder.code,
-            "sender" to placeholder.sender.name,
+            "player" to placeholder.sender.name,
             "args" to placeholder.args.joinToString(" "),
-            "commands" to "\n${placeholder.command}",
-            "id" to placeholder.commandId,
+            "property" to placeholder.property,
+
+            "code" to placeholder.code,
+            "status" to placeholder.status,
+
+            "cooldown" to placeholder.cooldown,
             "duration" to placeholder.duration,
-            "enabled" to placeholder.isEnabled,
-            "max_redemption" to placeholder.redemptionLimit,
+            "expiry" to placeholder.validTo,
+            "expired" to placeholder.isExpired,
+
+            "total_redemption" to placeholder.totalRedemption,
+            "player_redeemed" to placeholder.totalPlayerUsage,
             "max_player_limit" to placeholder.playerLimit,
+            "max_redemption" to placeholder.redemptionLimit,
+
             "permission" to placeholder.permission,
             "pin" to placeholder.pin,
+
+            "command" to placeholder.command,
+            "id" to placeholder.commandId,
+
             "target" to placeholder.target,
             "usedBy" to placeholder.usedBy,
             "redeemed_by" to placeholder.redeemedBy,
-            "total_player_redeemed" to placeholder.totalPlayerUsage,
-            "total_redemption" to placeholder.totalRedemption,
-            "expiry" to placeholder.validTo,
 
             "template" to placeholder.template,
             "locked" to placeholder.templateLocked,
-            "cooldown" to placeholder.cooldown,
-            "expired" to placeholder.isExpired,
-            "minLength" to placeholder.minLength,
-            "maxLength" to placeholder.maxLength,
-            "code_generate_digit" to placeholder.codeGenerateDigit,
-            "property" to placeholder.property,
-            "player" to placeholder.player
-        )
+
+            "min" to placeholder.minLength,
+            "max" to placeholder.maxLength,
+            "digit" to placeholder.codeGenerateDigit,
+
+            )
         val text = placeholders.entries.fold(message) { msg, (placeholder, value) ->
             msg.replace("{$placeholder}", value)
         }

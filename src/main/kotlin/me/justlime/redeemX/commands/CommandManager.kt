@@ -3,7 +3,7 @@ package me.justlime.redeemX.commands
 import me.justlime.redeemX.RedeemX
 
 class CommandManager(plugin: RedeemX) {
-    val tabCompleterList = TabCompleterList(plugin)
+    val tabCompleterList = RCXCommand(plugin)
     private val redeemCommand = RedeemCommand(plugin)
     private val rcxCommand = RCXCommand(plugin)
     init {
@@ -11,7 +11,6 @@ class CommandManager(plugin: RedeemX) {
         plugin.getCommand("rcx")?.apply {
             setExecutor(rcxCommand)
             tabCompleter = tabCompleterList
-            tabCompleterList.fetched()
         }
 
         // Register "redeem" command

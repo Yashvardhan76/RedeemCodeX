@@ -13,38 +13,36 @@ import org.bukkit.command.CommandSender
 class RenewSubCommand(val plugin: RedeemX): JSubCommand {
     private val codeRepo = RedeemCodeRepository(plugin)
     private val config = ConfigRepository(plugin)
-    override var codeList: List<String> = emptyList()
+    override var jList: List<String> = emptyList()
     override val permission: String = ""
 
     override fun execute(sender: CommandSender, args: MutableList<String>): Boolean {
         val placeHolder = CodePlaceHolder(sender)
         if (!hasPermission(sender)){
-            config.sendMsg(JMessage.NO_PERMISSION, placeHolder)
+            config.sendMsg(JMessage.Command.NO_PERMISSION, placeHolder)
             return true
         }
         if (args.size < 2) {
-            config.sendMsg(JMessage.RCX.Help.UNKNOWN_COMMAND, placeHolder)
+            config.sendMsg(JMessage.Command.UNKNOWN_COMMAND, placeHolder)
             return false
         }
         val code = args[1].uppercase()
         val player = if (args.size>2){ args[2] } else ""
         placeHolder.code = args[1]
 
-        placeHolder.player = player
-
         val redeemCode = codeRepo.getCode(code)
 
         plugin.logger.info(redeemCode?.commands.toString())
 
         if (redeemCode == null) {
-            config.sendMsg(JMessage.RCX.Renew.NOT_FOUND, placeHolder)
+            config.sendMsg(JMessage.Code.NOT_FOUND, placeHolder)
             return false
         }
 
         if(config.getConfigValue(JConfig.Renew.CLEAR_USAGE).equals("true",ignoreCase = true)) {
             val success = codeRepo.clearUsage(redeemCode, player)
             if (!success) {
-                config.sendMsg(JMessage.RCX.Renew.PLAYER_NOT_FOUND, placeHolder)
+                config.sendMsg(JMessage.Code.Renew.PLAYER_NOT_FOUND, placeHolder)
                 return true
             }
         }
@@ -52,29 +50,33 @@ class RenewSubCommand(val plugin: RedeemX): JSubCommand {
         if (config.getConfigValue(JConfig.Renew.RESET_DELAY).equals("true", ignoreCase = true)){
             codeRepo.clearRedeemedTime(redeemCode)
         }
-        if(config.getConfigValue(JConfig.Renew.CLEAR_REWARDS).equals("true",ignoreCase = true) && !redeemCode.locked){
+        if(config.getConfigValue(JConfig.Renew.CLEAR_REWARDS).equals("true",ignoreCase = true) && !redeemCode.sync){
             redeemCode.rewards.clear()
         }
 
-        if(config.getConfigValue(JConfig.Renew.CLEAR_COMMANDS).equals("true",ignoreCase = true) && !redeemCode.locked){
-            codeRepo.clearCommands(redeemCode)
+        if(config.getConfigValue(JConfig.Renew.CLEAR_COMMANDS).equals("true",ignoreCase = true) && !redeemCode.sync){
+            redeemCode.commands.clear()
         }
 
         if(config.getConfigValue(JConfig.Renew.RESET_EXPIRED).equals("true",ignoreCase = true)){
-            codeRepo.setStoredTime(redeemCode)
+            redeemCode.validFrom = JService.getCurrentTime()
         }
 
-        if(config.getConfigValue(JConfig.Renew.REMOVE_PERMISSION_REQUIRED).equals("true",ignoreCase = true) && !redeemCode.locked){
-            codeRepo.setPermission(redeemCode,"")
+        if(config.getConfigValue(JConfig.Renew.REMOVE_PERMISSION_REQUIRED).equals("true",ignoreCase = true) && !redeemCode.sync){
+            redeemCode.permission = permission.replace("{code}", redeemCode.code)
         }
 
         redeemCode.modified = JService.getCurrentTime()
         val success = codeRepo.upsertCode(redeemCode)
         if (!success) {
-            config.sendMsg(JMessage.RCX.Renew.FAILED, placeHolder)
+            config.sendMsg(JMessage.Code.Renew.FAILED, placeHolder)
             return true
         }
-        config.sendMsg(JMessage.RCX.Renew.SUCCESS, placeHolder)
+        config.sendMsg(JMessage.Code.Renew.SUCCESS, placeHolder)
         return true
+    }
+
+    override fun tabCompleter(sender: CommandSender, args: MutableList<String>): MutableList<String> {
+        return codeRepo.getCachedCode().toMutableList()
     }
 }

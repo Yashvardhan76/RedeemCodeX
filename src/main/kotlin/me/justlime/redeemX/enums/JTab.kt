@@ -15,9 +15,8 @@ sealed interface JTab {
         Info("info"),
 
         Reload("reload"),
+
         Preview("preview"),
-
-
 
         Usage("usage"),
 
@@ -29,55 +28,61 @@ sealed interface JTab {
 
     }
 
-    enum class Type(val value: String) {
-        Code("code"), Template("template"),
+    sealed interface Type {
+        companion object {
+            const val CODE = "code"
+            const val TEMPLATE = "template"
+        }
     }
 
-    enum class Generate(val value: String) {
-        Digit("DIGIT"), Custom("CUSTOM"), Amount("AMOUNT")
+    sealed interface Generate {
+        companion object {
+            const val CUSTOM = "custom"
+            const val AMOUNT = "amount"
+            const val DIGIT = "digit"
+            const val TEMPLATE_NAME = "template-name"
+        }
     }
 
-    enum class Modify(val value: String) {
+    sealed interface Modify {
+        companion object {
+            const val ENABLED = "enabled"
+            const val SYNC = "sync"
+            const val SET_REDEMPTION = "redemption"
+            const val SET_PLAYER_LIMIT = "playerLimit"
 
-        Enabled("enabled"), // Can be toggled
-        Locked("locked"),   // Can be toggled
-        SetRedemption("redemption"), SetPlayerLimit("playerLimit"),
+            const val SET_COMMAND = "setCommand"
+            const val ADD_COMMAND = "addCommand"
+            const val REMOVE_COMMAND = "removeCommand"
+            const val LIST_COMMAND = "listCommand"
 
-        SetCommand("setCommand"), AddCommand("addCommand"), RemoveCommand("removeCommand"), ListCommand("listCommand"),
+            const val SET_DURATION = "setDuration"
+            const val ADD_DURATION = "addDuration"
+            const val REMOVE_DURATION = "removeDuration"
 
-        SetDuration("setDuration"), AddDuration("addDuration"), RemoveDuration("removeDuration"),
+            const val SET_PERMISSION = "permission"
+            const val REQUIRED_PERMISSION = "requiredPermission"
+            const val SET_PIN = "pin"
 
-        SetPermission("permission"), // Can be toggled
-        SetPin("pin"),         // Can be toggled
+            const val SET_TARGET = "setTarget"
+            const val ADD_TARGET = "addTarget"
+            const val REMOVE_TARGET = "removeTarget"
+            const val LIST_TARGET = "listTarget"
 
-        SetTarget("setTarget"), AddTarget("addTarget"), RemoveTarget("removeTarget"), ListTarget("listTarget"),
+            const val SET_TEMPLATE = "setTemplate"
+            const val SET_COOLDOWN = "cooldown"
+            const val EDIT = "edit"
+        }
 
-        SetTemplate("template"), Cooldown("cooldown");
-
-        enum class Edit(val value: String): JTab {
-            It("edit"),
-            Reward("rewards"),
-            Message("messages"),
-            Sound("sound")
+        sealed interface Edit : JTab {
+            companion object {
+                const val REWARD = "reward"
+                const val MESSAGE = "message"
+                const val SOUND = "sound"
+            }
         }
 
     }
-    enum class Template(val value: String) {
-        SetRedemption("redemption"), SetPlayerLimit("playerLimit"),
-
-        SetCommand("setCommand"), AddCommand("addCommand"), RemoveCommand("removeCommand"), ListCommand("listCommand"),
-
-        SetDuration("setDuration"), AddDuration("addDuration"), RemoveDuration("removeDuration"),
-
-        SetCooldown("cooldown"),
-
-        SetPermission("permission"),
-        TogglePermissionRequired("togglePermission"), // Can be toggled
-
-        SetPin("pin"),// Can be toggled
-        Locked("locked")
-    }
-
     enum class Boolean(val value: String){
         True("true"), False("false")
     }

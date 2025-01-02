@@ -4,7 +4,7 @@ enum class JProperty(val property: String) {
     CODE("code"),
     ENABLED("enabled"),
     TEMPLATE("template"),
-    LOCKED("locked"),
+    SYNC("sync"),
     DURATION("duration"),
     COOLDOWN("cooldown"),
     PERMISSION("permission"),

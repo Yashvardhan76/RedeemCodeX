@@ -16,7 +16,7 @@ interface RedeemCodeDao {
     fun getCachedTargets(): MutableMap<String, MutableList<String>>
     fun getCachedUsages(): MutableMap<String, MutableMap<String,Int>>
     fun getByProperty(property: JProperty, value: String): List<RedeemCode>
-    fun getEntireCodes(): List<RedeemCode>
-    fun getTemplateCodes(template: String, byLocked: Boolean): List<RedeemCode>
+    fun getAllCodes(): List<RedeemCode>
+    fun getTemplateCodes(template: String, lockedStatus: Boolean): List<RedeemCode>
 
 }

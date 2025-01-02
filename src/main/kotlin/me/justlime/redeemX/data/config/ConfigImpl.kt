@@ -1,21 +1,20 @@
 package me.justlime.redeemX.data.config
 
 import me.justlime.redeemX.RedeemX
+import me.justlime.redeemX.api.RedeemXAPI.placeHolder
 import me.justlime.redeemX.enums.JFiles
 import me.justlime.redeemX.enums.JMessage
 import me.justlime.redeemX.models.CodePlaceHolder
 import me.justlime.redeemX.models.RedeemTemplate
+import me.justlime.redeemX.utilities.Converter
 import me.justlime.redeemX.utilities.JService
 import net.md_5.bungee.api.ChatMessageType
 import net.md_5.bungee.api.chat.TextComponent
-import org.bukkit.configuration.file.FileConfiguration
-import org.bukkit.configuration.file.YamlConfiguration
 import org.bukkit.entity.Player
 import java.io.File
 import java.util.logging.Level
 
 class ConfigImpl(private val plugin: RedeemX) : ConfigDao {
-    private val configFiles = mutableMapOf<JFiles, FileConfiguration>()
     private val configManager = plugin.configManager
 
     companion object {
@@ -30,15 +29,25 @@ class ConfigImpl(private val plugin: RedeemX) : ConfigDao {
         return if (applyColor) JService.applyColors(message) else message
     }
 
-    override fun getMessage(message: String): String {
+    override fun getMessage(key: String): String {
         //I have used formatted Message cause of redundant.
         val placeholders = CodePlaceHolder(plugin.server.consoleSender)
-        return JService.removeColors(getFormattedMessage(message, placeholders))
+        var message = getFormattedMessage("$key.chat", placeholders).removeSurrounding("[", "]")
+        if (message.isEmpty()) message = getFormattedMessage(key, placeholders).removeSurrounding("[", "]")
+        if (message.isEmpty()) message = getFormattedTemplateMessage(key, placeholders).removeSurrounding("[", "]")
+        if (message.isEmpty()) message = getFormattedTemplateMessage(key, placeholders).removeSurrounding("[", "]")
+        if (message.isEmpty()) return ""
+        return JService.removeColors(message)
     }
 
-    override fun getMessage(message: String, placeholders: CodePlaceHolder): String {
+    override fun getMessage(key: String, placeholders: CodePlaceHolder): String {
         //I have used formatted Message cause of redundant.
-        return JService.removeColors(getFormattedMessage(message, placeholders))
+        var message = getFormattedMessage("$key.chat", placeholders).removeSurrounding("[", "]")
+        if (message.isEmpty()) message = getFormattedMessage(key, placeholders).removeSurrounding("[", "]")
+        if (message.isEmpty()) message = getFormattedTemplateMessage(key, placeholders).removeSurrounding("[", "]")
+        if (message.isEmpty()) message = getFormattedTemplateMessage(key, placeholders).removeSurrounding("[", "]")
+        if (message.isEmpty()) return ""
+        return JService.removeColors(message)
     }
 
     override fun getTemplateMessage(template: String): String {
@@ -50,23 +59,23 @@ class ConfigImpl(private val plugin: RedeemX) : ConfigDao {
     }
 
     override fun getFormattedMessage(message: String, placeholders: CodePlaceHolder): String {
-        return JService.applyPlaceholders(getString(message, JFiles.MESSAGES, true) ?: return "", placeholders){
+        return JService.applyPlaceholders(getString(message, JFiles.MESSAGES, true) ?: return "", placeholders) {
             plugin.server.pluginManager.isPluginEnabled("PlaceholderAPI")
-        }.replace("{prefix}",getString(JMessage.PREFIX,JFiles.MESSAGES,true)?: "")
+        }.replace("{prefix}", getString(JMessage.PREFIX, JFiles.MESSAGES, true) ?: "")
     }
+
     override fun getFormattedTemplateMessage(message: String, placeholders: CodePlaceHolder): String {
-        return JService.applyPlaceholders(getString(message, JFiles.TEMPLATE, true) ?: return "", placeholders){
+        return JService.applyPlaceholders(getString(message, JFiles.TEMPLATE, true) ?: return "", placeholders) {
             plugin.server.pluginManager.isPluginEnabled("PlaceholderAPI")
         }
     }
-
 
     override fun sendMsg(key: String, placeHolder: CodePlaceHolder) {
 
         // Fetch different types of messages
         var message = getFormattedMessage("$key.chat", placeHolder).removeSurrounding("[", "]")
         if (message.isEmpty()) message = getFormattedMessage(key, placeHolder).removeSurrounding("[", "]")
-        if(message.isEmpty()) message = getFormattedTemplateMessage(key, placeHolder).removeSurrounding("[", "]")
+        if (message.isEmpty()) message = getFormattedTemplateMessage(key, placeHolder).removeSurrounding("[", "]")
         if (message.isEmpty()) message = getFormattedTemplateMessage(key, placeHolder).removeSurrounding("[", "]")
         if (message.isEmpty()) return
 
@@ -82,7 +91,7 @@ class ConfigImpl(private val plugin: RedeemX) : ConfigDao {
         actionBarMessage.let {
             if (placeHolder.sender is Player && actionBarMessage.isNotEmpty()) {
                 val player = placeHolder.sender as Player
-                player.spigot().sendMessage(ChatMessageType.ACTION_BAR, TextComponent(it))
+                player.spigot().sendMessage(ChatMessageType.ACTION_BAR, TextComponent(it.removePrefix(" ")))
             }
         }
 
@@ -90,38 +99,94 @@ class ConfigImpl(private val plugin: RedeemX) : ConfigDao {
         titleMessage.let {
             if (placeHolder.sender is Player && it.isNotEmpty()) {
                 val player = placeHolder.sender as Player
-                player.sendTitle(it, subtitleMessage, fadeIn, stay, fadeOut)
+                player.sendTitle(it.removePrefix(" "), subtitleMessage, fadeIn, stay, fadeOut)
             }
         }
 
         // Send chat message
         chatMessage.let {
             if (chatMessage.isNotEmpty()) {
-                chatMessage.forEach { placeHolder.sender.sendMessage(it.trim()) }
+                chatMessage.forEach { placeHolder.sender.sendMessage(it.removePrefix(" ")) }
             }
         }
     }
 
     override fun sendTemplateMsg(template: String, placeHolder: CodePlaceHolder) {
-        sendMsg("$template.messages",placeHolder)
+        sendMsg("$template.messages", placeHolder)
+    }
+
+    override fun loadDefaultTemplateValues(template: String): RedeemTemplate {
+        return RedeemTemplate(
+            name = template,
+            defaultEnabledStatus = true,
+            commands = mutableListOf(),
+            duration = "0s",
+            cooldown = "0s",
+            redemption = 1,
+            playerLimit = 1,
+            defaultSync = false,
+            permissionRequired = false,
+            permissionValue = "redeemx.use.${template.lowercase()}.{code}",
+            message = mutableListOf(),
+            sound = "",
+            rewards = mutableListOf(),
+            target = mutableListOf(),
+
+            syncEnabledStatus = false,
+            syncLockedStatus = false,
+            syncTarget = false,
+            syncCommands = true,
+            syncDuration = true,
+            syncCooldown = true,
+            syncPin = true,
+            syncRedemption = true,
+            syncPlayerLimit = true,
+            syncPermission = true,
+            syncMessages = true,
+            syncSound = true,
+            syncRewards = true,
+        )
     }
 
     override fun getTemplate(template: String): RedeemTemplate {
         val config = configManager.getConfig(JFiles.TEMPLATE)
-        val templateSection = config.getConfigurationSection(template) ?: throw Exception(getMessage(JMessage.RCX.ModifyTemplate.NOT_FOUND,CodePlaceHolder(plugin.server.consoleSender)))
+        val templateSection = config.getConfigurationSection(template) ?: throw Exception(
+            getMessage(
+                JMessage.Template.NOT_FOUND, CodePlaceHolder(plugin.server.consoleSender)
+            )
+        )
         return RedeemTemplate(
             name = template,
+
+            defaultEnabledStatus = templateSection.getBoolean("enabled", true),
             commands = templateSection.getStringList("commands"),
-            duration = templateSection.getString("duration") ?: "0s",
+            duration = templateSection.getString("duration", "0s") ?: "0s",
             redemption = templateSection.getInt("redemption", 1),
-            playerLimit = templateSection.getInt("limit", 1),
+            playerLimit = templateSection.getInt("player-limit", 1),
             permissionRequired = templateSection.getBoolean("permission.required", false),
-            permissionValue = templateSection.getString("permission.value","") ?: "",
+            permissionValue = templateSection.getString("permission.value", "redeemx.use.${template}.{code}") ?: "redeemx.use.${template}.{code}",
             pin = templateSection.getInt("pin", 0),
-            locked = templateSection.getBoolean("locked", false),
-            cooldown = templateSection.getString("cooldown") ?: "0s",
-            message = templateSection.getStringList("messages")
-        )
+            defaultSync = templateSection.getBoolean("default-sync", false),
+            cooldown = templateSection.getString("cooldown", "0s") ?: "0s",
+            message = templateSection.getStringList("messages"),
+            sound = templateSection.getString("sound") ?: "",
+            target = templateSection.getStringList("target"),
+            rewards = templateSection.getString("rewards").let { Converter.deserializeItemStackList(it) } ?: mutableListOf(),
+
+            syncEnabledStatus = templateSection.getBoolean("sync.enabled-status", false),
+            syncLockedStatus = templateSection.getBoolean("sync.locked-status", false),
+            syncTarget = templateSection.getBoolean("sync.target", false),
+
+            syncCommands = templateSection.getBoolean("sync.commands", true),
+            syncDuration = templateSection.getBoolean("sync.duration", true),
+            syncCooldown = templateSection.getBoolean("sync.cooldown", true),
+            syncPin = templateSection.getBoolean("sync.pin", true),
+            syncRedemption = templateSection.getBoolean("sync.redemption", true),
+            syncPlayerLimit = templateSection.getBoolean("sync.player-limit", true),
+            syncPermission = templateSection.getBoolean("sync.permission", true),
+            syncMessages = templateSection.getBoolean("sync.messages", true),
+            syncSound = templateSection.getBoolean("sync.sound", true),
+            syncRewards = templateSection.getBoolean("sync.rewards", true))
     }
 
     override fun getEntireTemplates(): List<RedeemTemplate> {
@@ -135,16 +200,33 @@ class ConfigImpl(private val plugin: RedeemX) : ConfigDao {
             val config = configManager.getConfig(JFiles.TEMPLATE)
             config.createSection(template.name)
             val section = config.getConfigurationSection(template.name)
-            section?.set("commands", template.commands)
+            section?.set("enabled", template.defaultEnabledStatus)
             section?.set("duration", template.duration)
+            section?.set("cooldown", template.cooldown)
             section?.set("redemption", template.redemption)
-            section?.set("limit", template.playerLimit)
+            section?.set("player-limit", template.playerLimit)
             section?.set("permission.required", template.permissionRequired)
             section?.set("permission.value", template.permissionValue)
             section?.set("pin", template.pin)
-            section?.set("locked", template.locked)
-            section?.set("cooldown", template.cooldown)
+            section?.set("default-sync", template.defaultSync)
             section?.set("messages", template.message)
+            section?.set("commands", template.commands)
+            section?.set("sound", template.sound)
+            section?.set("rewards", Converter.serializeItemStackList(template.rewards))
+
+            section?.set("sync.enabled-status", template.syncEnabledStatus)
+            section?.set("sync.locked-status", template.syncLockedStatus)
+            section?.set("sync.target", template.syncTarget)
+            section?.set("sync.commands", template.syncCommands)
+            section?.set("sync.duration", template.syncDuration)
+            section?.set("sync.cooldown", template.syncCooldown)
+            section?.set("sync.pin", template.syncPin)
+            section?.set("sync.redemption", template.syncRedemption)
+            section?.set("sync.player-limit", template.syncPlayerLimit)
+            section?.set("sync.permission", template.syncPermission)
+            section?.set("sync.messages", template.syncMessages)
+            section?.set("sync.sound", template.syncSound)
+            section?.set("sync.rewards", template.syncRewards)
             config.save(File(plugin.dataFolder, JFiles.TEMPLATE.filename))
             return true
         } catch (e: Exception) {
@@ -153,7 +235,7 @@ class ConfigImpl(private val plugin: RedeemX) : ConfigDao {
     }
 
     override fun deleteTemplate(name: String): Boolean {
-        if (name == "default") return false
+        if (name == "DEFAULT") return false
         try {
             val config = configManager.getConfig(JFiles.TEMPLATE)
             config.set(name, null)
@@ -168,7 +250,7 @@ class ConfigImpl(private val plugin: RedeemX) : ConfigDao {
         val config = configManager.getConfig(JFiles.TEMPLATE)
         if (config.getKeys(false).isEmpty()) return true
         try {
-            config.getKeys(false).forEach { config.set(it, null) }
+            config.getKeys(false).filter { it != "DEFAULT" }.forEach { config.set(it, null) }
             config.options().copyDefaults(true)
             config.save(File(plugin.dataFolder, JFiles.TEMPLATE.filename))
             return true
@@ -191,14 +273,13 @@ class ConfigImpl(private val plugin: RedeemX) : ConfigDao {
 
     override fun reloadConfig(configFile: JFiles): Boolean {
         try {
-            configFiles[configFile] = YamlConfiguration.loadConfiguration(File(plugin.dataFolder, configFile.filename))
+            configManager.getConfig(configFile)
             return true
         } catch (e: Exception) {
             plugin.logger.log(Level.SEVERE, "Could not reload ${configFile.filename}: ${e.message}")
             return false
         }
     }
-
 
     override fun saveAllConfigs(): Boolean {
         try {

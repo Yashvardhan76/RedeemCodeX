@@ -2,7 +2,6 @@ package me.justlime.redeemX.data.repository
 
 import me.justlime.redeemX.RedeemX
 import me.justlime.redeemX.data.local.RedeemCodeDao
-import me.justlime.redeemX.enums.JProperty
 import me.justlime.redeemX.models.RedeemCode
 import me.justlime.redeemX.models.RedeemTemplate
 import me.justlime.redeemX.utilities.JService
@@ -26,6 +25,10 @@ class RedeemCodeRepository(plugin: RedeemX) {
         return redeemCodeDao.getCachedCodes()
     }
 
+    /**
+     * List<code<Targets-Name>>
+     */
+
     fun getCachedTargetList(): MutableMap<String, MutableList<String>> {
         return redeemCodeDao.getCachedTargets()
     }
@@ -34,114 +37,40 @@ class RedeemCodeRepository(plugin: RedeemX) {
         return redeemCodeDao.getCachedUsages()
     }
 
-    //TODO This Performance is currently heavy
-    fun getCodesByProperty(property: JProperty, value: String): List<RedeemCode> {
-        return redeemCodeDao.getByProperty(property, value)
-    }
-
-    fun getCodesByTemplate(template: String, byLocked: Boolean): List<RedeemCode>{
-        return redeemCodeDao.getTemplateCodes(template,byLocked)
-    }
-
-    fun getAllCodes(): List<RedeemCode> {
-        return redeemCodeDao.getEntireCodes()
+    fun getCodesByTemplate(template: String, lockedStatus: Boolean): List<RedeemCode> {
+        return redeemCodeDao.getTemplateCodes(template, lockedStatus)
     }
 
     /**
-     * Toggles the enabled state of a redeem code.
-     *
-     * @param redeemCode The redeem code to toggle.
-     * @return `true` if the operation was successful, `false` otherwise.
-     */
-    fun toggleEnabled(redeemCode: RedeemCode): Boolean {
-        redeemCode.enabled = !redeemCode.enabled
-        return true
-    }
-
-    /**
-     * Sets the maximum number of redemptions for a redeem code.
-     *
-     * @param redeemCode The redeem code to modify.
-     * @param maxRedeems The new maximum number of redemptions.
-     * @return `true` if the operation was successful, `false` otherwise.
-     * **/
-    fun setMaxRedeems(redeemCode: RedeemCode, maxRedeems: Int): Boolean {
-        redeemCode.redemption = maxRedeems
-        return true
-    }
-
-    /**
-     * Sets the maximum number of players who can redeem a redeem code.
-     *
-     * @param redeemCode The redeem code to modify.
-     * @param maxPlayers The new maximum number of players. Set to `0` or less for no limit.
-     * @return `true` if the operation was successful, `false` otherwise.
-     */
-    fun setMaxPlayers(redeemCode: RedeemCode, maxPlayers: Int): Boolean {
-        redeemCode.playerLimit = maxPlayers
-        return true
-    }
-
-    fun setPermission(redeemCode: RedeemCode, permission: String): Boolean {
-        redeemCode.permission = permission.replace("{code}", redeemCode.code)
-        return true
-    }
-
-    /**
-     * Sets the template for a redeem code.
+     * Get Data From template.yml. If sync is false no data will be sync
      *
      * @param redeemCode The redeem code to modify.
      * @param template The new template for the redeem code.
      * @return `true` if the operation was successful, `false` otherwise.
-
+     *
      **/
-    fun templateToRedeemCode(redeemCode: RedeemCode, template: RedeemTemplate,locked: Boolean = true): Boolean {
+    fun templateToRedeemCode(redeemCode: RedeemCode, template: RedeemTemplate): Boolean {
 
-        if (template.name.isBlank()) redeemCode.template = "default"
+        if (template.name.isBlank()) return false
         redeemCode.apply {
             this.template = template.name
-            redemption = template.redemption
-            playerLimit = template.playerLimit
-            permission = template.permissionValue
-            permission = if (template.permissionRequired) template.permissionValue else ""
-            pin = template.pin
-            validFrom = JService.getCurrentTime()
-            duration = template.duration
-            usedBy = mutableMapOf()
-            target = mutableListOf()
-            commands = template.commands
-            this.locked = locked
-            lastRedeemed = mutableMapOf()
-            cooldown = template.cooldown
-            modified = JService.getCurrentTime()
+            if (template.defaultSync) {
+                if (template.syncEnabledStatus) enabledStatus = template.defaultEnabledStatus
+                if (template.syncPermission) permission = template.permissionValue
+                if (template.syncDuration) duration = template.duration
+                if (template.syncCooldown) cooldown = template.cooldown
+                if (template.syncPin) pin = template.pin
+                if (template.syncRedemption) redemption = template.redemption
+                if (template.syncPlayerLimit) playerLimit = template.playerLimit
+                if (template.syncMessages) messages = template.message.joinToString("\n")
+                if (template.syncSound) sound = template.sound
+                if (template.syncRewards) rewards = template.rewards
+                if (template.syncTarget) target = template.target
+                if (template.syncCommands) commands = template.commands
+                if (template.syncLockedStatus) this.sync = template.defaultSync
+                modified = JService.getCurrentTime()
+            }else return false
         }
-        return true
-    }
-
-    fun setTemplateLocked(redeemCode: RedeemCode, templateLocked: Boolean): Boolean {
-        redeemCode.locked = templateLocked
-        return true
-    }
-
-    fun addTarget(redeemCode: RedeemCode, target: String): Boolean {
-        if (target.isBlank()) return false
-        redeemCode.target.add(target)
-        return true
-    }
-
-    fun setTarget(redeemCode: RedeemCode, target: List<String>): Boolean {
-        redeemCode.target = target.distinct().toMutableList()
-        return true
-    }
-
-    fun removeTarget(redeemCode: RedeemCode, target: String): Boolean {
-        if (target.isBlank()) return false
-        redeemCode.target.remove(target)
-        return true
-    }
-
-    fun clearTarget(redeemCode: RedeemCode): Boolean {
-        redeemCode.target.clear()
         return true
     }
 
@@ -157,72 +86,8 @@ class RedeemCodeRepository(plugin: RedeemX) {
         return false
     }
 
-    fun clearCommands(redeemCode: RedeemCode): Boolean {
-        redeemCode.commands.clear()
-        return true
-    }
-
-    fun setStoredTime(redeemCode: RedeemCode): Boolean {
-        redeemCode.validFrom = JService.getCurrentTime()
-        return true
-    }
-
-    fun modifyDuration(code: RedeemCode,duration: String,isAdding: Boolean): Boolean{
-        if (!JService.isDurationValid(duration)) return false
-        code.duration = JService.adjustDuration(code.duration, duration, isAdding)
-        return true
-    }
-
-    fun addDuration(code: RedeemCode, duration: String): Boolean {
-        if (!JService.isDurationValid(duration)) return false
-        val existingDuration = code.duration
-        code.duration = JService.adjustDuration(existingDuration, duration, isAdding = true)
-        return true
-    }
-
-    fun removeDuration(code: RedeemCode, duration: String): Boolean {
-        if (!JService.isDurationValid(duration)) return false
-        val existingDuration = code.duration
-        code.duration = JService.adjustDuration(existingDuration, duration, isAdding = false)
-        return true
-    }
-
-    fun setDuration(code: RedeemCode, duration: String): Boolean {
-        if (!JService.isDurationValid(duration)) return false
-        code.duration = duration
-        return true
-    }
-
-    fun clearDuration(code: RedeemCode): Boolean {
-        code.duration = "0s"
-        return true
-    }
-
-    fun setLastRedeemedTime(redeemCode: RedeemCode, player: String): Boolean {
-        redeemCode.lastRedeemed[player] = JService.getCurrentTime()
-        return true
-    }
-
     fun clearRedeemedTime(redeemCode: RedeemCode) {
         redeemCode.lastRedeemed.clear()
-    }
-
-    fun setCooldown(redeemCode: RedeemCode, cooldown: String): Boolean {
-        //check is coldown string valid
-        if (!JService.isDurationValid(cooldown)) return false
-        redeemCode.cooldown = cooldown
-        if (cooldown.isBlank()) redeemCode.cooldown = ""
-        return true
-    }
-
-    fun setPin(redeemCode: RedeemCode, pin: Int): Boolean {
-        redeemCode.pin = pin
-        return true
-    }
-
-    fun removePin(redeemCode: RedeemCode): Boolean {
-        setPin(redeemCode, 0)
-        return true
     }
 
     fun upsertCode(redeemCode: RedeemCode): Boolean {
@@ -244,9 +109,4 @@ class RedeemCodeRepository(plugin: RedeemX) {
     fun deleteAllCodes(): Boolean {
         return redeemCodeDao.deleteAllCodes()
     }
-
-    private inline fun filterCodes(predicate: (RedeemCode) -> Boolean): List<RedeemCode> {
-        return getAllCodes().filter(predicate)
-    }
-
 }

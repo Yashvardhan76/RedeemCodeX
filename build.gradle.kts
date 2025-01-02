@@ -39,6 +39,7 @@ dependencies {
 
     // Gson for JSON serialization and deserialization
     compileOnly("com.google.code.gson:gson:2.10.1")
+    implementation(kotlin("reflect"))
 
 }
 

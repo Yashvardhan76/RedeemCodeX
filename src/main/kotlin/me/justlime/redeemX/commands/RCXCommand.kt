@@ -1,15 +1,7 @@
 package me.justlime.redeemX.commands
 
 import me.justlime.redeemX.RedeemX
-import me.justlime.redeemX.commands.subcommands.DeleteSubCommand
-import me.justlime.redeemX.commands.subcommands.GenerateSubCommand
-import me.justlime.redeemX.commands.subcommands.HelpSubCommand
-import me.justlime.redeemX.commands.subcommands.InfoSubCommand
-import me.justlime.redeemX.commands.subcommands.ModifySubCommand
-import me.justlime.redeemX.commands.subcommands.ModifyTemplateSubCommand
-import me.justlime.redeemX.commands.subcommands.ReloadSubCommand
-import me.justlime.redeemX.commands.subcommands.RenewSubCommand
-import me.justlime.redeemX.commands.subcommands.UsageSubCommand
+import me.justlime.redeemX.commands.subcommands.*
 import me.justlime.redeemX.data.repository.ConfigRepository
 import me.justlime.redeemX.enums.JMessage
 import me.justlime.redeemX.enums.JPermission
@@ -18,8 +10,9 @@ import me.justlime.redeemX.models.CodePlaceHolder
 import org.bukkit.command.Command
 import org.bukkit.command.CommandExecutor
 import org.bukkit.command.CommandSender
+import org.bukkit.command.TabExecutor
 
-class RCXCommand(private val plugin: RedeemX) : CommandExecutor {
+class RCXCommand(private val plugin: RedeemX) : CommandExecutor, TabExecutor {
     private val config = ConfigRepository(plugin)
     lateinit var placeHolder: CodePlaceHolder
     override fun onCommand(
@@ -27,7 +20,7 @@ class RCXCommand(private val plugin: RedeemX) : CommandExecutor {
     ): Boolean {
         placeHolder = CodePlaceHolder(sender, oldArgs.toMutableList())
         if (oldArgs.isEmpty()) {
-            config.sendMsg(JMessage.RCX.Help.UNKNOWN_COMMAND, placeHolder)
+            config.sendMsg(JMessage.Command.UNKNOWN_COMMAND, placeHolder)
             return true
         }
         val args = oldArgs.toMutableList()
@@ -40,26 +33,18 @@ class RCXCommand(private val plugin: RedeemX) : CommandExecutor {
             JPermission.Admin.RELOAD
         )
         if (!permissionList.any { sender.hasPermission(it) }) {
-            config.sendMsg(JMessage.NO_PERMISSION, placeHolder)
+            config.sendMsg(JMessage.Command.NO_PERMISSION, placeHolder)
             return true
         }
 
         when (args[0].lowercase()) {
-            JTab.GeneralActions.Gen.value -> {
-                GenerateSubCommand(plugin).execute(sender, args)
+            JTab.GeneralActions.Gen.value -> GenerateSubCommand(plugin).execute(sender, args)
 
-            }
-
-            JTab.GeneralActions.Modify.value -> {
-
-                if (args.size > 1 && args[1] == JTab.Type.Code.value) ModifySubCommand(plugin).execute(sender, args)
-                else if (args.size > 1 && args[1] == JTab.Type.Template.value) ModifyTemplateSubCommand(plugin).execute(sender, args)
-                else config.sendMsg(JMessage.RCX.Help.UNKNOWN_COMMAND, placeHolder)
-            }
+            JTab.GeneralActions.Modify.value -> ModifySubCommand(plugin).execute(sender, args)
 
             JTab.GeneralActions.Delete.value -> DeleteSubCommand(plugin).execute(sender, args)
 
-            JTab.GeneralActions.Preview.value -> {}
+            JTab.GeneralActions.Preview.value -> PreviewSubCommand(plugin).execute(sender, args)
 
             JTab.GeneralActions.Usage.value -> UsageSubCommand(plugin).execute(sender, args)
 
@@ -76,11 +61,48 @@ class RCXCommand(private val plugin: RedeemX) : CommandExecutor {
                         JPermission.Admin.RELOAD
                     )
                 ) HelpSubCommand(plugin).execute(sender, args)
-                else config.sendMsg(JMessage.RCX.Help.REDEEM, placeHolder)
+                else config.sendMsg(JMessage.Command.Help.REDEEM, placeHolder)
             }
 
-            else -> config.sendMsg(JMessage.RCX.UNKNOWN_COMMAND, placeHolder)
+            else -> config.sendMsg(JMessage.Command.UNKNOWN_COMMAND, placeHolder)
         }
         return true
+    }
+
+    override fun onTabComplete(sender: CommandSender, command: Command, label: String, args: Array<out String>?): MutableList<String>? {
+        val completions: MutableList<String> = mutableListOf()
+        val generalOptions: MutableList<String> = mutableListOf()
+
+
+        if (sender.hasPermission(JPermission.Admin.GEN)) generalOptions.add(JTab.GeneralActions.Gen.value)
+        if (sender.hasPermission(JPermission.Admin.MODIFY)) generalOptions.add(JTab.GeneralActions.Modify.value)
+        if (sender.hasPermission(JPermission.Admin.DELETE)) generalOptions.add(JTab.GeneralActions.Delete.value)
+        if (sender.hasPermission(JPermission.Admin.RENEW)) generalOptions.add(JTab.GeneralActions.Renew.value)
+        if (sender.hasPermission(JPermission.Admin.INFO)) generalOptions.add(JTab.GeneralActions.Info.value)
+        if (sender.hasPermission(JPermission.Admin.RELOAD)) generalOptions.add(JTab.GeneralActions.Reload.value)
+        if (sender.hasPermission(JPermission.Admin.USAGE)) generalOptions.add(JTab.GeneralActions.Usage.value)
+        if (sender.hasPermission(JPermission.Admin.PREVIEW)) generalOptions.add(JTab.GeneralActions.Preview.value)
+        if (args == null) return mutableListOf()
+        if (args.isEmpty()) return mutableListOf()
+
+        if (args.size == 1) completions.addAll(generalOptions)
+        (if (args.size >= 2) {
+            when (args[0]) {
+                JTab.GeneralActions.Gen.value -> if (sender.hasPermission(JPermission.Admin.GEN)) GenerateSubCommand(plugin).tabCompleter(sender, args.toMutableList()) else mutableListOf()
+                JTab.GeneralActions.Modify.value -> if (sender.hasPermission(JPermission.Admin.MODIFY)) ModifySubCommand(plugin).tabCompleter(sender, args.toMutableList()) else mutableListOf()
+                JTab.GeneralActions.Delete.value -> if (sender.hasPermission(JPermission.Admin.DELETE)) DeleteSubCommand(plugin).tabCompleter(sender, args.toMutableList()) else mutableListOf()
+                JTab.GeneralActions.Preview.value -> if (sender.hasPermission(JPermission.Admin.PREVIEW)) PreviewSubCommand(plugin).tabCompleter(sender, args.toMutableList()) else mutableListOf()
+                JTab.GeneralActions.Usage.value -> if (sender.hasPermission(JPermission.Admin.USAGE)) UsageSubCommand(plugin).tabCompleter(sender, args.toMutableList()) else mutableListOf()
+                JTab.GeneralActions.Renew.value -> if (sender.hasPermission(JPermission.Admin.RENEW)) RenewSubCommand(plugin).tabCompleter(sender, args.toMutableList()) else mutableListOf()
+                JTab.GeneralActions.Help.value -> HelpSubCommand(plugin).tabCompleter(sender, args.toMutableList())
+                JTab.GeneralActions.Info.value -> if (sender.hasPermission(JPermission.Admin.INFO)) InfoSubCommand(plugin).tabCompleter(sender, args.toMutableList()) else mutableListOf()
+                JTab.GeneralActions.Reload.value -> if (sender.hasPermission(JPermission.Admin.RELOAD)) ReloadSubCommand(plugin).tabCompleter(sender, args.toMutableList()) else mutableListOf()
+                 else -> mutableListOf()
+            }
+        } else mutableListOf()).let { completions.addAll(it ?: return null) }
+
+        return completions.filter {
+            it.contains(args.lastOrNull() ?: "", ignoreCase = true)
+        }.sortedBy { it.lowercase() }.toMutableList()
     }
 }

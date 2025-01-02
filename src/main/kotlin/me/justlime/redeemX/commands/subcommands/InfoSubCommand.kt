@@ -9,16 +9,20 @@ import me.justlime.redeemX.models.CodePlaceHolder
 import org.bukkit.command.CommandSender
 
 class InfoSubCommand(private val plugin: RedeemX): JSubCommand {
-    override var codeList: List<String> = emptyList()
+    override var jList: List<String> = emptyList()
     override val permission: String = JPermission.Admin.INFO
     val config = ConfigRepository(plugin)
     override fun execute(sender: CommandSender, args: MutableList<String>): Boolean {
         val placeHolder = CodePlaceHolder(sender)
         if (!hasPermission(sender)){
-            config.sendMsg(JMessage.NO_PERMISSION, placeHolder)
+            config.sendMsg(JMessage.Command.NO_PERMISSION, placeHolder)
             return true
         }
-        sender.sendMessage("RedeemX Plugin Version: ${plugin.description.version}")
+        sender.sendMessage("${JMessage.Command.INFO} - ${plugin.description.version}")
         return true
+    }
+
+    override fun tabCompleter(sender: CommandSender, args: MutableList<String>): MutableList<String> {
+        return mutableListOf()
     }
 }

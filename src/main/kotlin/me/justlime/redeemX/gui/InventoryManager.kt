@@ -42,13 +42,13 @@ object InventoryManager {
                 redeemCode.rewards = items.filterNotNull().toMutableList()
                 val success = codeRepo.upsertCode(redeemCode)
                 if (!success) {
-                    configRepo.sendMsg(JMessage.RCX.Modify.FAILED, placeHolder)
+                    configRepo.sendMsg(JMessage.Code.Modify.FAILED, placeHolder)
                     return false
                 }
-                configRepo.sendMsg(JMessage.RCX.Modify.SUCCESS, placeHolder)
+                configRepo.sendMsg(JMessage.Code.Gui.Save.REWARDS, placeHolder)
                 return true
             } catch (e: Exception) {
-                configRepo.sendMsg(JMessage.RCX.Modify.FAILED, placeHolder)
+                configRepo.sendMsg(JMessage.Code.Modify.FAILED, placeHolder)
                 return false
             }
         }

@@ -2,10 +2,11 @@ package me.justlime.redeemX.gui
 
 import me.justlime.redeemX.enums.JTemplate
 import me.justlime.redeemX.models.RedeemCode
+import me.justlime.redeemX.models.RedeemTemplate
 import org.bukkit.plugin.java.JavaPlugin
 
 object EditSound {
-    fun template(plugin: JavaPlugin, template: JTemplate){
+    fun template(plugin: JavaPlugin, template: RedeemTemplate){
 
     }
 

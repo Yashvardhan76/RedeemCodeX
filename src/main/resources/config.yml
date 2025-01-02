@@ -1,10 +1,18 @@
+#Lnaguage Selector
+lang: "en"
+#[How To Customize Language?]
+#Create copy of messages (File example:- messages_germany etc) and customize it.
+#Then set lang to `lang: "germany"`.That's it.
+
+
 #Maximum number of attempts for code generation to avoid infinite loops.
-#[What's That?] if you generate all combination of 3-digit code when you try to generate it again
+#[What's That?]
+#If you generate all combination of 3-digit code when you try to generate it again
 #It can stick in infinite loop because it repeats until it get a unique code to avoid we use maximum-attempts
 max-attempts: 1000
 
 code:
-  #When Generating Codes in bulk how much amount of codes you want to see
+  #When Generating Codes in bulk how much amount of codes you want to see in game chat.
   display-amount: 40
 
   #The minimum digit of code required to generate, default 3 if not specified
@@ -12,6 +20,8 @@ code:
 
   #The maximum digit of code required to generate, default 25 if not specified
   maximum-digit: 25
+
+
 
 redeem-command:
   #Set cooldown for using /redeem
@@ -35,7 +45,7 @@ rewards:
   equip-armor: false #TODO
 
 renew:
-  #Extend again for specified duration
+  #Set to `true` to renew expired codes and extend it duration. Duration will be grab from their property.
   reset-expired: true
 
   #Reset the ongoing Cooldown for all player

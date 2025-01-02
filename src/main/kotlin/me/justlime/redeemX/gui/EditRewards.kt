@@ -2,6 +2,7 @@ package me.justlime.redeemX.gui
 
 import me.justlime.redeemX.enums.JTemplate
 import me.justlime.redeemX.models.RedeemCode
+import me.justlime.redeemX.models.RedeemTemplate
 import org.bukkit.Material
 import org.bukkit.entity.Player
 import org.bukkit.inventory.ItemStack
@@ -12,8 +13,8 @@ object EditRewards{
     private const val REDEEM_CODE_SLOT = 49
     private val REDEEM_CODE_ITEM = Material.NETHER_STAR
 
-    fun template(plugin: JavaPlugin, template: JTemplate, player: Player){
-
+    fun template(plugin: JavaPlugin, template: RedeemTemplate, player: Player){
+        return
     }
 
     fun code(plugin: JavaPlugin, redeemCode: RedeemCode, player: Player){

@@ -3,207 +3,218 @@ package me.justlime.redeemX.enums
 sealed interface JMessage {
     companion object {
         const val PREFIX = "prefix"
-        const val RESTRICTED_TO_PLAYERS = "restricted-to-players"
-        const val NO_PERMISSION = "no-permission"
     }
 
-    sealed class Redeem : JMessage {
+    sealed interface Redeem : JMessage {
         companion object {
-            private const val REDEEMED = "redeemed-message"
-            const val FULL_INVENTORY = "$REDEEMED.full-inventory"
+            const val INVALID_CODE = "redeem.invalid-code"
+            const val MAX_REDEMPTIONS = "redeem.max-redemptions"
+            const val MAX_PLAYER_REDEEMED = "redeem.max-player-redeem"
+            const val DISABLED = "redeem.disabled"
+            const val EXPIRED_CODE = "redeem.expired-code"
+            const val INVALID_TARGET = "redeem.invalid-target"
+            const val MISSING_PIN = "redeem.missing-pin"
+            const val INVALID_PIN = "redeem.invalid-pin"
+            const val ON_COOLDOWN = "redeem.on-cooldown"
+            const val FULL_INVENTORY = "redeem.full-inventory"
+            const val NO_PERMISSION = "redeem.no-permission"
+            const val SUCCESS = "redeem.success"
+            const val FAILED = "redeem.failed"
+            const val USAGE = "redeem.usage"
+        }
 
-            const val SUCCESS = "$REDEEMED.success"
-            const val FAILED = "$REDEEMED.failed"
-            const val USAGE = "$REDEEMED.usage"
-            const val INVALID_CODE = "$REDEEMED.invalid-code"
-            const val ALREADY_REDEEMED = "$REDEEMED.already-redeemed"
-            const val EXPIRED_CODE = "$REDEEMED.expired-code"
-            const val INVALID_PIN = "$REDEEMED.invalid-pin"
-            const val NO_PERMISSION = "$REDEEMED.no-permission"
-            const val DISABLED = "$REDEEMED.disabled"
-            const val MISSING_PIN = "$REDEEMED.missing-pin"
-            const val INVALID_TARGET = "$REDEEMED.invalid-target"
-            const val MAX_PLAYER_REDEEMED = "$REDEEMED.max-player-redeemed"
-            const val MAX_REDEMPTIONS = "$REDEEMED.max-redemptions"
-            const val ON_COOLDOWN = "$REDEEMED.on-cooldown"
+    }
+
+    sealed interface Code : JMessage {
+        companion object {
+            const val NOT_FOUND = "code.not-found"
+            const val DISABLED = "code.disabled"
+        }
+
+        data object Placeholder {
+            const val DISABLED = "code.placeholder.disabled"
+            const val ENABLED = "code.placeholder.enabled"
+        }
+
+        data object Generate : Code {
+            const val SUCCESS = "code.gen.success"
+            const val FAILED = "code.gen.failed"
+            const val ALREADY_EXIST = "code.gen.already-exist"
+            const val MISSING = "code.gene.missing"
+            const val INVALID_AMOUNT = "code.gen.invalid-amount"
+            const val INVALID_LENGTH = "code.gen.invalid-length"
+            const val INVALID_RANGE = "code.gen.invalid-range"
+
+
+        }
+
+        data object Modify : Code {
+            const val SUCCESS = "code.modify.success"
+            const val FAILED = "code.modify.failed"
+            const val INVALID_VALUE = "code.modify.invalid-value"
+            const val INVALID_ID = "code.modify.invalid-id"
+            const val NOT_FOUND = "code.modify.not-found"
+            const val SYNC = "code.modify.sync"
+            const val SYNC_LOCKED = "code.modify.sync-locked"
+            const val ENABLED_STATUS = "code.modify.enabled-status"
+            const val SYNC_STATUS = "code.modify.locked-status"
+            const val SET_TEMPLATE = "code.modify.set-template"
+            const val SET_REDEMPTION = "code.modify.set-redemption"
+            const val SET_PLAYER_LIMIT = "code.modify.set-player-limit"
+            const val SET_PIN = "code.modify.set-pin"
+            const val SET_DURATION = "code.modify.set-duration"
+            const val ADD_DURATION = "code.modify.add-duration"
+            const val REMOVE_DURATION = "code.modify.remove-duration"
+            const val SET_COOLDOWN = "code.modify.set-cooldown"
+            const val SET_PERMISSION = "code.modify.set-permission"
+            const val SET_TARGET = "code.modify.set-target"
+            const val ADD_TARGET = "code.modify.add-target"
+            const val REMOVE_TARGET = "code.modify.remove-target"
+            const val SET_COMMAND = "code.modify.set-command"
+            const val ADD_COMMAND = "code.modify.add-command"
+            const val REMOVE_COMMAND = "code.modify.remove-command"
+        }
+
+        data object Delete : Code {
+            const val SUCCESS = "code.delete.success"
+            const val SUCCESS_ALL = "code.delete.success-all"
+            const val NOT_FOUND = "code.delete.not-found"
+            const val NOT_FOUND_ALL = "code.delete.not-found-all"
+            const val SUCCESS_CODES = "code.delete.success-codes"
+            const val CONFIRMATION_NEEDED = "code.delete.confirmation-needed"
+        }
+
+        data object Renew : Code {
+            const val SUCCESS = "code.renew.success"
+            const val FAILED = "code.renew.failed"
+            const val EXPIRED_CODE = "code.renew.expired-code"
+            const val PLAYER_NOT_FOUND = "code.renew.player-not-found"
+        }
+
+        data object Preview : Code {
+            const val PREVIEW = "code.preview"
+        }
+
+        data object Usages : Code {
+            const val USAGE = "code.usages.usage"
+            const val COMMAND = "code.usages.commands"
+            const val TARGET = "code.usages.target-list"
+        }
+
+        data object Gui : JMessage {
+            data object Save : JMessage {
+                const val REWARDS = "code.gui.save-rewards"
+                const val MESSAGE = "code.gui.save-message"
+                const val SOUND = "code.gui.save-sound"
+            }
         }
     }
 
-    sealed class RCX : JMessage {
-        data object Gen : RCX() {
-            private const val GEN = "commands.gen"
-            const val MISSING = "$GEN.missing"
-            const val INVALID_AMOUNT = "$GEN.invalid-amount"
-            data object Code : RCX(){
-                const val SUCCESS = "$GEN.code.success"
-                const val FAILED = "$GEN.code.failed"
-                const val ALREADY_EXIST = "$GEN.code.already-exist"
-                const val INVALID_CODE = "$GEN.code.invalid-code"
-                const val INVALID_TEMPLATE = "$GEN.code.invalid-template"
-                const val INVALID_LENGTH = "$GEN.code.invalid-length"
-                const val INVALID_RANGE = "$GEN.code.invalid-range"
-            }
-
-            data object Template : RCX(){
-                const val SUCCESS = "$GEN.template.success"
-                const val FAILED = "$GEN.template.failed"
-                const val ALREADY_EXIST = "$GEN.template.already-exist"
-                const val TEMPLATE_NOT_FOUND = "$GEN.template.not-found "
-            }
-        }
-
-        data object GenTemplate : RCX() {
-            private const val GEN_TEMPLATE = "commands.gen_template"
-            const val SUCCESS = "$GEN_TEMPLATE.success"
-            const val FAILED = "$GEN_TEMPLATE.failed"
-            const val LENGTH_ERROR = "$GEN_TEMPLATE.length-error"
-            const val ERROR = "$GEN_TEMPLATE.error"
-            const val ALREADY_EXIST = "$GEN_TEMPLATE.already_exist"
-        }
-
-        data object Modify : RCX() {
-            private const val MODIFY = "commands.modify"
-            const val SUCCESS = "$MODIFY.success"
-            const val FAILED = "$MODIFY.failed"
-            const val INVALID_VALUE = "$MODIFY.invalid-value"
-            const val NOT_FOUND = "$MODIFY.not-found"
-            const val UNKNOWN_PROPERTY = "$MODIFY.unknown-property"
-            const val INVALID_COMMAND = "$MODIFY.invalid-command"
-            const val INVALID_ID = "$MODIFY.invalid-id"
-            const val LIST = "$MODIFY.list"
-            const val INVALID_SET = "$MODIFY.invalid-set"
-            const val UNKNOWN_METHOD = "$MODIFY.unknown-method"
-            const val ENABLED = "$MODIFY.enabled"
-            const val EXPIRED_CODE = "$MODIFY.expired-code"
-            const val LOCKED = "$MODIFY.locked"
-
-            object Target {
-                private const val TARGET = "commands.modify.target"
-                const val ADD = "$TARGET.add"
-                const val SET = "$TARGET.set"
-                const val REMOVE = "$TARGET.remove"
-                const val REMOVE_ALL = "$TARGET.remove-all"
-                const val LIST = "$TARGET.list"
-                const val UNKNOWN_METHOD = "$TARGET.unknown-method"
-            }
-
-            const val PIN = "$MODIFY.set_pin"
-            const val MAX_REDEEMS = "$MODIFY.max_redeems"
-            const val MAX_PLAYERS = "$MODIFY.max_players"
-            const val SET_PERMISSION = "$MODIFY.permission"
-            const val UNSET_PERMISSION = "$MODIFY.permission-disabled"
-            const val TARGET = "$MODIFY.target"
-            const val COOLDOWN = "$MODIFY.cooldown"
-            const val TEMPLATE_SET = "$MODIFY.template-set"
-            const val TEMPLATE_EMPTY = "$MODIFY.template-empty"
-            const val TEMPLATE_INVALID = "$MODIFY.template-invalid"
-            const val TEMPLATE_LOCKED = "$MODIFY.template_locked"
-
-            const val CODE_GENERATE_DIGIT = "$MODIFY.code_generate_digit"
-            const val DURATION = "$MODIFY.duration"
-
-            object Edit {
-                private const val EDIT = "commands.modify.edit"
-                const val REWARDS = "$EDIT.rewards"
-                const val MESSAGE = "$EDIT.message"
-                const val SOUND = "$EDIT.sound"
-            }
-        }
-
-        data object ModifyTemplate : RCX() {
-            private const val MODIFY_TEMPLATE = "commands.modify_template"
-            const val SUCCESS = "$MODIFY_TEMPLATE.success"
-            const val FAILED = "$MODIFY_TEMPLATE.failed"
-            const val INVALID_VALUE = "$MODIFY_TEMPLATE.invalid-value"
-            const val NOT_FOUND = "$MODIFY_TEMPLATE.not-found"
-            const val CODES_MODIFIED = "$MODIFY_TEMPLATE.CODES_MODIFIED"
-
-            object Target {
-                private const val TARGET = "commands.modify_template.target"
-                const val ADD = "$TARGET.add"
-                const val SET = "$TARGET.set"
-                const val REMOVE = "$TARGET.remove"
-                const val REMOVE_ALL = "$TARGET.remove-all"
-                const val LIST = "$TARGET.list"
-                const val UNKNOWN_METHOD = "$TARGET.unknown-method"
-            }
-
-            const val PIN = "$MODIFY_TEMPLATE.set_pin"
-            const val MAX_REDEEMS = "$MODIFY_TEMPLATE.max_redeems"
-            const val MAX_PLAYERS = "$MODIFY_TEMPLATE.max_players"
-            const val PERMISSION = "$MODIFY_TEMPLATE.permission"
-            const val ENABLED = "$MODIFY_TEMPLATE.enabled"
-            const val CODE_GENERATE_DIGIT = "$MODIFY_TEMPLATE.code_generate_digit"
-            const val COOLDOWN = "$MODIFY_TEMPLATE.cooldown"
-            const val DURATION = "$MODIFY_TEMPLATE.duration"
-        }
-
-        data object Delete : RCX() {
-            private const val DELETE = "commands.delete"
-
-            object Success {
-                const val CODES = "$DELETE.success.codes"
-                const val ALL = "$DELETE.success.all"
-            }
-
-            object NotFound {
-                const val CODES = "$DELETE.not-found.codes"
-                const val ALL = "$DELETE.not-found.all"
-            }
-
-            const val CONFIRMATION_NEEDED = "$DELETE.confirmation-needed"
-            const val FAILED = "$DELETE.failed"
-        }
-
-        data object DeleteTemplate : RCX() {
-            private const val DELETE_TEMPLATE = "commands.delete_template"
-            const val SUCCESS = "$DELETE_TEMPLATE.success"
-            const val SUCCESS_ALL = "$DELETE_TEMPLATE.success_all"
-            const val FAILED = "$DELETE_TEMPLATE.failed"
-            const val NOT_FOUND = "$DELETE_TEMPLATE.not-found"
-        }
-
-        data object Renew : RCX() {
-            private const val RENEW = "commands.renew"
-            const val SUCCESS = "$RENEW.success"
-            const val NOT_FOUND = "$RENEW.not-found"
-            const val FAILED = "$RENEW.failed"
-            const val PLAYER_NOT_FOUND = "$RENEW.player-not-found"
-        }
-
-
-        data object Help : RCX() {
-            private const val HELP = "commands.help"
-            const val UNKNOWN_COMMAND = "$HELP.unknown-command"
-            const val GENERAL = "$HELP.general"
-            const val REDEEM = "$HELP.redeem"
-            const val GENERATION = "$HELP.generation"
-            const val MODIFICATION = "$HELP.modification"
-            const val DELETION = "$HELP.deletion"
-            const val RENEWAL = "$HELP.renewal"
-            const val PREVIEW = "$HELP.preview"
-            const val USAGE = "$HELP.usage"
-            const val PERMISSIONS = "$HELP.permissions"
-            const val RELOAD = "$HELP.reload"
-            const val INFO = "commands.info"
-        }
-
-        data object Usage: RCX(){
-            private const val USAGE = "commands.usage"
-            const val CODE = "$USAGE.code"
-            const val TEMPLATE = "$USAGE.template"
-            const val CODE_NOT_FOUND ="$USAGE.code-not-found"
-            const val TEMPLATE_NOT_FOUND ="$USAGE.template-not-found"
-        }
-
-        data object Reload : RCX() {
-            private const val RELOAD = "commands.reload"
-            const val SUCCESS = "$RELOAD.success"
-            const val FAILED = "$RELOAD.failed"
-        }
+    sealed interface Template : JMessage {
 
         companion object {
+            const val NOT_FOUND = "template.not-found"
+            const val DISABLED = "template.disabled"
+            const val USAGE = "template.usage"
+        }
+
+        data object Placeholder {
+
+        }
+
+        data object Generate : Template {
+            const val SUCCESS = "template.gen.success"
+            const val FAILED = "template.gen.failed"
+            const val ALREADY_EXIST = "template.gen.already-exist"
+            const val MISSING = "template.gen.missing"
+            const val INVALID_AMOUNT = "template.gen.invalid-amount"
+            const val INVALID_LENGTH = "template.gen.invalid-length"
+            const val INVALID_RANGE = "template.gen.invalid-range"
+        }
+
+        data object Modify : Template {
+            const val SUCCESS = "template.modify.success"
+            const val FAILED = "template.modify.failed"
+            const val CODES_MODIFIED = "template.modify.codes-modified"
+            const val INVALID_VALUE = "template.modify.invalid-value"
+            const val NOT_FOUND = "template.modify.not-found"
+            const val SET_PERMISSION = "template.modify.set-permission"
+            const val SET_DURATION = "template.modify.set-duration"
+            const val ADD_DURATION = "template.modify.add-duration"
+            const val REMOVE_DURATION = "template.modify.remove-duration"
+            const val SET_COOLDOWN = "template.modify.set-cooldown"
+            const val SET_COMMAND = "template.modify.set-command"
+            const val ADD_COMMAND = "template.modify.add-command"
+            const val REMOVE_COMMAND = "template.modify.remove-command"
+            const val SYNC_LOCKED = "template.modify.sync-locked"
+            const val SYNC_STATUS = "template.modify.locked-status"
+            const val SET_DEFAULT_ENABLED_STATUS = "template.modify.default-enabled-status"
+            const val SET_TEMPLATE = "template.modify.set-template"
+            const val SET_REDEMPTION = "template.modify.set-redemption"
+            const val SET_PLAYER_LIMIT = "template.modify.set-player-limit"
+            const val SET_PIN = "template.modify.set-pin"
+        }
+
+        data object Delete : Template {
+            const val SUCCESS = "template.delete.success"
+            const val SUCCESS_ALL = "template.delete.success-all"
+            const val NOT_FOUND = "template.delete.not-found"
+            const val NOT_FOUND_ALL = "template.delete.not-found-all"
+            const val CONFIRMATION_NEEDED = "template.delete.confirmation-needed"
+            const val FAILED_DEFAULT = "template.delete.default-delete"
+        }
+
+        data object Usage: Template{
+
+        }
+
+        data object Preview : Code {
+            const val PREVIEW = "template.preview"
+        }
+
+        data object Gui : JMessage {
+            data object Save : JMessage {
+                const val REWARDS = "gui.save-rewards"
+                const val MESSAGE = "gui.save-message"
+                const val SOUND = "gui.save-sound"
+            }
+        }
+    }
+
+    sealed interface Command : JMessage {
+        companion object {
+            const val RESTRICTED_TO_PLAYERS = "commands.restricted-to-players"
+            const val NO_PERMISSION = "commands.no-permission"
             const val UNKNOWN_COMMAND = "commands.unknown-command"
+            const val INFO = "commands.info"
+
+        }
+
+        data object Help : Command {
+            const val GENERAL = "commands.help.general"
+            const val REDEEM = "commands.help.redeem"
+            const val GENERATION = "commands.help.generation"
+            const val MODIFICATION = "commands.help.modification"
+            const val DELETION = "commands.help.deletion"
+            const val RENEWAL = "commands.help.renewal"
+            const val PREVIEW = "commands.help.preview"
+            const val USAGE = "commands.help.usage"
+            const val RELOAD = "commands.help.reload"
+            const val PERMISSIONS = "commands.help.permissions"
+        }
+
+        data object Renew : Command {
+            const val SUCCESS = "commands.renew.success"
+            const val INVALID_SYNTAX = "commands.renew.invalid-syntax"
+            const val EXPIRED_CODE = "commands.renew.expired-code"
+            const val FAILED = "commands.renew.failed"
+            const val PLAYER_NOT_FOUND = "commands.renew.player-not-found"
+        }
+
+        data object Reload : Command {
+            const val SUCCESS = "commands.reload.success"
+            const val FAILED = "commands.reload.failed"
         }
     }
+
 }

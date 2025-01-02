@@ -1,6 +1,4 @@
 package me.justlime.redeemX
-
-//import me.justlime.redeemX.bot.DiscordBot
 import me.justlime.redeemX.api.RedeemXAPI
 import me.justlime.redeemX.commands.CommandManager
 import me.justlime.redeemX.data.config.ConfigManager
@@ -17,13 +15,11 @@ class RedeemX : JavaPlugin() {
     lateinit var redeemCodeDB: RedeemCodeDaoImpl
     lateinit var configManager: ConfigManager
     lateinit var config: ConfigRepository
-    override fun onLoad() {
-        RedeemXAPI.initialize(this)
-    }
 
     override fun onEnable() {
         Class.forName("org.sqlite.JDBC")
         if (!this.dataFolder.exists()) this.dataFolder.mkdir()
+        RedeemXAPI.initialize(this)
         configManager = ConfigManager(this)
         try {
             redeemCodeDB = DatabaseManager.getInstance(this).getRedeemCodeDao()

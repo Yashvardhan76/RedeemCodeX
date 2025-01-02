@@ -30,7 +30,7 @@ class RedeemCommand(
     ): Boolean {
         val placeHolder = CodePlaceHolder(sender, args.toMutableList())
         if (sender !is Player) {
-            config.sendMsg(JMessage.RESTRICTED_TO_PLAYERS, placeHolder)
+            config.sendMsg(JMessage.Command.RESTRICTED_TO_PLAYERS, placeHolder)
             return true
         }
 
@@ -57,7 +57,7 @@ class RedeemCommand(
         }
 
         if (!codeValidation.hasPermission(sender)) {
-            placeHolder.permission = codeValidation.code.permission
+            placeHolder.permission = codeValidation.redeemCode.permission
             config.sendMsg(JMessage.Redeem.NO_PERMISSION, placeHolder)
             return true
         }
@@ -92,13 +92,13 @@ class RedeemCommand(
             }
         }
 
-        val code = codeValidation.code
+        val redeemCode = codeValidation.redeemCode
         if (codeValidation.isCooldown(placeHolder)) {
             config.sendMsg(JMessage.Redeem.ON_COOLDOWN, placeHolder)
             return true
         }
 
-        if (code.rewards.size > getEmptySlotSize(sender) && config.getConfigValue(JConfig.Rewards.DROP) == "false"){
+        if (redeemCode.rewards.size > getEmptySlotSize(sender) && config.getConfigValue(JConfig.Rewards.DROP) == "false"){
             config.sendMsg(JMessage.Redeem.FULL_INVENTORY, placeHolder)
             return true
         }
@@ -106,9 +106,10 @@ class RedeemCommand(
         // MAIN STUFF
 
 
-        code.usedBy[sender.name] = (code.usedBy[sender.name]?.plus(1)) ?: 1
-        codeRepo.setLastRedeemedTime(code, sender.name)
-        val success = codeRepo.upsertCode(code)
+        redeemCode.usedBy[sender.name] = (redeemCode.usedBy[sender.name]?.plus(1)) ?: 1
+        redeemCode.lastRedeemed[sender.name] = JService.getCurrentTime()
+
+        val success = codeRepo.upsertCode(redeemCode)
         if (!success) {
             config.sendMsg(JMessage.Redeem.FAILED, placeHolder)
             return false
@@ -116,19 +117,19 @@ class RedeemCommand(
 
         //Execute Command
         val console = plugin.server.consoleSender
-        code.commands.forEach {
-            val cmd = JService.applyPlaceholders(it, CodePlaceHolder.applyByRedeemCode(code, placeHolder.sender)){
+        redeemCode.commands.forEach {
+            val cmd = JService.applyColors( JService.applyPlaceholders(it, CodePlaceHolder.applyByRedeemCode(redeemCode, placeHolder.sender)){
                 plugin.server.pluginManager.isPluginEnabled("PlaceholderAPI")
-            }
+            })
             //set using placeholder api
             plugin.server.dispatchCommand(console, cmd)
         }
 
         //Received Messages
-        config.sendTemplateMsg(code.template, placeHolder)
+        config.sendTemplateMsg(redeemCode.template, placeHolder)
 
         //Received Rewards
-        code.rewards.forEach{item ->
+        redeemCode.rewards.forEach{ item ->
             val remaining = sender.inventory.addItem(item)
             if (remaining.isEmpty()) return@forEach
             if(config.getConfigValue(JConfig.Rewards.SOUND) == "true")
