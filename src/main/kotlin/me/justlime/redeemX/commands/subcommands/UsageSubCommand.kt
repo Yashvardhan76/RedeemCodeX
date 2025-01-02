@@ -1,32 +1,32 @@
 package me.justlime.redeemX.commands.subcommands
 
 import me.justlime.redeemX.RedeemX
+import me.justlime.redeemX.commands.JSubCommand
 import me.justlime.redeemX.data.repository.ConfigRepository
 import me.justlime.redeemX.data.repository.RedeemCodeRepository
 import me.justlime.redeemX.enums.JMessage
 import me.justlime.redeemX.enums.JPermission
-import me.justlime.redeemX.enums.JSubCommand
 import me.justlime.redeemX.enums.JTab
 import me.justlime.redeemX.models.CodePlaceHolder
 import me.justlime.redeemX.utilities.JService
 import org.bukkit.command.CommandSender
 
 class UsageSubCommand(plugin: RedeemX) : JSubCommand {
+    lateinit var placeHolder: CodePlaceHolder
     override var jList: List<String> = emptyList()
     override val permission: String = JPermission.Admin.USAGE
     val config = ConfigRepository(plugin)
     private val codeRepo = RedeemCodeRepository(plugin)
-    lateinit var placeHolder: CodePlaceHolder
 
     override fun execute(sender: CommandSender, args: MutableList<String>): Boolean {
         placeHolder = CodePlaceHolder(sender, args)
         if (!hasPermission(sender)) {
-            config.sendMsg(JMessage.Command.NO_PERMISSION, placeHolder)
+            sendMessage(JMessage.Command.NO_PERMISSION)
             return false
         }
 
         if (args.size < 3) {
-            config.sendMsg(JMessage.Command.UNKNOWN_COMMAND, CodePlaceHolder(sender))
+            sendMessage(JMessage.Command.UNKNOWN_COMMAND)
             return false
         }
         val type = args[1]
@@ -41,7 +41,7 @@ class UsageSubCommand(plugin: RedeemX) : JSubCommand {
             JTab.Type.CODE -> {
                 val redeemCode = codeRepo.getCode(args[2])
                 if (redeemCode == null) {
-                    config.sendMsg(JMessage.Code.NOT_FOUND, placeHolder)
+                    sendMessage(JMessage.Code.NOT_FOUND)
                     return false
                 }
                 placeHolder = CodePlaceHolder.applyByRedeemCode(redeemCode, sender)
@@ -56,13 +56,13 @@ class UsageSubCommand(plugin: RedeemX) : JSubCommand {
                 if (placeHolder.permission == "") placeHolder.permission = JService.applyColors(config.getMessage(JMessage.Code.Placeholder.DISABLED,
                     placeHolder))
 
-                config.sendMsg(JMessage.Code.Usages.USAGE, placeHolder)
+                sendMessage(JMessage.Code.Usages.USAGE)
             }
 
             JTab.Type.TEMPLATE -> {
                 val template = config.getTemplate(args[2])
                 if (template == null) {
-                    config.sendMsg(JMessage.Template.NOT_FOUND, placeHolder)
+                    sendMessage(JMessage.Template.NOT_FOUND)
                     return false
                 }
                 placeHolder = CodePlaceHolder.applyByTemplate(template, sender)
@@ -71,15 +71,21 @@ class UsageSubCommand(plugin: RedeemX) : JSubCommand {
                 if (placeHolder.permission == "") placeHolder.permission = JService.applyColors(config.getMessage(JMessage.Code.Placeholder.DISABLED,
                     placeHolder))
 
-                config.sendMsg(JMessage.Template.USAGE, placeHolder)
+                sendMessage(JMessage.Template.USAGE)
             }
 
             else -> {
-                config.sendMsg(JMessage.Template.USAGE, placeHolder)
+                sendMessage(JMessage.Template.USAGE)
                 return false
             }
         }
 
+        return true
+    }
+
+    override fun sendMessage(key: String): Boolean {
+        placeHolder.sentMessage = config.getMessage(key, placeHolder)
+        config.sendMsg(key, placeHolder)
         return true
     }
 

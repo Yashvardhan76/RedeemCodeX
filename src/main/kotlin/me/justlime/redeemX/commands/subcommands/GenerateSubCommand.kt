@@ -1,12 +1,12 @@
 package me.justlime.redeemX.commands.subcommands
 
 import me.justlime.redeemX.RedeemX
+import me.justlime.redeemX.commands.JSubCommand
 import me.justlime.redeemX.data.repository.ConfigRepository
 import me.justlime.redeemX.data.repository.RedeemCodeRepository
 import me.justlime.redeemX.enums.JConfig
 import me.justlime.redeemX.enums.JMessage
 import me.justlime.redeemX.enums.JPermission
-import me.justlime.redeemX.enums.JSubCommand
 import me.justlime.redeemX.enums.JTab
 import me.justlime.redeemX.models.CodePlaceHolder
 import me.justlime.redeemX.models.RedeemCode
@@ -21,19 +21,20 @@ class GenerateSubCommand(private val plugin: RedeemX) : JSubCommand {
     override var jList: List<String> = generatedCodesList
     override val permission: String = JPermission.Admin.GEN
     lateinit var sender: CommandSender
+    lateinit var placeHolder: CodePlaceHolder
     private var isDefaultLoaded = false
     private var usingDefault = false
 
     override fun execute(sender: CommandSender, args: MutableList<String>): Boolean {
         this.sender = sender
-        val placeHolder = CodePlaceHolder(sender, args)
+        placeHolder = CodePlaceHolder(sender, args)
         // Validate minimum arguments
         if (!hasPermission(sender)) {
-            config.sendMsg(JMessage.Command.NO_PERMISSION, placeHolder)
+            sendMessage(JMessage.Command.NO_PERMISSION)
             return true
         }
         if (args.size < 3) {
-            config.sendMsg(JMessage.Command.UNKNOWN_COMMAND, placeHolder)
+            sendMessage(JMessage.Command.UNKNOWN_COMMAND)
             return false
         }
 
@@ -45,15 +46,15 @@ class GenerateSubCommand(private val plugin: RedeemX) : JSubCommand {
             val codes = mutableListOf<RedeemCode>()
             for (index in 1..amount) {
                 if (digit != null) {
-                    handleNumericGeneration(digit, args.getOrNull(3) ?: "DEFAULT", placeHolder)?.let { codes.add(it) } ?: break
+                    handleNumericGeneration(digit, args.getOrNull(3) ?: "DEFAULT")?.let { codes.add(it) } ?: break
                 } else {
-                    handleCodeCreation(args[2], args.getOrNull(3) ?: "DEFAULT", placeHolder)?.let { codes.add(it) } ?: return true
+                    handleCodeCreation(args[2], args.getOrNull(3) ?: "DEFAULT")?.let { codes.add(it) } ?: return true
                 }
             }
-            if (isDefaultLoaded) config.sendMsg(JMessage.Code.Generate.MISSING, placeHolder)
+            if (isDefaultLoaded) sendMessage(JMessage.Code.Generate.MISSING)
             if (codes.size == 1) {
-                upsertRedeemCode(codes[0], placeHolder)
-            } else upsertRedeemCodes(codes, placeHolder)
+                upsertRedeemCode(codes[0])
+            } else upsertRedeemCodes(codes)
 
 //            CommandManager(plugin).tabCompleterList.fetched()
 
@@ -63,27 +64,29 @@ class GenerateSubCommand(private val plugin: RedeemX) : JSubCommand {
 
             return true
         }
-        if (args[1] == JTab.Type.CODE && amount < 1) config.sendMsg(JMessage.Code.Generate.INVALID_AMOUNT, placeHolder)
+        if (args[1] == JTab.Type.CODE && amount < 1) sendMessage(JMessage.Code.Generate.INVALID_AMOUNT)
         if (type == JTab.Type.TEMPLATE) {
-            generateTemplate(args[2].uppercase(), placeHolder)
+            generateTemplate(args[2].uppercase())
 //            CommandManager(plugin).tabCompleterList.fetched()
-            if (isDefaultLoaded) config.sendMsg(JMessage.Code.Generate.MISSING, placeHolder)
+            if (isDefaultLoaded) sendMessage(JMessage.Code.Generate.MISSING)
             // Reset
             isDefaultLoaded = false
 
             return true
         }
-        config.sendMsg(JMessage.Command.UNKNOWN_COMMAND, placeHolder)
+        sendMessage(JMessage.Command.UNKNOWN_COMMAND)
         return false
     }
 
-    override fun tabCompleter(sender: CommandSender, args: MutableList<String>): MutableList<String>? {
+    override fun tabCompleter(sender: CommandSender, args: MutableList<String>): MutableList<String> {
         val cachedTemplate = config.getAllTemplates().map { it.name }
         val completions = mutableListOf<String>()
 
         if (!hasPermission(sender)) return mutableListOf()
         when (args.size) {
-            2 -> { completions.addAll(mutableListOf(JTab.Type.CODE, JTab.Type.TEMPLATE)) }
+            2 -> {
+                completions.addAll(mutableListOf(JTab.Type.CODE, JTab.Type.TEMPLATE))
+            }
 
             3 -> {
                 if (args[1] == JTab.Type.CODE) completions.addAll(mutableListOf(JTab.Generate.CUSTOM, JTab.Generate.DIGIT))
@@ -98,30 +101,35 @@ class GenerateSubCommand(private val plugin: RedeemX) : JSubCommand {
                 if (args[1] == JTab.Type.CODE && args[2].toIntOrNull() != null) completions.addAll(mutableListOf(JTab.Generate.AMOUNT))
             }
         }
-        return completions.filter {
-            it.contains(args.lastOrNull() ?: "", ignoreCase = true)
-        }.sortedBy { it.lowercase() }.toMutableList()
+        return completions
     }
 
-    private fun generateTemplate(templateName: String, placeHolder: CodePlaceHolder) {
+    override fun sendMessage(key: String): Boolean {
+        placeHolder.sentMessage = config.getMessage(key, placeHolder)
+        config.sendMsg(key, placeHolder)
+        return true
+    }
+
+    private fun generateTemplate(templateName: String): Boolean {
         placeHolder.template = templateName
-        if (config.getTemplate(templateName) != null) return config.sendMsg(JMessage.Template.Generate.ALREADY_EXIST, placeHolder)
+        if (config.getTemplate(templateName) != null) return !sendMessage(JMessage.Template.Generate.ALREADY_EXIST)
         val template = config.loadDefaultTemplateValues(templateName)
         template.defaultSync = true
         config.createTemplate(template)
-        config.sendMsg(JMessage.Template.Generate.SUCCESS, placeHolder)
+        sendMessage(JMessage.Template.Generate.SUCCESS)
+        return true
     }
 
-    private fun handleNumericGeneration(codeLength: Int, templateName: String, placeHolder: CodePlaceHolder): RedeemCode? {
+    private fun handleNumericGeneration(codeLength: Int, templateName: String): RedeemCode? {
         placeHolder.template = templateName
         val (minLength, maxLength) = config.getCodeLengthRange(placeHolder)
         if (codeLength !in minLength..maxLength) {
-            config.sendMsg(JMessage.Code.Generate.INVALID_RANGE, placeHolder)
+            sendMessage(JMessage.Code.Generate.INVALID_RANGE)
             return null
         }
         val uniqueCode = generateCode(codeLength)
         if (uniqueCode == null) {
-            config.sendMsg(JMessage.Code.Generate.INVALID_LENGTH, placeHolder)
+            sendMessage(JMessage.Code.Generate.INVALID_LENGTH)
             return null
         }
         placeHolder.code = uniqueCode
@@ -129,12 +137,12 @@ class GenerateSubCommand(private val plugin: RedeemX) : JSubCommand {
         return createRedeemCode(uniqueCode, template)
     }
 
-    private fun handleCodeCreation(code: String, templateName: String, placeHolder: CodePlaceHolder): RedeemCode? {
+    private fun handleCodeCreation(code: String, templateName: String): RedeemCode? {
         placeHolder.template = templateName
         placeHolder.code = code.uppercase()
 
         if (codeRepo.getCode(code.uppercase()) != null) {
-            config.sendMsg(JMessage.Code.Generate.ALREADY_EXIST, placeHolder)
+            sendMessage(JMessage.Code.Generate.ALREADY_EXIST)
             return null
         }
 
@@ -142,7 +150,6 @@ class GenerateSubCommand(private val plugin: RedeemX) : JSubCommand {
         val redeemCode = createRedeemCode(code.uppercase(), template)
         return redeemCode
     }
-
 
     private fun createRedeemCode(code: String, redeemTemplate: RedeemTemplate): RedeemCode = RedeemCode(
         code = code.uppercase(),
@@ -164,38 +171,38 @@ class GenerateSubCommand(private val plugin: RedeemX) : JSubCommand {
         rewards = mutableListOf()
     )
 
-    private fun upsertRedeemCode(redeemCode: RedeemCode, placeHolder: CodePlaceHolder) {
+    private fun upsertRedeemCode(redeemCode: RedeemCode) {
         try {
             val success = codeRepo.upsertCode(redeemCode)
             if (success) {
                 placeHolder.code = redeemCode.code
-                config.sendMsg(JMessage.Code.Generate.SUCCESS, placeHolder)
+                sendMessage(JMessage.Code.Generate.SUCCESS)
 //                CommandManager(plugin).tabCompleterList.fetched()
                 generatedCodesList.add(redeemCode.code)
             } else {
-                config.sendMsg(JMessage.Code.Generate.FAILED, placeHolder)
+                sendMessage(JMessage.Code.Generate.FAILED)
             }
         } catch (e: Exception) {
-            config.sendMsg(JMessage.Code.Generate.FAILED, placeHolder)
+            sendMessage(JMessage.Code.Generate.FAILED)
             e.printStackTrace()
         }
     }
 
-    private fun upsertRedeemCodes(redeemCodes: List<RedeemCode>, placeHolder: CodePlaceHolder) {
+    private fun upsertRedeemCodes(redeemCodes: List<RedeemCode>) {
         val displayAmount = config.getConfigValue(JConfig.Code.DISPLAY_AMOUNT).toIntOrNull() ?: 40
         try {
             val success = codeRepo.upsertCodes(redeemCodes)
             if (success) {
                 placeHolder.code = if (redeemCodes.size <= displayAmount) redeemCodes.joinToString(" ") { it.code }
                 else redeemCodes.subList(0, displayAmount + 1).joinToString(" ") { it.code }.plus("...")
-                config.sendMsg(JMessage.Code.Generate.SUCCESS, placeHolder)
+                sendMessage(JMessage.Code.Generate.SUCCESS)
 //                CommandManager(plugin).tabCompleterList.fetched()
                 generatedCodesList.addAll(redeemCodes.map { it.code })
             } else {
-                config.sendMsg(JMessage.Code.Generate.FAILED, placeHolder)
+                sendMessage(JMessage.Code.Generate.FAILED)
             }
         } catch (e: Exception) {
-            config.sendMsg(JMessage.Code.Generate.FAILED, placeHolder)
+            sendMessage(JMessage.Code.Generate.FAILED)
             e.printStackTrace()
         }
     }

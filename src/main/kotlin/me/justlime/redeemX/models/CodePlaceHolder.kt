@@ -10,6 +10,7 @@ data class CodePlaceHolder(
     var sentMessage:String = "",
 
     var code: String = "none",
+    var totalCodes: Int = 1,
     var template: String = "none",
     var templateLocked: String = "none",
     var command: String = "none",

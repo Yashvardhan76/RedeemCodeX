@@ -1,12 +1,12 @@
 package me.justlime.redeemX.commands.subcommands
 
 import me.justlime.redeemX.RedeemX
+import me.justlime.redeemX.commands.JSubCommand
 import me.justlime.redeemX.data.repository.ConfigRepository
 import me.justlime.redeemX.data.repository.RedeemCodeRepository
 import me.justlime.redeemX.enums.JConfig
 import me.justlime.redeemX.enums.JMessage
 import me.justlime.redeemX.enums.JPermission
-import me.justlime.redeemX.enums.JSubCommand
 import me.justlime.redeemX.enums.JTab
 import me.justlime.redeemX.models.CodePlaceHolder
 import me.justlime.redeemX.utilities.JService
@@ -14,14 +14,20 @@ import org.bukkit.Sound
 import org.bukkit.command.CommandSender
 import org.bukkit.entity.Player
 
+//rcx preview code <code> [command|reward|message]
+//rcx preview template <template> [command|reward|message]
 class PreviewSubCommand(val plugin: RedeemX) : JSubCommand {
     override var jList: List<String> = emptyList()
     override val permission: String = JPermission.Admin.PREVIEW
-    val config = ConfigRepository(plugin)
-    val codeRepo = RedeemCodeRepository(plugin)
     lateinit var placeHolder: CodePlaceHolder
+    private val config = ConfigRepository(plugin)
+    private val codeRepo = RedeemCodeRepository(plugin)
 
-    private fun sendMessage(key: String): Boolean = config.sendMsg(key, placeHolder) == Unit
+    override fun sendMessage(key: String): Boolean {
+        placeHolder.sentMessage = config.getMessage(key, placeHolder)
+        config.sendMsg(key, placeHolder)
+        return true
+    }
 
     override fun execute(sender: CommandSender, args: MutableList<String>): Boolean {
         if (sender !is Player) return !sendMessage(JMessage.Command.RESTRICTED_TO_PLAYERS)
@@ -48,14 +54,15 @@ class PreviewSubCommand(val plugin: RedeemX) : JSubCommand {
                             plugin.server.pluginManager.isPluginEnabled("PlaceholderAPI")
                         }))
                     }
-                    if (redeemCode.rewards.size > getEmptySlotSize(sender) && config.getConfigValue(JConfig.Rewards.DROP) == "false"){
+                    if (redeemCode.rewards.size > getEmptySlotSize(sender) && config.getConfigValue(JConfig.Rewards.DROP) == "false") {
                         config.sendMsg(JMessage.Redeem.FULL_INVENTORY, placeHolder)
                         return true
-                    } else redeemCode.rewards.forEach{ item ->
+                    } else redeemCode.rewards.forEach { item ->
                         val remaining = sender.inventory.addItem(item)
                         if (remaining.isEmpty()) return@forEach
-                        if(config.getConfigValue(JConfig.Rewards.SOUND) == "true")
-                            sender.playSound(sender.location, Sound.ENTITY_ITEM_PICKUP, 1f, 1f)
+                        if (config.getConfigValue(JConfig.Rewards.SOUND) == "true") sender.playSound(
+                            sender.location, Sound.ENTITY_ITEM_PICKUP, 1f, 1f
+                        )
 
                         // If there are remaining items (inventory was full), drop them
                         remaining.values.forEach { droppedItem ->
@@ -122,10 +129,8 @@ class PreviewSubCommand(val plugin: RedeemX) : JSubCommand {
         }
     }
 
-}
-private fun getEmptySlotSize(sender: Player): Int{
-    return sender.inventory.filter { it == null }.size
+    private fun getEmptySlotSize(sender: Player): Int {
+        return sender.inventory.filter { it == null }.size
+    }
 }
 
-//rcx preview code <code> [command|reward|message]
-//rcx preview template <template> [command|reward|message]

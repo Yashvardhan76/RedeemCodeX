@@ -1,11 +1,11 @@
 package me.justlime.redeemX.commands.subcommands
 
 import me.justlime.redeemX.RedeemX
+import me.justlime.redeemX.commands.JSubCommand
 import me.justlime.redeemX.data.repository.ConfigRepository
 import me.justlime.redeemX.data.repository.RedeemCodeRepository
 import me.justlime.redeemX.enums.JMessage
 import me.justlime.redeemX.enums.JPermission
-import me.justlime.redeemX.enums.JSubCommand
 import me.justlime.redeemX.enums.JTab
 import me.justlime.redeemX.enums.JTemplate
 import me.justlime.redeemX.gui.EditMessages
@@ -17,6 +17,11 @@ import me.justlime.redeemX.models.RedeemTemplate
 import me.justlime.redeemX.utilities.JService
 import org.bukkit.command.CommandSender
 import org.bukkit.entity.Player
+
+//rcx modify code <code> <toggle-property> [codes]
+//rcx modify code <code> <property> <value> ([codes] //Except SetCommand, AddCommand, SetMessage, AddMessage)
+//rcx modify template <template> <toggle-property> [codes]
+//rcx modify template <template> <property> <value> ([codes] //Except SetCommand, AddCommand, SetMessage, AddMessage)
 
 class ModifySubCommand(private val plugin: RedeemX) : JSubCommand {
     private val config = ConfigRepository(plugin)
@@ -132,6 +137,13 @@ class ModifySubCommand(private val plugin: RedeemX) : JSubCommand {
         return completions
     }
 
+    override fun sendMessage(key: String): Boolean {
+        if (placeHolder.sentMessage.isBlank())placeHolder.sentMessage = config.getMessage(key, placeHolder)
+        else placeHolder.sentMessage = "${placeHolder.sentMessage}\n ${config.getMessage(key, placeHolder)}"
+        config.sendMsg(key, placeHolder)
+        return true
+    }
+
     private fun codeModification(sender: CommandSender, args: MutableList<String>): Boolean {
         val code = args[2].uppercase()
         val redeemCode = codeRepo.getCode(code) ?: return !sendMessage(JMessage.Code.NOT_FOUND)
@@ -181,7 +193,7 @@ class ModifySubCommand(private val plugin: RedeemX) : JSubCommand {
         val template = args[2].uppercase()
         val redeemTemplate = config.getTemplate(template) ?: return sendMessage(JMessage.Template.NOT_FOUND)
 
-        placeHolder = CodePlaceHolder.applyByTemplate(redeemTemplate, sender)
+        placeHolder = CodePlaceHolder.applyByTemplate(redeemTemplate, sender).also { it.property = args[3] }
         jList = listOf(template)
         val options = mutableListOf(
             JTab.Modify.ENABLED,
@@ -191,7 +203,6 @@ class ModifySubCommand(private val plugin: RedeemX) : JSubCommand {
             JTab.Modify.LIST_COMMAND,
         )
         val optionsWithValue = mutableListOf(
-            JTab.Modify.SET_TEMPLATE,
             JTab.Modify.SET_DURATION,
             JTab.Modify.ADD_DURATION,
             JTab.Modify.REMOVE_DURATION,
@@ -207,7 +218,6 @@ class ModifySubCommand(private val plugin: RedeemX) : JSubCommand {
             JTab.Modify.REMOVE_COMMAND,
         )
 
-        if (args.size < 4) return !sendMessage(JMessage.Command.UNKNOWN_COMMAND)
         if (placeHolder.property in optionsWithValue && args.size < 5) return sendMessage(JMessage.Template.Modify.INVALID_VALUE)
         if (placeHolder.property in optionsWithValues && args.size < 5) return sendMessage(JMessage.Template.Modify.INVALID_VALUE)
 
@@ -232,6 +242,7 @@ class ModifySubCommand(private val plugin: RedeemX) : JSubCommand {
 
     private fun modify(redeemTemplate: RedeemTemplate, property: String): Boolean {
         return when (property) {
+            JTab.Modify.SYNC -> upsertTemplate(redeemTemplate)
             JTab.Modify.ENABLED -> toggleEnabledStatus(redeemTemplate)
             JTab.Modify.SET_PERMISSION -> setPermission(redeemTemplate)
             JTab.Modify.REQUIRED_PERMISSION -> setPermission(redeemTemplate)
@@ -288,7 +299,8 @@ class ModifySubCommand(private val plugin: RedeemX) : JSubCommand {
 
             JTab.Modify.ADD_COMMAND -> addCommand(redeemCode, value.drop(0).joinToString(" "))
             JTab.Modify.REMOVE_COMMAND -> removeCommand(
-                redeemCode, value[0].toIntOrNull() ?: return !sendMessage(JMessage.Code.Modify.INVALID_ID)
+                redeemCode, value[0].toIntOrNull() ?: return if (value[0] == "*") removeAllCommand(redeemCode)
+                else !sendMessage(JMessage.Code.Modify.INVALID_ID)
             )
 
             else -> false
@@ -303,17 +315,12 @@ class ModifySubCommand(private val plugin: RedeemX) : JSubCommand {
 
             JTab.Modify.ADD_COMMAND -> addCommand(redeemTemplate, value.drop(0).joinToString(" "))
             JTab.Modify.REMOVE_COMMAND -> removeCommand(
-                redeemTemplate, value[0].toIntOrNull() ?: return !sendMessage(JMessage.Code.Modify.INVALID_ID)
+                redeemTemplate, value[0].toIntOrNull() ?: return if (value[0] == "*") removeAllCommand(redeemTemplate)
+                else return !sendMessage(JMessage.Code.Modify.INVALID_ID)
             )
 
             else -> false
         }
-    }
-
-    private fun sendMessage(key: String): Boolean {
-        placeHolder.sentMessage = config.getMessage(key, placeHolder)
-        config.sendMsg(key, placeHolder)
-        return true
     }
 
     private fun upsertCode(redeemCode: RedeemCode): Boolean {
@@ -330,7 +337,12 @@ class ModifySubCommand(private val plugin: RedeemX) : JSubCommand {
         val redeemCode: List<RedeemCode> = codeRepo.getCodesByTemplate(template.name, true)
         if (redeemCode.isEmpty()) return false
         val codes: MutableList<String> = mutableListOf()
-        redeemCode.forEach { codes.add(it.code); if (!codeRepo.templateToRedeemCode(it, template)) return false }
+        redeemCode.forEach {
+            codes.add(it.code)
+            if (!codeRepo.templateToRedeemCode(it, template)) return false
+             if(template.permissionRequired) it.permission = it.permission.replace("{code}", it.code.lowercase()) else it.permission = ""
+        }
+        placeHolder.totalCodes = codes.size
         placeHolder.code = codes.joinToString(" ")
 
         codeRepo.upsertCodes(redeemCode)
@@ -339,121 +351,13 @@ class ModifySubCommand(private val plugin: RedeemX) : JSubCommand {
 
     private fun upsertTemplate(template: RedeemTemplate): Boolean {
         val success = config.modifyTemplate(template)
-        if (upsetCodes(template)) config.sendMsg(JMessage.Template.Modify.CODES_MODIFIED, placeHolder)
+        if (upsetCodes(template)) sendMessage(JMessage.Template.Modify.CODES_MODIFIED)
 
-        if (success) {
-            config.sendMsg(JMessage.Template.Modify.SUCCESS, placeHolder)
-            return true
-        } else {
+        if (!success) {
             config.sendMsg(JMessage.Template.Modify.FAILED, placeHolder)
             return false
         }
-    }
-
-    private fun openGUI(redeemCode: RedeemCode, value: String, sender: CommandSender): Boolean {
-        if (sender !is Player) return sendMessage(JMessage.Command.RESTRICTED_TO_PLAYERS)
-        when (value) {
-            JTab.Modify.Edit.REWARD -> {
-                if (redeemCode.sync && config.getTemplate(redeemCode.template)?.syncRewards == true) return sendMessage(JMessage.Code.Modify.SYNC_LOCKED)
-                EditRewards.code(plugin, redeemCode, sender)
-            }
-
-            JTab.Modify.Edit.MESSAGE -> {
-                if (redeemCode.sync && config.getTemplate(redeemCode.template)?.syncMessages == true) return sendMessage(JMessage.Code.Modify.SYNC_LOCKED)
-                EditMessages.code(plugin, redeemCode)
-            }
-
-            JTab.Modify.Edit.SOUND -> {
-                if (redeemCode.sync && config.getTemplate(redeemCode.template)?.syncSound == true) return sendMessage(JMessage.Code.Modify.SYNC_LOCKED)
-                EditSound.code(plugin, redeemCode)
-            }
-        }
-        return upsertCode(redeemCode)
-    }
-
-    private fun openGUI(redeemTemplate: RedeemTemplate, value: String, sender: CommandSender): Boolean {
-        if (sender !is Player) return sendMessage(JMessage.Command.RESTRICTED_TO_PLAYERS)
-        when (value) {
-            JTab.Modify.Edit.REWARD -> {
-                if (redeemTemplate.syncRewards) return sendMessage(JMessage.Template.Modify.SYNC_LOCKED)
-                EditRewards.template(plugin, redeemTemplate, sender)
-            }
-
-            JTab.Modify.Edit.MESSAGE -> {
-                if (redeemTemplate.syncMessages) return sendMessage(JMessage.Template.Modify.SYNC_LOCKED)
-                EditMessages.template(plugin, redeemTemplate)
-            }
-
-            JTab.Modify.Edit.SOUND -> {
-                if (redeemTemplate.syncSound) return sendMessage(JMessage.Template.Modify.SYNC_LOCKED)
-                EditSound.template(plugin, redeemTemplate)
-            }
-        }
-        return upsertTemplate(redeemTemplate)
-    }
-
-    private fun setCommand(redeemCode: RedeemCode, id: Int, command: String): Boolean {
-        if (redeemCode.sync && config.getTemplate(redeemCode.template)?.syncCommands == true) return sendMessage(JMessage.Code.Modify.SYNC_LOCKED)
-        if (command.isEmpty()) return !sendMessage(JMessage.Code.Modify.INVALID_VALUE)
-        if (id >= redeemCode.commands.size) return !sendMessage(JMessage.Code.Modify.INVALID_ID)
-        redeemCode.commands[id] = command
-        placeHolder.command = command
-        placeHolder.commandId = id.toString()
-        sendMessage(JMessage.Code.Modify.SET_COMMAND)
-        return upsertCode(redeemCode)
-    }
-
-    private fun setCommand(redeemTemplate: RedeemTemplate, id: Int, command: String): Boolean {
-        if (command.isBlank()) return config.sendMsg(JMessage.Template.Modify.INVALID_VALUE, placeHolder) != Unit
-        if (id > redeemTemplate.commands.size) return config.sendMsg(JMessage.Template.Modify.INVALID_VALUE, placeHolder) != Unit
-        redeemTemplate.commands[id] = command
-        return upsertTemplate(redeemTemplate)
-    }
-
-    private fun addCommand(redeemCode: RedeemCode, command: String): Boolean {
-        if (redeemCode.sync && config.getTemplate(redeemCode.template)?.syncCommands == true) return sendMessage(JMessage.Code.Modify.SYNC_LOCKED)
-        placeHolder.command = command
-        if (command.isBlank()) return !sendMessage(JMessage.Code.Modify.INVALID_VALUE)
-        redeemCode.commands.add(command)
-        placeHolder.commandId = (redeemCode.commands.size - 1).toString()
-        sendMessage(JMessage.Code.Modify.ADD_COMMAND)
-        return upsertCode(redeemCode)
-    }
-
-    private fun addCommand(redeemTemplate: RedeemTemplate, command: String): Boolean {
-        if (command.isBlank()) return config.sendMsg(JMessage.Template.Modify.INVALID_VALUE, placeHolder) != Unit
-        redeemTemplate.commands.add(command)
-        return upsertTemplate(redeemTemplate)
-    }
-
-    private fun removeCommand(redeemCode: RedeemCode, id: Int): Boolean {
-        if (redeemCode.sync && config.getTemplate(redeemCode.template)?.syncCommands == true) return sendMessage(JMessage.Code.Modify.SYNC_LOCKED)
-        if (redeemCode.commands.isEmpty() || id >= redeemCode.commands.size || id < 0) return !sendMessage(JMessage.Code.Modify.INVALID_ID)
-        placeHolder.commandId = id.toString()
-        placeHolder.command = redeemCode.commands[id]
-        redeemCode.commands.removeAt(id)
-        sendMessage(JMessage.Code.Modify.REMOVE_COMMAND)
-        return upsertCode(redeemCode)
-    }
-
-    private fun removeCommand(redeemTemplate: RedeemTemplate, id: Int): Boolean {
-        if (id > redeemTemplate.commands.size) return config.sendMsg(JMessage.Template.Modify.INVALID_VALUE, placeHolder) != Unit
-        redeemTemplate.commands.removeAt(id)
-        return upsertTemplate(redeemTemplate)
-    }
-
-    private fun setPin(redeemCode: RedeemCode, value: String): Boolean {
-        if (redeemCode.sync && config.getTemplate(redeemCode.template)?.syncPin == true) return sendMessage(JMessage.Code.Modify.SYNC_LOCKED)
-        placeHolder.pin = value
-        redeemCode.pin = value.toIntOrNull() ?: return !sendMessage(JMessage.Code.Modify.INVALID_VALUE)
-        sendMessage(JMessage.Code.Modify.SET_PIN)
-        return upsertCode(redeemCode)
-    }
-
-    private fun setPin(redeemTemplate: RedeemTemplate, value: String): Boolean {
-        redeemTemplate.pin = value.toIntOrNull() ?: return !sendMessage(JMessage.Template.Modify.INVALID_VALUE)
-        sendMessage(JMessage.Code.Modify.SET_PIN)
-        return upsertTemplate(redeemTemplate)
+        return true
     }
 
     private fun setRedemption(redeemCode: RedeemCode, value: String): Boolean {
@@ -465,8 +369,9 @@ class ModifySubCommand(private val plugin: RedeemX) : JSubCommand {
     }
 
     private fun setRedemption(redeemTemplate: RedeemTemplate, value: String): Boolean {
+        placeHolder.redemptionLimit = value
         redeemTemplate.redemption = value.toIntOrNull() ?: return !sendMessage(JMessage.Template.Modify.INVALID_VALUE)
-        sendMessage(JMessage.Code.Modify.SET_REDEMPTION)
+        sendMessage(JMessage.Template.Modify.SET_REDEMPTION)
         return upsertTemplate(redeemTemplate)
     }
 
@@ -479,23 +384,60 @@ class ModifySubCommand(private val plugin: RedeemX) : JSubCommand {
     }
 
     private fun setPlayerLimit(redeemTemplate: RedeemTemplate, value: String): Boolean {
+        placeHolder.playerLimit = value
         redeemTemplate.playerLimit = value.toIntOrNull() ?: return !sendMessage(JMessage.Template.Modify.INVALID_VALUE)
-        sendMessage(JMessage.Code.Modify.SET_PLAYER_LIMIT)
+        sendMessage(JMessage.Template.Modify.SET_PLAYER_LIMIT)
         return upsertTemplate(redeemTemplate)
     }
 
-    private fun toggleEnabledStatus(redeemCode: RedeemCode): Boolean {
-        if (redeemCode.sync && config.getTemplate(redeemCode.template)?.syncEnabledStatus == true) return sendMessage(JMessage.Code.Modify.SYNC_LOCKED)
-        redeemCode.enabledStatus = !redeemCode.enabledStatus
-        placeHolder.status = redeemCode.enabledStatus.toString()
-        sendMessage(JMessage.Code.Modify.ENABLED_STATUS)
+    private fun setPin(redeemCode: RedeemCode, value: String): Boolean {
+        if (redeemCode.sync && config.getTemplate(redeemCode.template)?.syncPin == true) return sendMessage(JMessage.Code.Modify.SYNC_LOCKED)
+        placeHolder.pin = value
+        redeemCode.pin = value.toIntOrNull() ?: return !sendMessage(JMessage.Code.Modify.INVALID_VALUE)
+        sendMessage(JMessage.Code.Modify.SET_PIN)
         return upsertCode(redeemCode)
     }
 
-    private fun toggleEnabledStatus(redeemTemplate: RedeemTemplate): Boolean {
-        redeemTemplate.defaultEnabledStatus = !redeemTemplate.defaultEnabledStatus
-        placeHolder.status = redeemTemplate.defaultEnabledStatus.toString()
-        sendMessage(JMessage.Code.Modify.ENABLED_STATUS)
+    private fun setPin(redeemTemplate: RedeemTemplate, value: String): Boolean {
+        placeHolder.pin = value
+        redeemTemplate.pin = value.toIntOrNull() ?: return !sendMessage(JMessage.Template.Modify.INVALID_VALUE)
+        sendMessage(JMessage.Template.Modify.SET_PIN)
+        return upsertTemplate(redeemTemplate)
+    }
+
+    private fun adjustDuration(redeemCode: RedeemCode, existingDuration: String, duration: String, isAdding: Boolean): Boolean {
+        if (redeemCode.sync && config.getTemplate(redeemCode.template)?.syncDuration == true) return sendMessage(JMessage.Code.Modify.SYNC_LOCKED)
+        if (!JService.isDurationValid(duration)) return sendMessage(JMessage.Code.Modify.INVALID_VALUE)
+        redeemCode.duration = JService.adjustDuration(existingDuration, duration, isAdding)
+        placeHolder.duration = redeemCode.duration
+        sendMessage(JMessage.Code.Modify.SET_DURATION)
+        return upsertCode(redeemCode)
+    }
+
+    private fun adjustDuration(redeemTemplate: RedeemTemplate, existingDuration: String, duration: String, isAdding: Boolean): Boolean {
+        if (!JService.isDurationValid(duration)) return sendMessage(JMessage.Template.Modify.INVALID_VALUE)
+        redeemTemplate.duration = JService.adjustDuration(existingDuration, duration, isAdding)
+        placeHolder.duration = redeemTemplate.duration
+        sendMessage(JMessage.Template.Modify.SET_DURATION)
+        return upsertTemplate(redeemTemplate)
+    }
+
+    private fun setCooldown(redeemCode: RedeemCode, duration: String): Boolean {
+        if (redeemCode.sync && config.getTemplate(redeemCode.template)?.syncCooldown == true) return sendMessage(JMessage.Code.Modify.SYNC_LOCKED)
+        placeHolder.cooldown = duration
+        if (!JService.isDurationValid(duration)) return !sendMessage(JMessage.Code.Modify.INVALID_VALUE)
+        redeemCode.cooldown = duration
+        if (duration.isBlank()) redeemCode.cooldown = "0s"
+        sendMessage(JMessage.Code.Modify.SET_COOLDOWN)
+        return upsertCode(redeemCode)
+    }
+
+    private fun setCooldown(redeemTemplate: RedeemTemplate, duration: String): Boolean {
+        placeHolder.cooldown = duration
+        if (!JService.isDurationValid(duration)) return !sendMessage(JMessage.Template.Modify.INVALID_VALUE)
+        redeemTemplate.cooldown = duration
+        if (duration.isBlank()) redeemTemplate.cooldown = "0s"
+        sendMessage(JMessage.Template.Modify.SET_COOLDOWN)
         return upsertTemplate(redeemTemplate)
     }
 
@@ -549,39 +491,136 @@ class ModifySubCommand(private val plugin: RedeemX) : JSubCommand {
         return upsertTemplate(redeemTemplate)
     }
 
-    private fun adjustDuration(redeemCode: RedeemCode, existingDuration: String, duration: String, isAdding: Boolean): Boolean {
-        if (redeemCode.sync && config.getTemplate(redeemCode.template)?.syncDuration == true) return sendMessage(JMessage.Code.Modify.SYNC_LOCKED)
-        if (!JService.isDurationValid(duration)) return sendMessage(JMessage.Code.Modify.INVALID_VALUE)
-        redeemCode.duration = JService.adjustDuration(existingDuration, duration, isAdding)
-        placeHolder.duration = redeemCode.duration
-        sendMessage(JMessage.Code.Modify.SET_DURATION)
+    private fun setCommand(redeemCode: RedeemCode, id: Int, command: String): Boolean {
+        if (redeemCode.sync && config.getTemplate(redeemCode.template)?.syncCommands == true) return sendMessage(JMessage.Code.Modify.SYNC_LOCKED)
+        placeHolder.command = command
+        placeHolder.commandId = id.toString()
+        if (command.isEmpty()) return !sendMessage(JMessage.Code.Modify.INVALID_VALUE)
+        if (id >= redeemCode.commands.size) return !sendMessage(JMessage.Code.Modify.INVALID_ID)
+        redeemCode.commands[id] = command
+        sendMessage(JMessage.Code.Modify.SET_COMMAND)
         return upsertCode(redeemCode)
     }
 
-    private fun adjustDuration(redeemTemplate: RedeemTemplate, existingDuration: String, duration: String, isAdding: Boolean): Boolean {
-        if (!JService.isDurationValid(duration)) return sendMessage(JMessage.Template.Modify.INVALID_VALUE)
-        redeemTemplate.duration = JService.adjustDuration(existingDuration, duration, isAdding)
-        placeHolder.duration = redeemTemplate.duration
-        sendMessage(JMessage.Template.Modify.SET_DURATION)
+    private fun setCommand(redeemTemplate: RedeemTemplate, id: Int, command: String): Boolean {
+        placeHolder.commandId = id.toString()
+        placeHolder.command = command
+        if (command.isBlank()) return config.sendMsg(JMessage.Template.Modify.INVALID_VALUE, placeHolder) != Unit
+        if (id > redeemTemplate.commands.size) return config.sendMsg(JMessage.Template.Modify.INVALID_VALUE, placeHolder) != Unit
+        redeemTemplate.commands[id] = command
+        sendMessage(JMessage.Template.Modify.SET_COMMAND)
         return upsertTemplate(redeemTemplate)
     }
 
-    private fun setCooldown(redeemCode: RedeemCode, duration: String): Boolean {
-        if (redeemCode.sync && config.getTemplate(redeemCode.template)?.syncCooldown == true) return sendMessage(JMessage.Code.Modify.SYNC_LOCKED)
-        placeHolder.cooldown = duration
-        if (!JService.isDurationValid(duration)) return !sendMessage(JMessage.Code.Modify.INVALID_VALUE)
-        redeemCode.cooldown = duration
-        if (duration.isBlank()) redeemCode.cooldown = "0s"
-        sendMessage(JMessage.Code.Modify.SET_COOLDOWN)
+    private fun addCommand(redeemCode: RedeemCode, command: String): Boolean {
+        if (redeemCode.sync && config.getTemplate(redeemCode.template)?.syncCommands == true) return sendMessage(JMessage.Code.Modify.SYNC_LOCKED)
+        placeHolder.command = command
+        if (command.isBlank()) return !sendMessage(JMessage.Code.Modify.INVALID_VALUE)
+        redeemCode.commands.add(command)
+        placeHolder.commandId = (redeemCode.commands.size - 1).toString()
+        sendMessage(JMessage.Code.Modify.ADD_COMMAND)
         return upsertCode(redeemCode)
     }
 
-    private fun setCooldown(redeemTemplate: RedeemTemplate, duration: String): Boolean {
-        placeHolder.cooldown = duration
-        if (!JService.isDurationValid(duration)) return !sendMessage(JMessage.Template.Modify.INVALID_VALUE)
-        redeemTemplate.cooldown = duration
-        if (duration.isBlank()) redeemTemplate.cooldown = "0s"
-        sendMessage(JMessage.Template.Modify.SET_COOLDOWN)
+    private fun addCommand(redeemTemplate: RedeemTemplate, command: String): Boolean {
+        placeHolder.command = command
+        if (command.isBlank()) return config.sendMsg(JMessage.Template.Modify.INVALID_VALUE, placeHolder) != Unit
+        redeemTemplate.commands.add(command)
+        placeHolder.commandId = (redeemTemplate.commands.size - 1).toString()
+        sendMessage(JMessage.Template.Modify.ADD_COMMAND)
+        return upsertTemplate(redeemTemplate)
+    }
+
+    private fun removeCommand(redeemCode: RedeemCode, id: Int): Boolean {
+        if (redeemCode.sync && config.getTemplate(redeemCode.template)?.syncCommands == true) return sendMessage(JMessage.Code.Modify.SYNC_LOCKED)
+        placeHolder.commandId = id.toString()
+        if (redeemCode.commands.isEmpty() || id >= redeemCode.commands.size || id < 0) return !sendMessage(JMessage.Code.Modify.INVALID_ID)
+        placeHolder.command = redeemCode.commands[id]
+        redeemCode.commands.removeAt(id)
+        sendMessage(JMessage.Code.Modify.REMOVE_COMMAND)
+        return upsertCode(redeemCode)
+    }
+
+    private fun removeCommand(redeemTemplate: RedeemTemplate, id: Int): Boolean {
+        placeHolder.commandId = id.toString()
+        if (redeemTemplate.commands.isEmpty() || id >= redeemTemplate.commands.size || id < 0) return config.sendMsg(
+            JMessage.Template.Modify.INVALID_ID, placeHolder
+        ) != Unit
+        placeHolder.command = redeemTemplate.commands[id]
+        redeemTemplate.commands.removeAt(id)
+        sendMessage(JMessage.Template.Modify.REMOVE_COMMAND)
+        return upsertTemplate(redeemTemplate)
+    }
+
+    private fun removeAllCommand(redeemCode: RedeemCode): Boolean {
+        if (redeemCode.sync && config.getTemplate(redeemCode.template)?.syncCommands == true) return sendMessage(JMessage.Code.Modify.SYNC_LOCKED)
+        redeemCode.commands.clear()
+        placeHolder.command = ""
+        sendMessage(JMessage.Code.Modify.REMOVE_ALL_COMMAND)
+        return upsertCode(redeemCode)
+    }
+
+    private fun removeAllCommand(redeemTemplate: RedeemTemplate): Boolean {
+        redeemTemplate.commands.clear()
+        placeHolder.command = ""
+        sendMessage(JMessage.Template.Modify.REMOVE_ALL_COMMAND)
+        return upsertTemplate(redeemTemplate)
+    }
+
+    private fun toggleEnabledStatus(redeemCode: RedeemCode): Boolean {
+        if (redeemCode.sync && config.getTemplate(redeemCode.template)?.syncEnabledStatus == true) return sendMessage(JMessage.Code.Modify.SYNC_LOCKED)
+        redeemCode.enabledStatus = !redeemCode.enabledStatus
+        placeHolder.status = redeemCode.enabledStatus.toString()
+        sendMessage(JMessage.Code.Modify.ENABLED_STATUS)
+        return upsertCode(redeemCode)
+    }
+
+    private fun toggleEnabledStatus(redeemTemplate: RedeemTemplate): Boolean {
+        redeemTemplate.defaultEnabledStatus = !redeemTemplate.defaultEnabledStatus
+        placeHolder.status = redeemTemplate.defaultEnabledStatus.toString()
+        sendMessage(JMessage.Template.Modify.SET_DEFAULT_ENABLED_STATUS)
+        return upsertTemplate(redeemTemplate)
+    }
+
+    private fun openGUI(redeemCode: RedeemCode, value: String, sender: CommandSender): Boolean {
+        if (sender !is Player) return sendMessage(JMessage.Command.RESTRICTED_TO_PLAYERS)
+        when (value) {
+            JTab.Modify.Edit.REWARD -> {
+                if (redeemCode.sync && config.getTemplate(redeemCode.template)?.syncRewards == true) return sendMessage(JMessage.Code.Modify.SYNC_LOCKED)
+                EditRewards.code(plugin, redeemCode, sender)
+            }
+
+            JTab.Modify.Edit.MESSAGE -> {
+                if (redeemCode.sync && config.getTemplate(redeemCode.template)?.syncMessages == true) return sendMessage(JMessage.Code.Modify.SYNC_LOCKED)
+                EditMessages.code(plugin, redeemCode)
+            }
+
+            JTab.Modify.Edit.SOUND -> {
+                if (redeemCode.sync && config.getTemplate(redeemCode.template)?.syncSound == true) return sendMessage(JMessage.Code.Modify.SYNC_LOCKED)
+                EditSound.code(plugin, redeemCode)
+            }
+        }
+        return upsertCode(redeemCode)
+    }
+
+    private fun openGUI(redeemTemplate: RedeemTemplate, value: String, sender: CommandSender): Boolean {
+        if (sender !is Player) return sendMessage(JMessage.Command.RESTRICTED_TO_PLAYERS)
+        when (value) {
+            JTab.Modify.Edit.REWARD -> {
+                if (redeemTemplate.syncRewards) return sendMessage(JMessage.Template.Modify.SYNC_LOCKED)
+                EditRewards.template(plugin, redeemTemplate, sender)
+            }
+
+            JTab.Modify.Edit.MESSAGE -> {
+                if (redeemTemplate.syncMessages) return sendMessage(JMessage.Template.Modify.SYNC_LOCKED)
+                EditMessages.template(plugin, redeemTemplate)
+            }
+
+            JTab.Modify.Edit.SOUND -> {
+                if (redeemTemplate.syncSound) return sendMessage(JMessage.Template.Modify.SYNC_LOCKED)
+                EditSound.template(plugin, redeemTemplate)
+            }
+        }
         return upsertTemplate(redeemTemplate)
     }
 

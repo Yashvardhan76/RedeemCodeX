@@ -57,7 +57,7 @@ sealed interface JMessage {
             const val SYNC = "code.modify.sync"
             const val SYNC_LOCKED = "code.modify.sync-locked"
             const val ENABLED_STATUS = "code.modify.enabled-status"
-            const val SYNC_STATUS = "code.modify.locked-status"
+            const val SYNC_STATUS = "code.modify.sync-status"
             const val SET_TEMPLATE = "code.modify.set-template"
             const val SET_REDEMPTION = "code.modify.set-redemption"
             const val SET_PLAYER_LIMIT = "code.modify.set-player-limit"
@@ -73,6 +73,7 @@ sealed interface JMessage {
             const val SET_COMMAND = "code.modify.set-command"
             const val ADD_COMMAND = "code.modify.add-command"
             const val REMOVE_COMMAND = "code.modify.remove-command"
+            const val REMOVE_ALL_COMMAND = "code.modify.remove-all-command"
         }
 
         data object Delete : Code {
@@ -137,15 +138,21 @@ sealed interface JMessage {
             const val FAILED = "template.modify.failed"
             const val CODES_MODIFIED = "template.modify.codes-modified"
             const val INVALID_VALUE = "template.modify.invalid-value"
+            const val INVALID_ID = "template.modify.invalid-id"
             const val NOT_FOUND = "template.modify.not-found"
             const val SET_PERMISSION = "template.modify.set-permission"
             const val SET_DURATION = "template.modify.set-duration"
             const val ADD_DURATION = "template.modify.add-duration"
             const val REMOVE_DURATION = "template.modify.remove-duration"
+
             const val SET_COOLDOWN = "template.modify.set-cooldown"
+
             const val SET_COMMAND = "template.modify.set-command"
             const val ADD_COMMAND = "template.modify.add-command"
             const val REMOVE_COMMAND = "template.modify.remove-command"
+            const val REMOVE_ALL_COMMAND = "template.modify.remove-all-command"
+
+
             const val SYNC_LOCKED = "template.modify.sync-locked"
             const val SYNC_STATUS = "template.modify.locked-status"
             const val SET_DEFAULT_ENABLED_STATUS = "template.modify.default-enabled-status"

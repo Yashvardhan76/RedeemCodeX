@@ -118,6 +118,7 @@ object JService {
             "property" to placeholder.property,
 
             "code" to placeholder.code,
+            "total_code" to placeholder.totalCodes.toString(),
             "status" to placeholder.status,
 
             "cooldown" to placeholder.cooldown,

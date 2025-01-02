@@ -1,4 +1,4 @@
-package me.justlime.redeemX.enums
+package me.justlime.redeemX.commands
 
 import org.bukkit.command.CommandSender
 
@@ -14,6 +14,8 @@ interface JSubCommand {
      * @return True if the command executed successfully, otherwise false.
      */
     fun execute(sender: CommandSender, args: MutableList<String>): Boolean
+
+    fun sendMessage(key: String): Boolean
 
     /**
      * Checks if the sender has the required permission.
