@@ -1,6 +1,6 @@
 name: RedeemX
 version: 1.0-EAP
-main: me.justlime.redeemX.RedeemX
+main: me.justlime.redeemcodex.RedeemCodeX
 api-version: 1.13
 softdepend: ["PlaceholderAPI"]
 

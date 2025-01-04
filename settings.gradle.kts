@@ -1,1 +1,1 @@
-rootProject.name = "RedeemX"
+rootProject.name = "RedeemCodeX"

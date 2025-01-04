@@ -34,6 +34,9 @@ dependencies {
     // HikariCP for efficient JDBC connection pooling
     implementation("com.zaxxer:HikariCP:4.0.3")
 
+    //bStats
+    implementation("org.bstats:bstats-bukkit:3.0.0")
+
     // SQLite JDBC Driver
     compileOnly("org.xerial:sqlite-jdbc:3.47.0.0")
 
@@ -66,7 +69,7 @@ tasks.processResources {
 // Task to copy the jar to the server plugins folder
 tasks.register<Copy>("copyToServerPlugins") {
     dependsOn("shadowJar")  // Ensure shadowJar completes before copying
-    from(layout.buildDirectory.dir("libs/RedeemX-${project.version}-all.jar"))  // Use layout.buildDirectory
+    from(layout.buildDirectory.dir("libs/RedeemCodeX-${project.version}-all.jar"))  // Use layout.buildDirectory
     into("E:/Minecraft/servers/Plugin-Maker/plugins")  // Destination folder
 }
 
