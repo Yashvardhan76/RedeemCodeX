@@ -82,13 +82,13 @@ class ConfigRepository(val plugin: RedeemCodeX) {
         return false
     }
 
-    fun modifyTemplate(template: RedeemTemplate): Boolean {
+    fun upsertTemplate(template: RedeemTemplate): Boolean {
         if(getTemplate(template.name) == null) return false
         return config.upsertTemplate(template = template)
     }
 
     fun modifyTemplates(template: List<RedeemTemplate>){
-        template.forEach { modifyTemplate(it) }
+        template.forEach { upsertTemplate(it) }
     }
 
     fun deleteTemplate(name: String): Boolean {

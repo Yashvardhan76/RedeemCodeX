@@ -4,8 +4,7 @@ import org.bukkit.inventory.ItemStack
 import java.sql.Timestamp
 
 data class RedeemCode(
-    val code: String,
-    var enabledStatus: Boolean,
+    val code: String, var enabledStatus: Boolean,
 
     var template: String, //Blank for disabled
     var sync: Boolean,
@@ -21,48 +20,13 @@ data class RedeemCode(
 
     var usedBy: MutableMap<String, Int>,
 
-    var validFrom: Timestamp,
-    var lastRedeemed: MutableMap<String, Timestamp>,
+    var validFrom: Timestamp, var lastRedeemed: MutableMap<String, Timestamp>,
 
     var target: MutableList<String>, //Blank for disabled
     var commands: MutableList<String>, //Empty list for disabled
 
     var rewards: MutableList<ItemStack> = mutableListOf(),
-    var messages: String = "",
-    var sound: String = "",
-
+    var messages: MessageState,
+    var sound: SoundState,
     var modified: Timestamp
-){
-    fun toRedeemTemplate(template: String): RedeemTemplate {
-        return RedeemTemplate(
-            name = template,
-            defaultEnabledStatus = this.enabledStatus,
-            commands = this.commands,
-            duration = this.duration,
-            redemption = this.redemption,
-            playerLimit = this.playerLimit,
-            permissionRequired = this.permission.isNotBlank(),
-            permissionValue = this.permission,
-            pin = this.pin,
-            defaultSync = this.sync,
-            cooldown = this.cooldown,
-            message = mutableListOf(this.messages),
-            sound = this.sound,
-            rewards = this.rewards,
-            target = mutableListOf(),
-            syncEnabledStatus = false,
-            syncLockedStatus = false,
-            syncCommands = true,
-            syncDuration = true,
-            syncCooldown = true,
-            syncPin = true,
-            syncRedemption = true,
-            syncPlayerLimit = true,
-            syncPermission = true,
-            syncMessages = true,
-            syncSound = true,
-            syncRewards = true,
-            syncTarget = true,
-        )
-    }
-}
+)

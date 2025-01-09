@@ -137,8 +137,12 @@ class RedeemCommand(
                 sender.world.dropItem(sender.location, droppedItem)
             }
         }
-        config.sendMsg(JMessage.Redeem.SUCCESS, placeHolder)
+        if(redeemCode.sound.sound != null) redeemCode.sound.playSound(sender)
+        if(redeemCode.messages.text.isNotEmpty()) redeemCode.messages.sendMessage(sender,placeHolder)
+        else config.sendMsg(JMessage.Redeem.SUCCESS, placeHolder)
         return true
+
+
     }
 
     private fun getEmptySlotSize(sender: Player): Int = sender.inventory.filter { it == null }.size

@@ -33,10 +33,13 @@ data class RedeemTemplate(
     var permissionValue: String,
     var syncPermission: Boolean,
 
-    var message: List<String>,
+    var messages: MessageState,
     var syncMessages: Boolean,
 
     var sound: String,
+    var soundVolume: Float,
+    var soundPitch: Float,
+
     var syncSound: Boolean,
 
     var rewards: MutableList<ItemStack>,
@@ -44,28 +47,4 @@ data class RedeemTemplate(
 
     var target: MutableList<String> = mutableListOf(),
     var syncTarget: Boolean,
-    ) {
-    fun toRedeemCode(code: String): RedeemCode {
-        return RedeemCode(
-            code = code,
-            enabledStatus = this.defaultEnabledStatus,
-            template = this.name,
-            sync = this.defaultSync,
-            duration = this.duration,
-            cooldown = this.cooldown,
-            permission = this.permissionValue,
-            pin = this.pin,
-            redemption = this.redemption,
-            playerLimit = this.playerLimit,
-            usedBy = mutableMapOf(),
-            validFrom = java.sql.Timestamp(System.currentTimeMillis()),
-            lastRedeemed = mutableMapOf(),
-            target = this.target,
-            commands = this.commands,
-            messages = this.message.joinToString("\n"),
-            sound = this.sound,
-            rewards = this.rewards,
-            modified = java.sql.Timestamp(System.currentTimeMillis())
-        )
-    }
-}
+    )

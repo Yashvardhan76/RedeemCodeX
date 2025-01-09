@@ -24,6 +24,7 @@ class RewardsHolder(val sender: Player, private val redeemData: RedeemType, row:
     private val inventory = Bukkit.createInventory(this, row * 9, title)
     override fun getInventory(): Inventory = inventory
     override fun loadContent() {
+        InventoryManager.outlineInventory(inventory)
         val redeemCodeSlot = 49
         val redeemCodeItem = ItemStack(Material.NETHER_STAR, 1)
         val itemMeta: ItemMeta? = redeemCodeItem.itemMeta
@@ -46,7 +47,7 @@ class RewardsHolder(val sender: Player, private val redeemData: RedeemType, row:
         val playerInventory = player.inventory
         val upperInventory = event.inventory
         event.isCancelled = true
-        if (event.clickedInventory == upperInventory && event.slot in InventoryManager.outlinedSlots) return
+        if (event.clickedInventory == upperInventory && event.slot in InventoryManager.outlinedSlotsFull) return
         if (clickedInventory === playerInventory) handlePlayerInventoryClick(event, player, upperInventory)
         else if (clickedInventory === upperInventory) handleGuiClick(event, player, upperInventory)
         else return
@@ -54,7 +55,6 @@ class RewardsHolder(val sender: Player, private val redeemData: RedeemType, row:
 
     override fun onOpen(event: InventoryOpenEvent, player: Player) {
         loadContent()
-        InventoryManager.outlineInventory(event.inventory)
         val holder = inventory.holder as RewardsHolder
         player.sendMessage("Loading rewards...")
 
@@ -144,7 +144,7 @@ class RewardsHolder(val sender: Player, private val redeemData: RedeemType, row:
                 val placeHolder = CodePlaceHolder(player, template = redeemTemplate.name)
                 try {
                     redeemTemplate.rewards = items.filterNotNull().toMutableList()
-                    val success = configRepo.modifyTemplate(redeemTemplate)
+                    val success = configRepo.upsertTemplate(redeemTemplate)
                     if (!success) {
                        configRepo.sendMsg(JMessage.Template.Modify.FAILED, placeHolder)
                         return false

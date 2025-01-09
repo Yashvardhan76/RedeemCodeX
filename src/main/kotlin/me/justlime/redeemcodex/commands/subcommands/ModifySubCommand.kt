@@ -9,7 +9,9 @@ import me.justlime.redeemcodex.enums.JPermission
 import me.justlime.redeemcodex.enums.JTab
 import me.justlime.redeemcodex.enums.JTemplate
 import me.justlime.redeemcodex.enums.RedeemType
+import me.justlime.redeemcodex.gui.holders.MessageHolder
 import me.justlime.redeemcodex.gui.holders.RewardsHolder
+import me.justlime.redeemcodex.gui.holders.SoundHolder
 import me.justlime.redeemcodex.models.CodePlaceHolder
 import me.justlime.redeemcodex.models.RedeemCode
 import me.justlime.redeemcodex.models.RedeemTemplate
@@ -357,7 +359,7 @@ class ModifySubCommand(private val plugin: RedeemCodeX) : JSubCommand {
     }
 
     private fun upsertTemplate(template: RedeemTemplate): Boolean {
-        val success = config.modifyTemplate(template)
+        val success = config.upsertTemplate(template)
         if (upsetCodes(template)) sendMessage(JMessage.Template.Modify.CODES_MODIFIED)
 
         if (!success) {
@@ -365,6 +367,52 @@ class ModifySubCommand(private val plugin: RedeemCodeX) : JSubCommand {
             return false
         }
         return true
+    }
+
+    private fun openGUI(redeemCode: RedeemCode, value: String, sender: CommandSender): Boolean {
+        if (sender !is Player) return sendMessage(JMessage.Command.RESTRICTED_TO_PLAYERS)
+        when (value) {
+            JTab.Modify.Edit.REWARD -> {
+                if (redeemCode.sync && config.getTemplate(redeemCode.template)?.syncRewards == true) return sendMessage(JMessage.Code.Modify.SYNC_LOCKED)
+                val rewardsHolder = RewardsHolder(sender, RedeemType.Code(redeemCode), 6, "Rewards GUI")
+                sender.openInventory(rewardsHolder.inventory)
+            }
+
+            JTab.Modify.Edit.MESSAGE -> {
+                if (redeemCode.sync && config.getTemplate(redeemCode.template)?.syncMessages == true) return sendMessage(JMessage.Code.Modify.SYNC_LOCKED)
+                val messageHolder = MessageHolder(plugin, sender, RedeemType.Code(redeemCode), 3, "Message GUI")
+                sender.openInventory(messageHolder.inventory)
+
+            }
+
+            JTab.Modify.Edit.SOUND -> {
+                if (redeemCode.sync && config.getTemplate(redeemCode.template)?.syncSound == true) return sendMessage(JMessage.Code.Modify.SYNC_LOCKED)
+                val soundHolder = SoundHolder(plugin,sender,RedeemType.Code(redeemCode), 6,"Sound GUI")
+                sender.openInventory(soundHolder.inventory)
+            }
+        }
+        return upsertCode(redeemCode)
+    }
+
+    private fun openGUI(redeemTemplate: RedeemTemplate, value: String, sender: CommandSender): Boolean {
+        if (sender !is Player) return sendMessage(JMessage.Command.RESTRICTED_TO_PLAYERS)
+        when (value) {
+            JTab.Modify.Edit.REWARD -> {
+                val rewardsHolder = RewardsHolder(sender, RedeemType.Template(redeemTemplate), 6, "Rewards GUI - ${redeemTemplate.name}")
+                sender.openInventory(rewardsHolder.inventory)
+            }
+
+            JTab.Modify.Edit.MESSAGE -> {
+                val messageHolder = MessageHolder(plugin, sender, RedeemType.Template(redeemTemplate), 3, "Message GUI - ${redeemTemplate.name}")
+                sender.openInventory(messageHolder.inventory)
+            }
+
+            JTab.Modify.Edit.SOUND -> {
+                val soundHolder = SoundHolder(plugin,sender,RedeemType.Template(redeemTemplate), 6,"Sound GUI - $redeemTemplate.name")
+                sender.openInventory(soundHolder.inventory)
+            }
+        }
+        return upsertTemplate(redeemTemplate)
     }
 
     private fun setRedemption(redeemCode: RedeemCode, value: String): Boolean {
@@ -586,45 +634,6 @@ class ModifySubCommand(private val plugin: RedeemCodeX) : JSubCommand {
         redeemTemplate.defaultEnabledStatus = !redeemTemplate.defaultEnabledStatus
         placeHolder.status = redeemTemplate.defaultEnabledStatus.toString()
         sendMessage(JMessage.Template.Modify.SET_DEFAULT_ENABLED_STATUS)
-        return upsertTemplate(redeemTemplate)
-    }
-
-    private fun openGUI(redeemCode: RedeemCode, value: String, sender: CommandSender): Boolean {
-        if (sender !is Player) return sendMessage(JMessage.Command.RESTRICTED_TO_PLAYERS)
-        when (value) {
-            JTab.Modify.Edit.REWARD -> {
-                if (redeemCode.sync && config.getTemplate(redeemCode.template)?.syncRewards == true) return sendMessage(JMessage.Code.Modify.SYNC_LOCKED)
-                val rewardsHolder = RewardsHolder(sender, RedeemType.Code(redeemCode), 6, "Rewards GUI")
-                sender.openInventory(rewardsHolder.inventory)
-            }
-
-            JTab.Modify.Edit.MESSAGE -> {
-                if (redeemCode.sync && config.getTemplate(redeemCode.template)?.syncMessages == true) return sendMessage(JMessage.Code.Modify.SYNC_LOCKED)
-            }
-
-            JTab.Modify.Edit.SOUND -> {
-                if (redeemCode.sync && config.getTemplate(redeemCode.template)?.syncSound == true) return sendMessage(JMessage.Code.Modify.SYNC_LOCKED)
-            }
-        }
-        return upsertCode(redeemCode)
-    }
-
-    private fun openGUI(redeemTemplate: RedeemTemplate, value: String, sender: CommandSender): Boolean {
-        if (sender !is Player) return sendMessage(JMessage.Command.RESTRICTED_TO_PLAYERS)
-        when (value) {
-            JTab.Modify.Edit.REWARD -> {
-                val rewardsHolder = RewardsHolder(sender, RedeemType.Template(redeemTemplate), 6, "Rewards GUI")
-                sender.openInventory(rewardsHolder.inventory)
-            }
-
-            JTab.Modify.Edit.MESSAGE -> {
-                if (redeemTemplate.syncMessages) return sendMessage(JMessage.Template.Modify.SYNC_LOCKED)
-            }
-
-            JTab.Modify.Edit.SOUND -> {
-                if (redeemTemplate.syncSound) return sendMessage(JMessage.Template.Modify.SYNC_LOCKED)
-            }
-        }
         return upsertTemplate(redeemTemplate)
     }
 

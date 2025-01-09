@@ -17,6 +17,7 @@ import java.util.logging.Level
 class RedeemCodeX : JavaPlugin() {
     lateinit var redeemCodeDB: RedeemCodeDaoImpl
     lateinit var configManager: ConfigManager
+    lateinit var listenerManager: ListenerManager
     lateinit var config: ConfigRepository
 
     override fun onEnable() {
@@ -40,7 +41,7 @@ class RedeemCodeX : JavaPlugin() {
 
         config = ConfigRepository(this)
         CommandManager(this)
-        ListenerManager(this)
+        listenerManager = ListenerManager(this)
         //Line
         this.logger.info("\u001B[32mRedeemX Plugin has been enabled!\u001B[0m")
         if (Bukkit.getPluginManager().isPluginEnabled("PlaceholderAPI")) {

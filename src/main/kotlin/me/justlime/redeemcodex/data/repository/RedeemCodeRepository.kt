@@ -4,7 +4,9 @@ import me.justlime.redeemcodex.RedeemCodeX
 import me.justlime.redeemcodex.data.local.RedeemCodeDao
 import me.justlime.redeemcodex.models.RedeemCode
 import me.justlime.redeemcodex.models.RedeemTemplate
+import me.justlime.redeemcodex.models.SoundState
 import me.justlime.redeemcodex.utilities.JService
+import org.bukkit.Sound
 
 /**
  * This repository class is responsible for managing redeem codes from database.
@@ -62,14 +64,16 @@ class RedeemCodeRepository(plugin: RedeemCodeX) {
                 if (template.syncPin) pin = template.pin
                 if (template.syncRedemption) redemption = template.redemption
                 if (template.syncPlayerLimit) playerLimit = template.playerLimit
-                if (template.syncMessages) messages = template.message.joinToString("\n")
-                if (template.syncSound) sound = template.sound
+                if (template.syncMessages) messages = template.messages
+                if (template.syncSound) sound = SoundState(
+                    sound = Sound.valueOf(template.sound.uppercase()), volume = template.soundVolume, pitch = template.soundPitch
+                )
                 if (template.syncRewards) rewards = template.rewards
                 if (template.syncTarget) target = template.target
                 if (template.syncCommands) commands = template.commands
                 if (template.syncLockedStatus) this.sync = template.defaultSync
                 modified = JService.getCurrentTime()
-            }else return false
+            } else return false
         }
         return true
     }

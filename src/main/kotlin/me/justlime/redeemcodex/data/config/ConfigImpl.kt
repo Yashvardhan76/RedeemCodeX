@@ -4,7 +4,9 @@ import me.justlime.redeemcodex.RedeemCodeX
 import me.justlime.redeemcodex.enums.JFiles
 import me.justlime.redeemcodex.enums.JMessage
 import me.justlime.redeemcodex.models.CodePlaceHolder
+import me.justlime.redeemcodex.models.MessageState
 import me.justlime.redeemcodex.models.RedeemTemplate
+import me.justlime.redeemcodex.models.Title
 import me.justlime.redeemcodex.utilities.Converter
 import me.justlime.redeemcodex.utilities.JService
 import net.md_5.bungee.api.ChatMessageType
@@ -126,11 +128,13 @@ class ConfigImpl(private val plugin: RedeemCodeX) : ConfigDao {
             defaultSync = false,
             permissionRequired = false,
             permissionValue = "redeemx.use.${template.lowercase()}.{code}",
-            message = mutableListOf(),
+            messages = MessageState(mutableListOf(), "", Title()),
             sound = "",
+            pin = -1,
+            soundVolume = 1f,
+            soundPitch = 1f,
             rewards = mutableListOf(),
             target = mutableListOf(),
-
             syncEnabledStatus = false,
             syncLockedStatus = false,
             syncTarget = false,
@@ -144,7 +148,8 @@ class ConfigImpl(private val plugin: RedeemCodeX) : ConfigDao {
             syncMessages = true,
             syncSound = true,
             syncRewards = true,
-        )
+
+            )
     }
 
     override fun getTemplate(template: String): RedeemTemplate {
@@ -156,7 +161,6 @@ class ConfigImpl(private val plugin: RedeemCodeX) : ConfigDao {
         )
         return RedeemTemplate(
             name = template,
-
             defaultEnabledStatus = templateSection.getBoolean("enabled", true),
             commands = templateSection.getStringList("commands"),
             duration = templateSection.getString("duration", "0s") ?: "0s",
@@ -167,11 +171,23 @@ class ConfigImpl(private val plugin: RedeemCodeX) : ConfigDao {
             pin = templateSection.getInt("pin", 0),
             defaultSync = templateSection.getBoolean("default-sync", false),
             cooldown = templateSection.getString("cooldown", "0s") ?: "0s",
-            message = templateSection.getStringList("messages"),
-            sound = templateSection.getString("sound") ?: "",
-            target = templateSection.getStringList("target"),
+            messages = MessageState(
+                text = templateSection.getStringList("messages.text"),
+                actionbar = templateSection.getString("messages.actionbar") ?: "",
+                title = Title(
+                    title = templateSection.getString("messages.title") ?: "",
+                    subTitle = templateSection.getString("messages.subtitle") ?: "",
+                    fadeIn = templateSection.getInt("messages.fade-in",1),
+                    stay = templateSection.getInt("messages.stay",2),
+                    fadeOut = templateSection.getInt("messages.fade-out",1)
+                )
+            ),
+            sound = templateSection.getString("sound.name") ?: "",
+            soundVolume = templateSection.getString("sound.volume")?.toFloatOrNull() ?: 1f,
+            soundPitch = templateSection.getString("sound.pitch")?.toFloatOrNull() ?: 1f,
             rewards = templateSection.getString("rewards").let { Converter.deserializeItemStackList(it) } ?: mutableListOf(),
 
+            target = templateSection.getStringList("target"),
             syncEnabledStatus = templateSection.getBoolean("sync.enabled-status", false),
             syncLockedStatus = templateSection.getBoolean("sync.locked-status", false),
             syncTarget = templateSection.getBoolean("sync.target", false),
@@ -208,9 +224,17 @@ class ConfigImpl(private val plugin: RedeemCodeX) : ConfigDao {
             section?.set("permission.value", template.permissionValue)
             section?.set("pin", template.pin)
             section?.set("default-sync", template.defaultSync)
-            section?.set("messages", template.message)
+            section?.set("messages.text", template.messages.text)
+            section?.set("messages.actionbar", template.messages.actionbar)
+            section?.set("messages.title", template.messages.title.title)
+            section?.set("messages.subtitle", template.messages.title.subTitle)
+            section?.set("messages.fade-in", template.messages.title.fadeIn)
+            section?.set("messages.stay", template.messages.title.stay)
+            section?.set("messages.fade-out", template.messages.title.fadeOut)
             section?.set("commands", template.commands)
-            section?.set("sound", template.sound)
+            section?.set("sound.name", template.sound)
+            section?.set("sound.volume", template.soundVolume.toString())
+            section?.set("sound.pitch", template.soundPitch.toString())
             section?.set("rewards", Converter.serializeItemStackList(template.rewards))
 
             section?.set("sync.enabled-status", template.syncEnabledStatus)

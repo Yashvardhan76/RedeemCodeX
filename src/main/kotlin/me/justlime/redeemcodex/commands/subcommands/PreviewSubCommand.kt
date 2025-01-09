@@ -9,6 +9,7 @@ import me.justlime.redeemcodex.enums.JMessage
 import me.justlime.redeemcodex.enums.JPermission
 import me.justlime.redeemcodex.enums.JTab
 import me.justlime.redeemcodex.models.CodePlaceHolder
+import me.justlime.redeemcodex.models.SoundState
 import me.justlime.redeemcodex.utilities.JService
 import org.bukkit.Sound
 import org.bukkit.command.CommandSender
@@ -45,7 +46,7 @@ class PreviewSubCommand(val plugin: RedeemCodeX) : JSubCommand {
                     when (args[3]) {
                         "command" -> placeHolder.sender.sendMessage(placeHolder.command)
                         "reward" -> placeHolder.sender.sendMessage(redeemCode.rewards.toString())
-                        "message" -> placeHolder.sender.sendMessage(redeemCode.messages)
+                        "message" -> redeemCode.messages.sendMessage(sender,placeHolder)
                         else -> return !sendMessage(JMessage.Command.UNKNOWN_COMMAND)
                     }
                 } else {
@@ -68,6 +69,8 @@ class PreviewSubCommand(val plugin: RedeemCodeX) : JSubCommand {
                         remaining.values.forEach { droppedItem ->
                             sender.world.dropItem(sender.location, droppedItem)
                         }
+                        if(redeemCode.sound.sound != null) redeemCode.sound.playSound(sender)
+
                     }
                     config.sendTemplateMsg(redeemCode.template, placeHolder)
                     sendMessage(JMessage.Code.Preview.PREVIEW)
@@ -76,23 +79,24 @@ class PreviewSubCommand(val plugin: RedeemCodeX) : JSubCommand {
             }
 
             JTab.Type.TEMPLATE -> {
-                val template = config.getTemplate(code) ?: return !sendMessage(JMessage.Template.NOT_FOUND)
-                placeHolder = CodePlaceHolder.applyByTemplate(template, sender)
+                val redeemTemplate = config.getTemplate(code) ?: return !sendMessage(JMessage.Template.NOT_FOUND)
+                placeHolder = CodePlaceHolder.applyByTemplate(redeemTemplate, sender)
                 if (args.size > 3) {
                     when (args[3]) {
-                        "command" -> {}
-                        "reward" -> {}
-                        "message" -> {}
+                        "command" -> placeHolder.sender.sendMessage(placeHolder.command)
+                        "reward" -> placeHolder.sender.sendMessage(redeemTemplate.rewards.toString())
+                        "message" -> redeemTemplate.messages.sendMessage(sender,placeHolder)
                         else -> return !sendMessage(JMessage.Command.UNKNOWN_COMMAND)
                     }
                 } else {
-                    template.commands.forEach {
+                    if(redeemTemplate.sound.isNotBlank()) redeemTemplate.let{ SoundState(Sound.valueOf(it.sound),it.soundVolume,it.soundPitch).playSound(sender) }
+                    redeemTemplate.commands.forEach {
                         console.server.dispatchCommand(console, JService.applyColors(JService.applyPlaceholders(it, placeHolder) {
                             plugin.server.pluginManager.isPluginEnabled("PlaceholderAPI")
                         }))
                     }
 
-                    config.sendTemplateMsg(template.name, placeHolder)
+                    config.sendTemplateMsg(redeemTemplate.name, placeHolder)
 
                     sendMessage(JMessage.Code.Preview.PREVIEW)
                     return true

@@ -5,8 +5,12 @@ import com.google.gson.JsonPrimitive
 import com.google.gson.JsonSerializer
 import com.google.gson.reflect.TypeToken
 import me.justlime.redeemcodex.enums.JProperty
+import me.justlime.redeemcodex.models.MessageState
 import me.justlime.redeemcodex.models.RedeemCode
 import me.justlime.redeemcodex.models.RedeemCodeDatabase
+import me.justlime.redeemcodex.models.SoundState
+import me.justlime.redeemcodex.models.Title
+import org.bukkit.Sound
 import org.bukkit.inventory.ItemStack
 import org.bukkit.util.io.BukkitObjectInputStream
 import org.bukkit.util.io.BukkitObjectOutputStream
@@ -44,7 +48,9 @@ object Converter {
             target = safeFromJson(result.getString(JProperty.TARGET.property), listType) ?: mutableListOf(),
             commands = safeFromJson(result.getString(JProperty.COMMANDS.property), listType) ?: mutableListOf(),
             modified = result.getTimestamp(JProperty.MODIFIED.property),
-            rewards = deserializeItemStackList(result.getString(JProperty.REWARDS.property)) ?: mutableListOf()
+            rewards = deserializeItemStackList(result.getString(JProperty.REWARDS.property)) ?: mutableListOf(),
+            sound = deserializeSound(result.getString(JProperty.Sound.property)) ?: SoundState(sound = null, 1f, 1f),
+            messages = deserializeMessage(result.getString(JProperty.Message.property)) ?: MessageState(mutableListOf(), "", Title())
         )
     }
 
@@ -66,8 +72,8 @@ object Converter {
             lastRedeemed = gson.toJson(redeemCode.lastRedeemed),
             cooldown = redeemCode.cooldown,
             rewards = serializeItemStackList(redeemCode.rewards),
-            messages = redeemCode.messages,
-            sound = redeemCode.sound,
+            messages = serializeMessage( redeemCode.messages),
+            sound = serializeSound(redeemCode.sound),
             last_modified = redeemCode.modified
         )
     }
@@ -116,4 +122,47 @@ object Converter {
         }
     }
 
+    private fun serializeSound(item: SoundState): String {
+        val serializedData = mapOf(
+            "sound" to (item.sound?.name ?: ""), "volume" to item.volume.toString(), "pitch" to item.pitch.toString()
+        )
+        return Base64.getEncoder().encodeToString(serializedData.toString().toByteArray(Charsets.UTF_8))
+    }
+
+    private fun deserializeSound(data: String?): SoundState? {
+        if (data.isNullOrEmpty()) return null
+        return try {
+            val decodedString = String(Base64.getDecoder().decode(data), Charsets.UTF_8)
+            val serializedData = decodedString.trim('{', '}').split(", ").associate {
+                val (key, value) = it.split("=")
+                key.trim() to value.trim()
+            }
+            val sound = serializedData["sound"]?.takeIf { it.isNotBlank() }?.let { Sound.valueOf(it) }
+            val volume = serializedData["volume"]?.toFloatOrNull() ?: 1.0f
+            val pitch = serializedData["pitch"]?.toFloatOrNull() ?: 1.0f
+            SoundState(sound, volume, pitch)
+        } catch (e: Exception) {
+            e.printStackTrace()
+            null
+        }
+    }
+    private fun serializeMessage(item: MessageState): String {
+        // Use Gson to serialize the entire object to JSON
+        val serializedJson = gson.toJson(item)
+        // Encode the JSON string to Base64
+        return Base64.getEncoder().encodeToString(serializedJson.toByteArray(Charsets.UTF_8))
+    }
+
+    private fun deserializeMessage(data: String?): MessageState? {
+        if (data.isNullOrEmpty()) return null
+        return try {
+            // Decode Base64 back to JSON string
+            val decodedJson = String(Base64.getDecoder().decode(data), Charsets.UTF_8)
+            // Deserialize JSON string back into a MessageState object
+            gson.fromJson(decodedJson, MessageState::class.java)
+        } catch (e: Exception) {
+            e.printStackTrace()
+            null
+        }
+    }
 }

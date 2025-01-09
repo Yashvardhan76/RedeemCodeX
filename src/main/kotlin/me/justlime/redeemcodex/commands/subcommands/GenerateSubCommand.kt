@@ -11,7 +11,9 @@ import me.justlime.redeemcodex.enums.JTab
 import me.justlime.redeemcodex.models.CodePlaceHolder
 import me.justlime.redeemcodex.models.RedeemCode
 import me.justlime.redeemcodex.models.RedeemTemplate
+import me.justlime.redeemcodex.models.SoundState
 import me.justlime.redeemcodex.utilities.JService
+import org.bukkit.Sound
 import org.bukkit.command.CommandSender
 
 class GenerateSubCommand(private val plugin: RedeemCodeX) : JSubCommand {
@@ -168,7 +170,12 @@ class GenerateSubCommand(private val plugin: RedeemCodeX) : JSubCommand {
         lastRedeemed = mutableMapOf(),
         cooldown = "0s",
         modified = JService.getCurrentTime(),
-        rewards = redeemTemplate.rewards
+        rewards = redeemTemplate.rewards,
+        sound = SoundState(
+            sound = if (redeemTemplate.sound in Sound.entries.map { it.name }) Sound.valueOf(redeemTemplate.sound.uppercase())
+            else null, volume = redeemTemplate.soundVolume, pitch = redeemTemplate.soundPitch
+        ),
+        messages = redeemTemplate.messages,
     )
 
     private fun upsertRedeemCode(redeemCode: RedeemCode) {
