@@ -22,12 +22,20 @@ class MessageHolder(
 ) : InventoryHolder, GUIHandle {
 
     private val inventory = Bukkit.createInventory(this, row * 9, title)
+    private var messageState = MessageState(mutableListOf(), "", Title())
     private val placeholder = when (redeemData) {
-        is RedeemType.Code -> CodePlaceHolder.applyByRedeemCode(redeemData.redeemCode, player)
-        is RedeemType.Template -> CodePlaceHolder.applyByTemplate(redeemData.redeemTemplate, player)
+        is RedeemType.Code -> {
+            messageState = redeemData.redeemCode.messages
+            CodePlaceHolder.applyByRedeemCode(redeemData.redeemCode, player)
+        }
+        is RedeemType.Template -> {
+            messageState = redeemData.redeemTemplate.messages
+            CodePlaceHolder.applyByTemplate(redeemData.redeemTemplate, player)
+        }
     }
-    private val messageState = MessageState(mutableListOf(), "", Title())
     private var inputReceived = false
+    private val listener = plugin.listenerManager.asyncPlayerChatListener
+    private val timeOut: Long = 60*5 //In Seconds
 
     override fun getInventory(): Inventory = inventory
 
@@ -51,10 +59,17 @@ class MessageHolder(
     override fun onClick(event: InventoryClickEvent, clickedInventory: Inventory, player: Player) {
         event.isCancelled = true
         when (event.currentItem?.type) {
-            Material.PAPER -> openInputText(player)
+            Material.PAPER -> {
+                if (!event.isShiftClick) messageState.text.clear()
+                openInputText(player)
+            }
             Material.FEATHER -> openInputActionBar(player)
             Material.BOOK -> openInputTitle(player)
-            Material.NETHER_STAR -> upsertMessage()
+            Material.NETHER_STAR -> {
+                upsertMessage()
+                player.closeInventory()
+                plugin.config.sendMsg("&aMessages Saved",placeholder)
+            }
             else -> return
         }
     }
@@ -83,19 +98,17 @@ class MessageHolder(
     private fun openInputText(player: Player) {
         inputReceived = false
         closeInventoryWithMessage(player, "§eEnter your messages in chat. Type 'done' when you're finished:")
-        plugin.listenerManager.asyncPlayerChatListener.registerCallback(player, InventoryManager.timeOut, onTimeout = {
+        listener.registerCallback(player, this.timeOut*20, onTimeout = {
             handleInputTimeout(player, "§cInput timed out. Returning to menu.")
         }, callback = { message ->
             if (message.equals("done", ignoreCase = true)) {
                 finalizeInput(player, "§aChat messages updated.")
-                inputReceived = true
-                player.openInventory(inventory)
+                listener.unregisterCallback(player)
             } else {
                 val formattedMessage = JService.applyColors(message)
                 messageState.text.add(formattedMessage)
                 player.sendMessage("§aAdded: $formattedMessage")
             }
-
         })
     }
 
@@ -103,7 +116,7 @@ class MessageHolder(
         inputReceived = false
         closeInventoryWithMessage(player, "§eEnter your action bar message:")
 
-        plugin.listenerManager.asyncPlayerChatListener.registerCallback(player, InventoryManager.timeOut, {
+        listener.registerCallback(player,  InventoryManager.timeOut*20, {
             handleInputTimeout(player, "§cAction bar message input timed out.")
         }, callback = { message ->
             messageState.actionbar = JService.applyColors(message)
@@ -115,7 +128,7 @@ class MessageHolder(
         inputReceived = false
         closeInventoryWithMessage(player, "§eEnter your title message (format: title;subtitle;fadeIn;stay;fadeOut):")
 
-        plugin.listenerManager.asyncPlayerChatListener.registerCallback(player, InventoryManager.timeOut, {
+        listener.registerCallback(player, InventoryManager.timeOut*20, {
             handleInputTimeout(player, "§cTitle message input timed out.")
         }, callback = { message ->
             val parts = message.split(";")
@@ -138,9 +151,9 @@ class MessageHolder(
             Title(
                 title = JService.applyColors(parts[0]),
                 subTitle = JService.applyColors(parts[1]),
-                fadeIn = parts[2].toInt(),
-                stay = parts[3].toInt(),
-                fadeOut = parts[4].toInt()
+                fadeIn = parts[2].toIntOrNull() ?: 1,
+                stay = parts[3].toIntOrNull() ?: 2,
+                fadeOut = parts[4].toIntOrNull() ?: 1
             )
         } catch (e: NumberFormatException) {
             null
@@ -184,4 +197,6 @@ class MessageHolder(
             }
         }
     }
+
+
 }

@@ -253,6 +253,7 @@ class SoundHolder(val plugin: RedeemCodeX, val player: Player, private val redee
             plugin.server.scheduler.runTask(plugin, Runnable {
                 currentPage = 0
                 sortMode = SortMode.SEARCH
+                listener.unregisterCallback(player)
                 player.openInventory(inventory)
                 loadContent()
             })

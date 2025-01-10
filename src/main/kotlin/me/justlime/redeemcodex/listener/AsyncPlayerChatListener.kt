@@ -52,6 +52,5 @@ class AsyncPlayerChatListener : Listener {
         event.isCancelled = true // Prevent other plugins from handling this message
         callback(event.message) // Process the input with the callback
 
-        unregisterCallback(player) // Remove the callback after processing
     }
 }

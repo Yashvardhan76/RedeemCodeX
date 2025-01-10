@@ -83,6 +83,7 @@ data class CodePlaceHolder(
             return CodePlaceHolder(
                 sender = sender,
                 code = redeemCode.code,
+                template = redeemCode.template,
                 command = redeemCode.commands.toString().removeSurrounding("{", "}").trim(),
                 duration = redeemCode.duration,
                 status = redeemCode.enabledStatus.toString(),
@@ -94,7 +95,6 @@ data class CodePlaceHolder(
                 usedBy = redeemCode.usedBy.map {
                     "${it.key} = ${it.value}"
                 }.joinToString(", "),
-                template = redeemCode.template,
                 templateLocked = redeemCode.sync.toString(),
                 cooldown = redeemCode.cooldown,
                 minLength = "none",

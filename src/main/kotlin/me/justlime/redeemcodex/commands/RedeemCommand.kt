@@ -27,7 +27,7 @@ class RedeemCommand(
         label: String,
         args: Array<out String>,
     ): Boolean {
-        val placeHolder = CodePlaceHolder(sender, args.toMutableList())
+        var placeHolder = CodePlaceHolder(sender, args.toMutableList())
         if (sender !is Player) {
             config.sendMsg(JMessage.Command.RESTRICTED_TO_PLAYERS, placeHolder)
             return true
@@ -44,6 +44,7 @@ class RedeemCommand(
             config.sendMsg(JMessage.Redeem.INVALID_CODE, placeHolder)
             return true
         }
+        placeHolder = CodePlaceHolder.applyByRedeemCode(codeValidation.redeemCode, sender)
 
         if (codeValidation.isReachedMaximumRedeem(sender)) {
             config.sendMsg(JMessage.Redeem.MAX_REDEMPTIONS, placeHolder)
