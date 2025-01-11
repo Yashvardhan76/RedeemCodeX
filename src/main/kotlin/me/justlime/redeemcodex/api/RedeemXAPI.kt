@@ -1,3 +1,16 @@
+/*
+ *
+ *  RedeemCodeX
+ *  Copyright 2024 JUSTLIME
+ *
+ *  This software is licensed under the Apache License 2.0 with a Commons Clause restriction.
+ *  See the LICENSE file for details.
+ *
+ *  This file handles the core logic for redeeming codes and managing associated data.
+ *
+ */
+
+
 package me.justlime.redeemcodex.api
 
 import me.justlime.redeemcodex.RedeemCodeX
@@ -80,7 +93,9 @@ object RedeemXAPI {
             JTab.Modify.EDIT
         )
         val modify = ModifySubCommand(plugin)
-        val args = if (value.isNotBlank() && value.isNotEmpty() && property in optionsWithValue) mutableListOf(JTab.GeneralActions.Modify.value, JTab.Type.CODE, code, property, value)
+        val args = if (value.isNotBlank() && value.isNotEmpty() && property in optionsWithValue) mutableListOf(
+            JTab.GeneralActions.Modify.value, JTab.Type.CODE, code, property, value
+        )
         else if (property in options) mutableListOf(JTab.GeneralActions.Modify.value, JTab.Type.CODE, code, property)
         else return emptyList()
         modify.execute(sender, args)
@@ -107,7 +122,9 @@ object RedeemXAPI {
             JTab.Modify.EDIT
         )
         val modify = ModifySubCommand(plugin)
-        val args = if (value.isNotBlank() && value.isNotEmpty() && property in optionsWithValue) mutableListOf(JTab.GeneralActions.Modify.value, JTab.Type.TEMPLATE, template, property, value)
+        val args = if (value.isNotBlank() && value.isNotEmpty() && property in optionsWithValue) mutableListOf(
+            JTab.GeneralActions.Modify.value, JTab.Type.TEMPLATE, template, property, value
+        )
         else if (property in options) mutableListOf(JTab.GeneralActions.Modify.value, JTab.Type.TEMPLATE, template, property)
         else return emptyList()
         modify.execute(sender, args)

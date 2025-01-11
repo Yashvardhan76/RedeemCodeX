@@ -1,3 +1,15 @@
+/*
+ *
+ *  RedeemCodeX
+ *  Copyright 2024 JUSTLIME
+ *
+ *  This software is licensed under the Apache License 2.0 with a Commons Clause restriction.
+ *  See the LICENSE file for details.
+ *
+ *  This file handles the core logic for redeeming codes and managing associated data.
+ *
+ */
+
 package me.justlime.redeemcodex.gui.holders
 
 import me.justlime.redeemcodex.RedeemCodeX
@@ -28,6 +40,7 @@ class MessageHolder(
             messageState = redeemData.redeemCode.messages
             CodePlaceHolder.applyByRedeemCode(redeemData.redeemCode, player)
         }
+
         is RedeemType.Template -> {
             messageState = redeemData.redeemTemplate.messages
             CodePlaceHolder.applyByTemplate(redeemData.redeemTemplate, player)
@@ -35,7 +48,7 @@ class MessageHolder(
     }
     private var inputReceived = false
     private val listener = plugin.listenerManager.asyncPlayerChatListener
-    private val timeOut: Long = 60*5 //In Seconds
+    private val timeOut: Long = 60 * 5 //In Seconds
 
     override fun getInventory(): Inventory = inventory
 
@@ -63,13 +76,15 @@ class MessageHolder(
                 if (!event.isShiftClick) messageState.text.clear()
                 openInputText(player)
             }
+
             Material.FEATHER -> openInputActionBar(player)
             Material.BOOK -> openInputTitle(player)
             Material.NETHER_STAR -> {
                 upsertMessage()
                 player.closeInventory()
-                plugin.config.sendMsg("&aMessages Saved",placeholder)
+                plugin.config.sendMsg("&aMessages Saved", placeholder)
             }
+
             else -> return
         }
     }
@@ -98,7 +113,7 @@ class MessageHolder(
     private fun openInputText(player: Player) {
         inputReceived = false
         closeInventoryWithMessage(player, "§eEnter your messages in chat. Type 'done' when you're finished:")
-        listener.registerCallback(player, this.timeOut*20, onTimeout = {
+        listener.registerCallback(player, this.timeOut * 20, onTimeout = {
             handleInputTimeout(player, "§cInput timed out. Returning to menu.")
         }, callback = { message ->
             if (message.equals("done", ignoreCase = true)) {
@@ -116,7 +131,7 @@ class MessageHolder(
         inputReceived = false
         closeInventoryWithMessage(player, "§eEnter your action bar message:")
 
-        listener.registerCallback(player,  InventoryManager.timeOut*20, {
+        listener.registerCallback(player, InventoryManager.timeOut * 20, {
             handleInputTimeout(player, "§cAction bar message input timed out.")
         }, callback = { message ->
             messageState.actionbar = JService.applyColors(message)
@@ -128,7 +143,7 @@ class MessageHolder(
         inputReceived = false
         closeInventoryWithMessage(player, "§eEnter your title message (format: title;subtitle;fadeIn;stay;fadeOut):")
 
-        listener.registerCallback(player, InventoryManager.timeOut*20, {
+        listener.registerCallback(player, InventoryManager.timeOut * 20, {
             handleInputTimeout(player, "§cTitle message input timed out.")
         }, callback = { message ->
             val parts = message.split(";")
@@ -197,6 +212,5 @@ class MessageHolder(
             }
         }
     }
-
 
 }

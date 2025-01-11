@@ -1,3 +1,15 @@
+/*
+ *
+ *  RedeemCodeX
+ *  Copyright 2024 JUSTLIME
+ *
+ *  This software is licensed under the Apache License 2.0 with a Commons Clause restriction.
+ *  See the LICENSE file for details.
+ *
+ *  This file handles the core logic for redeeming codes and managing associated data.
+ *
+ */
+
 package me.justlime.redeemcodex.gui.holders
 
 import me.justlime.redeemcodex.RedeemCodeX
@@ -62,6 +74,7 @@ class RewardsHolder(val sender: Player, private val redeemData: RedeemType, row:
             is RedeemType.Code -> {
                 holder.redeemData.redeemCode.rewards
             }
+
             is RedeemType.Template -> {
                 holder.redeemData.redeemTemplate.rewards
             }
@@ -115,13 +128,12 @@ class RewardsHolder(val sender: Player, private val redeemData: RedeemType, row:
         val player = if (inventory.viewers.first() is Player) holder.inventory.viewers.first() as Player else return false
         player.sendMessage("Saving rewards...")
 
-
         val codeRepo = RedeemCodeRepository(plugin) //Used to update the database
         val configRepo = ConfigRepository(plugin) //Used to send the msg
 
         val items: MutableList<ItemStack?> = holder.inventory.contents.filterIndexed { index, _ -> index in selectedSlots }.toMutableList()
         items.removeIf { it == null || it.type == Material.AIR }
-        when (redeemData){
+        when (redeemData) {
             is RedeemType.Code -> {
                 val redeemCode = (holder.redeemData as RedeemType.Code).redeemCode
                 val placeHolder = CodePlaceHolder(player, code = redeemCode.code)
@@ -139,6 +151,7 @@ class RewardsHolder(val sender: Player, private val redeemData: RedeemType, row:
                     return false
                 }
             }
+
             is RedeemType.Template -> {
                 val redeemTemplate = (holder.redeemData as RedeemType.Template).redeemTemplate
                 val placeHolder = CodePlaceHolder(player, template = redeemTemplate.name)
@@ -146,7 +159,7 @@ class RewardsHolder(val sender: Player, private val redeemData: RedeemType, row:
                     redeemTemplate.rewards = items.filterNotNull().toMutableList()
                     val success = configRepo.upsertTemplate(redeemTemplate)
                     if (!success) {
-                       configRepo.sendMsg(JMessage.Template.Modify.FAILED, placeHolder)
+                        configRepo.sendMsg(JMessage.Template.Modify.FAILED, placeHolder)
                         return false
                     }
                     configRepo.sendMsg(JMessage.Template.Gui.Save.REWARDS, placeHolder)
@@ -158,7 +171,6 @@ class RewardsHolder(val sender: Player, private val redeemData: RedeemType, row:
 
             }
         }
-
 
     }
 
