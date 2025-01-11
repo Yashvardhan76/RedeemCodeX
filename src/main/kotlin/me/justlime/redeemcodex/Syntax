@@ -4,10 +4,10 @@
 /rcx gen code <DIGIT> [TEMPLATE] [AMOUNT]
 /rcx gen template <template>
 
-/rcx modify code <code> <toggle-property> [codes]
-/rcx modify code <code> <property> <value> ([codes] //Except SetCommand, AddCommand, SetMessage, AddMessage)
-/rcx modify template <template> <toggle-property> [codes]
-/rcx modify template <template> <property> <value> ([codes] //Except SetCommand, AddCommand, SetMessage, AddMessage)
+/rcx modify code <code> <toggle-property>
+/rcx modify code <code> <property> <value>
+/rcx modify template <template> <toggle-property>
+/rcx modify template <template> <property> <value>
 
 /rcx delete code <code> [codes]
 /rcx delete code * CONFIRM
