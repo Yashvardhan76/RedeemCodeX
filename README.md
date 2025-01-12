@@ -24,6 +24,7 @@ This plugin provides a comprehensive redeem code system.  It allows for the crea
 ### Features
   * Ease of Modify Bulk Codes via Template
   * Support Placeholder api with Hex Colors
+  * Discord Bot Support
   * GUI Support For Editing Rewards, Messages, Sounds
   * Template-Sync, This allows you to automatically update all generated bulk codes with a single template modification.
   * Optimized for Best performance
