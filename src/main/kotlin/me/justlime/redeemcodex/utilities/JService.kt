@@ -6,7 +6,7 @@
  *  This software is licensed under the Apache License 2.0 with a Commons Clause restriction.
  *  See the LICENSE file for details.
  *
- *  This file handles the core logic for redeeming codes and managing associated data.
+ *
  *
  */
 
@@ -89,11 +89,12 @@ object JService {
     }
 
     fun onCoolDown(cooldown: String, lastRedeemed: MutableMap<String, Timestamp>, player: String): Boolean {
+        if (!isDurationValid(cooldown)) return false
+        if (cooldown == "0s") return false
         val cooldownTimeMillis = parseDurationToSeconds(cooldown) * 1000
         val lastRedeemedTimeMillis = lastRedeemed[player]?.time ?: 0L
-        val cooldownTime = lastRedeemedTimeMillis + cooldownTimeMillis
-        return getCurrentTime().time < cooldownTime //29oct < 28oct + 2d = 30oct (true)
-
+        return getCurrentTime().time < lastRedeemedTimeMillis + cooldownTimeMillis
+        //Example: 29oct < 28oct + 2d = 30oct (true) [29oct - current date]
     }
 
     fun applyColors(message: String): String {

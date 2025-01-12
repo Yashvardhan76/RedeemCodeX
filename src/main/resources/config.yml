@@ -1,5 +1,5 @@
 
-#Lnaguage Selector
+#Language Selector
 lang: "en"
 #[How To Customize Language?]
 #Create copy of messages (File example:- messages_germany etc) and customize it.
@@ -8,7 +8,7 @@ lang: "en"
 
 #Maximum number of attempts for code generation to avoid infinite loops.
 #[What's That?]
-#If you generate all combination of 3-digit code when you try to generate it again
+#If you generate all combinations of 3-digit code when you try to generate it again
 #It can stick in infinite loop because it repeats until it get a unique code to avoid we use maximum-attempts
 max-attempts: 1000
 
@@ -16,24 +16,25 @@ code:
   #When Generating Codes in bulk how much amount of codes you want to see in game chat.
   display-amount: 40
 
-  #The minimum digit of code required to generate, default 3 if not specified
+  #The at least digit of code required to generate, default 3 if not specified
   minimum-digit: 3
 
-  #The maximum digit of code required to generate, default 25 if not specified
+  #The at most digit of code required to generate, default 25 if not specified
   maximum-digit: 25
 
 
 
 redeem-command:
   #Set cooldown for using /redeem
-  cooldown: "0s" #TODO
+  cooldown: "3s"
+
 
 auto-delete:
   #It will only be done when server got restart.
-  expired-codes: true
+  expired-codes: true #TODO
 
   #it will only delete those codes who's both redemption and player limit is reached.
-  redeemed-codes: false
+  redeemed-codes: true
 
 rewards:
   #What to do if inventory full if you set it to false player can't redeem code until there is some space in inventory
@@ -64,11 +65,11 @@ renew:
   #Change permission requirement to false. Not work if Locked
   remove-permission-required: false
 
-#TODO
 logger:
-  generate: true  #Log The Code with created Time. [Recommended] Set it True if You generate Bulk Codes.
-  modify: false #Log The Code with Modified Time
-  delete: true #Log The Code with deleted Time
+  generate: true  #Log The Code And Template with created Time. [Recommended] Set it True if You generate Bulk Codes.
+  modify: true #Log The Code And Template with Modified Time
+  delete: true #Log The Code And Template with deleted Time
+  redeemed: true #Log The Player with Code who Redeemed with redeemed Time
 
 #Don't change it unless you know what you are doing
 database:

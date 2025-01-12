@@ -82,6 +82,11 @@ redeem:
     chat: "&cYour inventory is full! Please make some space before redeeming."
     actionbar: "&cInventory full! Make space to redeem."
 
+  command-cooldown:
+    chat:
+      - "&cYou are on cooldown. Please wait {cooldown} before trying again."
+    actionbar: "&cYou are on cooldown. Please wait {cooldown}."
+
   on-cooldown:
     chat:
       - "&cCode &e{code} &cis currently on cooldown. Please try again later."

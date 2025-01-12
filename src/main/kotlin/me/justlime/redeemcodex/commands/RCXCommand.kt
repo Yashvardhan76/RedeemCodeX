@@ -6,15 +6,21 @@
  *  This software is licensed under the Apache License 2.0 with a Commons Clause restriction.
  *  See the LICENSE file for details.
  *
- *  This file handles the core logic for redeeming codes and managing associated data.
- *
  */
 
 
 package me.justlime.redeemcodex.commands
 
 import me.justlime.redeemcodex.RedeemCodeX
-import me.justlime.redeemcodex.commands.subcommands.*
+import me.justlime.redeemcodex.commands.subcommands.DeleteSubCommand
+import me.justlime.redeemcodex.commands.subcommands.GenerateSubCommand
+import me.justlime.redeemcodex.commands.subcommands.HelpSubCommand
+import me.justlime.redeemcodex.commands.subcommands.InfoSubCommand
+import me.justlime.redeemcodex.commands.subcommands.ModifySubCommand
+import me.justlime.redeemcodex.commands.subcommands.PreviewSubCommand
+import me.justlime.redeemcodex.commands.subcommands.ReloadSubCommand
+import me.justlime.redeemcodex.commands.subcommands.RenewSubCommand
+import me.justlime.redeemcodex.commands.subcommands.UsageSubCommand
 import me.justlime.redeemcodex.data.repository.ConfigRepository
 import me.justlime.redeemcodex.enums.JMessage
 import me.justlime.redeemcodex.enums.JPermission
@@ -101,16 +107,48 @@ class RCXCommand(private val plugin: RedeemCodeX) : CommandExecutor, TabExecutor
         if (args.size == 1) completions.addAll(generalOptions)
         (if (args.size >= 2) {
             when (args[0]) {
-                JTab.GeneralActions.Gen.value -> if (sender.hasPermission(JPermission.Admin.GEN)) GenerateSubCommand(plugin).tabCompleter(sender, args.toMutableList()) else mutableListOf()
-                JTab.GeneralActions.Modify.value -> if (sender.hasPermission(JPermission.Admin.MODIFY)) ModifySubCommand(plugin).tabCompleter(sender, args.toMutableList()) else mutableListOf()
-                JTab.GeneralActions.Delete.value -> if (sender.hasPermission(JPermission.Admin.DELETE)) DeleteSubCommand(plugin).tabCompleter(sender, args.toMutableList()) else mutableListOf()
-                JTab.GeneralActions.Preview.value -> if (sender.hasPermission(JPermission.Admin.PREVIEW)) PreviewSubCommand(plugin).tabCompleter(sender, args.toMutableList()) else mutableListOf()
-                JTab.GeneralActions.Usage.value -> if (sender.hasPermission(JPermission.Admin.USAGE)) UsageSubCommand(plugin).tabCompleter(sender, args.toMutableList()) else mutableListOf()
-                JTab.GeneralActions.Renew.value -> if (sender.hasPermission(JPermission.Admin.RENEW)) RenewSubCommand(plugin).tabCompleter(sender, args.toMutableList()) else mutableListOf()
+                JTab.GeneralActions.Gen.value -> if (sender.hasPermission(JPermission.Admin.GEN)) GenerateSubCommand(plugin).tabCompleter(
+                    sender,
+                    args.toMutableList()
+                ) else mutableListOf()
+
+                JTab.GeneralActions.Modify.value -> if (sender.hasPermission(JPermission.Admin.MODIFY)) ModifySubCommand(plugin).tabCompleter(
+                    sender,
+                    args.toMutableList()
+                ) else mutableListOf()
+
+                JTab.GeneralActions.Delete.value -> if (sender.hasPermission(JPermission.Admin.DELETE)) DeleteSubCommand(plugin).tabCompleter(
+                    sender,
+                    args.toMutableList()
+                ) else mutableListOf()
+
+                JTab.GeneralActions.Preview.value -> if (sender.hasPermission(JPermission.Admin.PREVIEW)) PreviewSubCommand(plugin).tabCompleter(
+                    sender,
+                    args.toMutableList()
+                ) else mutableListOf()
+
+                JTab.GeneralActions.Usage.value -> if (sender.hasPermission(JPermission.Admin.USAGE)) UsageSubCommand(plugin).tabCompleter(
+                    sender,
+                    args.toMutableList()
+                ) else mutableListOf()
+
+                JTab.GeneralActions.Renew.value -> if (sender.hasPermission(JPermission.Admin.RENEW)) RenewSubCommand(plugin).tabCompleter(
+                    sender,
+                    args.toMutableList()
+                ) else mutableListOf()
+
                 JTab.GeneralActions.Help.value -> HelpSubCommand(plugin).tabCompleter(sender, args.toMutableList())
-                JTab.GeneralActions.Info.value -> if (sender.hasPermission(JPermission.Admin.INFO)) InfoSubCommand(plugin).tabCompleter(sender, args.toMutableList()) else mutableListOf()
-                JTab.GeneralActions.Reload.value -> if (sender.hasPermission(JPermission.Admin.RELOAD)) ReloadSubCommand(plugin).tabCompleter(sender, args.toMutableList()) else mutableListOf()
-                 else -> mutableListOf()
+                JTab.GeneralActions.Info.value -> if (sender.hasPermission(JPermission.Admin.INFO)) InfoSubCommand(plugin).tabCompleter(
+                    sender,
+                    args.toMutableList()
+                ) else mutableListOf()
+
+                JTab.GeneralActions.Reload.value -> if (sender.hasPermission(JPermission.Admin.RELOAD)) ReloadSubCommand(plugin).tabCompleter(
+                    sender,
+                    args.toMutableList()
+                ) else mutableListOf()
+
+                else -> mutableListOf()
             }
         } else mutableListOf()).let { completions.addAll(it ?: return null) }
 

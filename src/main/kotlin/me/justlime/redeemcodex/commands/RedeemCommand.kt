@@ -6,7 +6,7 @@
  *  This software is licensed under the Apache License 2.0 with a Commons Clause restriction.
  *  See the LICENSE file for details.
  *
- *  This file handles the core logic for redeeming codes and managing associated data.
+ *
  *
  */
 
@@ -20,13 +20,16 @@ import me.justlime.redeemcodex.enums.JConfig
 import me.justlime.redeemcodex.enums.JMessage
 import me.justlime.redeemcodex.models.CodePlaceHolder
 import me.justlime.redeemcodex.utilities.CodeValidation
+import me.justlime.redeemcodex.utilities.JLogger
 import me.justlime.redeemcodex.utilities.JService
+import org.bukkit.NamespacedKey
 import org.bukkit.Sound
 import org.bukkit.command.Command
 import org.bukkit.command.CommandExecutor
 import org.bukkit.command.CommandSender
 import org.bukkit.command.TabCompleter
 import org.bukkit.entity.Player
+import org.bukkit.persistence.PersistentDataType
 
 class RedeemCommand(
     private val plugin: RedeemCodeX,
@@ -53,6 +56,19 @@ class RedeemCommand(
         placeHolder.sender = sender
         placeHolder.code = args[0].uppercase()
         val codeValidation = CodeValidation(plugin, args[0].uppercase(), sender)
+        if (codeValidation.isPlayerOnCooldown()) {
+            if (codeValidation.isPlayerOnCooldown()) {
+                val COOLDOWN_KEY = NamespacedKey(plugin, "cooldown")
+                val last_cooldown = sender.persistentDataContainer.get(COOLDOWN_KEY, PersistentDataType.LONG) ?: 0L
+                placeHolder.cooldown = JService.adjustDuration(
+                    config.getConfigValue("redeem-command.cooldown"),
+                    JService.formatSecondsToDuration((JService.getCurrentTime().time - last_cooldown) / 1000),
+                    false
+                )
+                config.sendMsg(JMessage.Redeem.COMMAND_COOLDOWN, placeHolder)
+                return true
+            }
+        }
         if (!codeValidation.isCodeExist()) {
             config.sendMsg(JMessage.Redeem.INVALID_CODE, placeHolder)
             return true
@@ -106,7 +122,7 @@ class RedeemCommand(
         }
 
         val redeemCode = codeValidation.redeemCode
-        if(codeValidation.isCooldown(placeHolder)) {
+        if (codeValidation.isCooldown(placeHolder)) {
             config.sendMsg(JMessage.Redeem.ON_COOLDOWN, placeHolder)
             return true
         }
@@ -151,11 +167,19 @@ class RedeemCommand(
                 sender.world.dropItem(sender.location, droppedItem)
             }
         }
-        if(redeemCode.sound.sound != null) redeemCode.sound.playSound(sender)
-        if(redeemCode.messages.text.isNotEmpty()) redeemCode.messages.sendMessage(sender,placeHolder)
-        else config.sendMsg(JMessage.Redeem.SUCCESS, placeHolder)
+        if (redeemCode.sound.sound != null) redeemCode.sound.playSound(sender)
+        if (redeemCode.messages.text.isNotEmpty()) redeemCode.messages.sendMessage(sender, placeHolder)
+        else {
+            JLogger(plugin).logRedeemed(redeemCode.code + " by ${sender.name}")
+            config.sendMsg(JMessage.Redeem.SUCCESS, placeHolder)
+            if (config.getConfigValue("auto-delete.redeemed-codes")
+                    .toBoolean() && redeemCode.usedBy.all { redeemCode.redemption == it.value } && redeemCode.playerLimit == redeemCode.usedBy.size
+            ) {
+                codeRepo.deleteCode(redeemCode.code)
+                JLogger(plugin).logDelete(redeemCode.code)
+            }
+        }
         return true
-
 
     }
 

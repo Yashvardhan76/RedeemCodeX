@@ -6,7 +6,7 @@
  *  This software is licensed under the Apache License 2.0 with a Commons Clause restriction.
  *  See the LICENSE file for details.
  *
- *  This file handles the core logic for redeeming codes and managing associated data.
+ *
  *
  */
 
@@ -16,12 +16,34 @@ import me.justlime.redeemcodex.RedeemCodeX
 import me.justlime.redeemcodex.data.repository.RedeemCodeRepository
 import me.justlime.redeemcodex.models.CodePlaceHolder
 import me.justlime.redeemcodex.models.RedeemCode
+import org.bukkit.NamespacedKey
 import org.bukkit.command.CommandSender
 import org.bukkit.entity.Player
+import org.bukkit.persistence.PersistentDataType
+import java.sql.Timestamp
 
 class CodeValidation(val plugin: RedeemCodeX, private val userCode: String, private val sender: CommandSender) {
     private val repo = RedeemCodeRepository(plugin)
+
     lateinit var redeemCode: RedeemCode
+
+    fun isPlayerOnCooldown(): Boolean {
+        val COOLDOWN_KEY = NamespacedKey(plugin, "cooldown")
+        val cooldown = plugin.configRepo.getConfigValue("redeem-command.cooldown")
+        if(sender !is Player) return false
+
+        fun getLastRedeemed(): Long {
+            val container = sender.persistentDataContainer
+            return  container.get(COOLDOWN_KEY, PersistentDataType.LONG) ?: 0L
+        }
+        fun setLastRedeemed(timestamp: Long) {
+            val container = sender.persistentDataContainer
+            container.set(COOLDOWN_KEY, PersistentDataType.LONG, timestamp)
+        }
+        val onCooldown: Boolean = JService.onCoolDown(cooldown, mutableMapOf(sender.name to Timestamp(getLastRedeemed())), sender.name)
+        if (!onCooldown){ setLastRedeemed(JService.getCurrentTime().time) }
+        return onCooldown
+    }
 
     private fun isValidCode(code: String): Boolean {
         return code.matches(Regex("^[a-zA-Z0-9]{1,100}$"))
@@ -85,7 +107,8 @@ class CodeValidation(val plugin: RedeemCodeX, private val userCode: String, priv
             val lastRedeemedTime = redeemCode.lastRedeemed[sender.name]?.time
             if (lastRedeemedTime != null) {
                 val currentTimeMillis = JService.getCurrentTime().time
-                val elapsedTimeInSeconds = (lastRedeemedTime / 1000) + JService.parseDurationToSeconds(redeemCode.cooldown) - (currentTimeMillis / 1000)
+                val elapsedTimeInSeconds =
+                    (lastRedeemedTime / 1000) + JService.parseDurationToSeconds(redeemCode.cooldown) - (currentTimeMillis / 1000)
                 val duration = JService.adjustDuration(JService.formatSecondsToDuration(elapsedTimeInSeconds), "0s", true)
                 placeHolder.cooldown = duration
             }

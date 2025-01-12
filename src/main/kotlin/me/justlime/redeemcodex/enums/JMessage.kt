@@ -6,7 +6,7 @@
  *  This software is licensed under the Apache License 2.0 with a Commons Clause restriction.
  *  See the LICENSE file for details.
  *
- *  This file handles the core logic for redeeming codes and managing associated data.
+ *
  *
  */
 
@@ -22,12 +22,14 @@ sealed interface JMessage {
         companion object {
             const val INVALID_CODE = "redeem.invalid-code"
             const val MAX_REDEMPTIONS = "redeem.max-redemptions"
-            const val MAX_PLAYER_REDEEMED = "redeem.max-player-redeem"
+            const val MAX_PLAYER_REDEEMED = "redeem.max-player-redeemed"
             const val DISABLED = "redeem.disabled"
             const val EXPIRED_CODE = "redeem.expired-code"
             const val INVALID_TARGET = "redeem.invalid-target"
             const val MISSING_PIN = "redeem.missing-pin"
             const val INVALID_PIN = "redeem.invalid-pin"
+            const val ALREADY_REDEEMED = "redeem.already-redeemed"
+            const val COMMAND_COOLDOWN = "redeem.command-cooldown"
             const val ON_COOLDOWN = "redeem.on-cooldown"
             const val FULL_INVENTORY = "redeem.full-inventory"
             const val NO_PERMISSION = "redeem.no-permission"

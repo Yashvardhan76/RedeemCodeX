@@ -6,7 +6,7 @@
  *  This software is licensed under the Apache License 2.0 with a Commons Clause restriction.
  *  See the LICENSE file for details.
  *
- *  This file handles the core logic for redeeming codes and managing associated data.
+ *
  *
  */
 
@@ -79,7 +79,11 @@ class RedeemCodeRepository(plugin: RedeemCodeX) {
                 if (template.syncPlayerLimit) playerLimit = template.playerLimit
                 if (template.syncMessages) messages = template.messages
                 if (template.syncSound) sound = SoundState(
-                    sound = Sound.valueOf(template.sound.uppercase()), volume = template.soundVolume, pitch = template.soundPitch
+                    sound = try {
+                        Sound.valueOf(template.sound.uppercase())
+                    } catch (e: Exception) {
+                        null
+                    }, volume = template.soundVolume, pitch = template.soundPitch
                 )
                 if (template.syncRewards) rewards = template.rewards
                 if (template.syncTarget) target = template.target

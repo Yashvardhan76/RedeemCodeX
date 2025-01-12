@@ -6,7 +6,7 @@
  *  This software is licensed under the Apache License 2.0 with a Commons Clause restriction.
  *  See the LICENSE file for details.
  *
- *  This file handles the core logic for redeeming codes and managing associated data.
+ *
  *
  */
 
@@ -25,6 +25,7 @@ import me.justlime.redeemcodex.models.CodePlaceHolder
 import me.justlime.redeemcodex.models.RedeemCode
 import me.justlime.redeemcodex.models.RedeemTemplate
 import me.justlime.redeemcodex.models.SoundState
+import me.justlime.redeemcodex.utilities.JLogger
 import me.justlime.redeemcodex.utilities.JService
 import org.bukkit.Sound
 import org.bukkit.command.CommandSender
@@ -131,6 +132,7 @@ class GenerateSubCommand(private val plugin: RedeemCodeX) : JSubCommand {
         val template = config.loadDefaultTemplateValues(templateName)
         template.defaultSync = true
         config.createTemplate(template)
+        JLogger(plugin).logGenerate("$templateName (TEMPLATE)")
         sendMessage(JMessage.Template.Generate.SUCCESS)
         return true
     }
@@ -197,11 +199,10 @@ class GenerateSubCommand(private val plugin: RedeemCodeX) : JSubCommand {
             if (success) {
                 placeHolder.code = redeemCode.code
                 sendMessage(JMessage.Code.Generate.SUCCESS)
-//                CommandManager(plugin).tabCompleterList.fetched()
                 generatedCodesList.add(redeemCode.code)
-            } else {
-                sendMessage(JMessage.Code.Generate.FAILED)
-            }
+                JLogger(plugin).logGenerate(redeemCode.code + " - ${redeemCode.template}")
+            } else sendMessage(JMessage.Code.Generate.FAILED)
+
         } catch (e: Exception) {
             sendMessage(JMessage.Code.Generate.FAILED)
             e.printStackTrace()
@@ -215,8 +216,8 @@ class GenerateSubCommand(private val plugin: RedeemCodeX) : JSubCommand {
             if (success) {
                 placeHolder.code = if (redeemCodes.size <= displayAmount) redeemCodes.joinToString(" ") { it.code }
                 else redeemCodes.subList(0, displayAmount + 1).joinToString(" ") { it.code }.plus("...")
+                redeemCodes.forEach { JLogger(plugin).logGenerate(it.code + " - ${it.template}") }
                 sendMessage(JMessage.Code.Generate.SUCCESS)
-//                CommandManager(plugin).tabCompleterList.fetched()
                 generatedCodesList.addAll(redeemCodes.map { it.code })
             } else {
                 sendMessage(JMessage.Code.Generate.FAILED)

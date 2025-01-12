@@ -6,7 +6,7 @@
  *  This software is licensed under the Apache License 2.0 with a Commons Clause restriction.
  *  See the LICENSE file for details.
  *
- *  This file handles the core logic for redeeming codes and managing associated data.
+ *
  *
  */
 
@@ -85,9 +85,9 @@ data class CodePlaceHolder(
                 templateLocked = redeemCode.sync.toString(),
                 cooldown = redeemCode.cooldown,
                 isExpired = JService.isExpired(redeemCode).toString(),
-                minLength = plugin.config.getConfigValue("code-minimum-digit"),
-                maxLength = plugin.config.getConfigValue("code-maximum-digit"),
-                codeGenerateDigit = plugin.config.getConfigValue("default.code-generate-digit")
+                minLength = plugin.configRepo.getConfigValue("code-minimum-digit"),
+                maxLength = plugin.configRepo.getConfigValue("code-maximum-digit"),
+                codeGenerateDigit = plugin.configRepo.getConfigValue("default.code-generate-digit")
             )
         } //TODO Remove it
 

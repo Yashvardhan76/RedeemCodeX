@@ -6,14 +6,13 @@
  *  This software is licensed under the Apache License 2.0 with a Commons Clause restriction.
  *  See the LICENSE file for details.
  *
- *  This file handles the core logic for redeeming codes and managing associated data.
- *
  */
 
 
 package me.justlime.redeemcodex.commands.subcommands
 
 import me.justlime.redeemcodex.RedeemCodeX
+import me.justlime.redeemcodex.api.RedeemXAPI.deleteTemplate
 import me.justlime.redeemcodex.commands.JSubCommand
 import me.justlime.redeemcodex.data.repository.ConfigRepository
 import me.justlime.redeemcodex.data.repository.RedeemCodeRepository
@@ -22,9 +21,10 @@ import me.justlime.redeemcodex.enums.JMessage
 import me.justlime.redeemcodex.enums.JPermission
 import me.justlime.redeemcodex.enums.JTab
 import me.justlime.redeemcodex.models.CodePlaceHolder
+import me.justlime.redeemcodex.utilities.JLogger
 import org.bukkit.command.CommandSender
 
-class DeleteSubCommand(plugin: RedeemCodeX) : JSubCommand {
+class DeleteSubCommand(val plugin: RedeemCodeX) : JSubCommand {
     lateinit var placeHolder: CodePlaceHolder
     private val config = ConfigRepository(plugin)
     private val codeRepo = RedeemCodeRepository(plugin)
@@ -37,7 +37,7 @@ class DeleteSubCommand(plugin: RedeemCodeX) : JSubCommand {
             sendMessage(JMessage.Command.NO_PERMISSION)
             return true
         }
-        if (args.size > 3) {
+        if (args.size < 3) {
             sendMessage(JMessage.Command.UNKNOWN_COMMAND)
             return true
         }
@@ -130,13 +130,19 @@ class DeleteSubCommand(plugin: RedeemCodeX) : JSubCommand {
 
     private fun deleteCode(code: String, placeHolder: CodePlaceHolder) {
         placeHolder.code = code
-        if (codeRepo.deleteCode(code)) sendMessage(JMessage.Code.Delete.SUCCESS)
+        if (codeRepo.deleteCode(code)) {
+            JLogger(plugin).logDelete(code)
+            sendMessage(JMessage.Code.Delete.SUCCESS)
+        }
         else sendMessage(JMessage.Code.Delete.NOT_FOUND)
     }
 
     private fun deleteCodes(codes: List<String>, placeHolder: CodePlaceHolder) {
         placeHolder.code = codes.joinToString(" ")
-        if (codeRepo.deleteCodes(codes)) sendMessage(JMessage.Code.Delete.SUCCESS_CODES)
+        if (codeRepo.deleteCodes(codes)) {
+            codes.forEach { JLogger(plugin).logDelete(it) }
+            sendMessage(JMessage.Code.Delete.SUCCESS_CODES)
+        }
         else sendMessage(JMessage.Code.Delete.NOT_FOUND_ALL)
     }
 
@@ -146,6 +152,7 @@ class DeleteSubCommand(plugin: RedeemCodeX) : JSubCommand {
             return
         }
         codeRepo.deleteAllCodes()
+        JLogger(plugin).logDelete("Deleted All Codes")
         sendMessage(JMessage.Code.Delete.SUCCESS_ALL)
     }
 
@@ -160,12 +167,14 @@ class DeleteSubCommand(plugin: RedeemCodeX) : JSubCommand {
             return false
         }
         config.deleteTemplate(template)
+        JLogger(plugin).logDelete("$template (TEMPLATE)")
         sendMessage(JMessage.Template.Delete.SUCCESS)
         return true
     }
 
     private fun deleteAllTemplates(): Boolean {
         config.deleteAllTemplates()
+        JLogger(plugin).logDelete("Deleted All Templates")
         sendMessage(JMessage.Template.Delete.SUCCESS_ALL)
         return true
     }

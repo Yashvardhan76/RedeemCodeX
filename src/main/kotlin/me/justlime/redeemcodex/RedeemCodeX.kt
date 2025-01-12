@@ -6,7 +6,7 @@
  *  This software is licensed under the Apache License 2.0 with a Commons Clause restriction.
  *  See the LICENSE file for details.
  *
- *  This file handles the core logic for redeeming codes and managing associated data.
+ *
  *
  */
 
@@ -30,7 +30,7 @@ class RedeemCodeX : JavaPlugin() {
     lateinit var redeemCodeDB: RedeemCodeDaoImpl
     lateinit var configManager: ConfigManager
     lateinit var listenerManager: ListenerManager
-    lateinit var config: ConfigRepository
+    lateinit var configRepo: ConfigRepository
 
     override fun onEnable() {
         Class.forName("org.sqlite.JDBC")
@@ -51,7 +51,7 @@ class RedeemCodeX : JavaPlugin() {
             this.logger.log(Level.SEVERE, "Failed to fetch redeem codes from database", e)
         }
 
-        config = ConfigRepository(this)
+        configRepo = ConfigRepository(this)
         CommandManager(this)
         listenerManager = ListenerManager(this)
         //Line

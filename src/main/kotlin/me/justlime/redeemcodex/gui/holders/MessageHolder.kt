@@ -6,7 +6,7 @@
  *  This software is licensed under the Apache License 2.0 with a Commons Clause restriction.
  *  See the LICENSE file for details.
  *
- *  This file handles the core logic for redeeming codes and managing associated data.
+ *
  *
  */
 
@@ -82,7 +82,7 @@ class MessageHolder(
             Material.NETHER_STAR -> {
                 upsertMessage()
                 player.closeInventory()
-                plugin.config.sendMsg("&aMessages Saved", placeholder)
+                plugin.configRepo.sendMsg("&aMessages Saved", placeholder)
             }
 
             else -> return
@@ -208,7 +208,7 @@ class MessageHolder(
 
             is RedeemType.Template -> {
                 redeemData.redeemTemplate.messages = messageState
-                plugin.config.upsertTemplate(redeemData.redeemTemplate)
+                plugin.configRepo.upsertTemplate(redeemData.redeemTemplate)
             }
         }
     }

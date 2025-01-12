@@ -6,7 +6,7 @@
  *  This software is licensed under the Apache License 2.0 with a Commons Clause restriction.
  *  See the LICENSE file for details.
  *
- *  This file handles the core logic for redeeming codes and managing associated data.
+ *
  *
  */
 
@@ -28,6 +28,7 @@ import me.justlime.redeemcodex.gui.holders.SoundHolder
 import me.justlime.redeemcodex.models.CodePlaceHolder
 import me.justlime.redeemcodex.models.RedeemCode
 import me.justlime.redeemcodex.models.RedeemTemplate
+import me.justlime.redeemcodex.utilities.JLogger
 import me.justlime.redeemcodex.utilities.JService
 import org.bukkit.command.CommandSender
 import org.bukkit.entity.Player
@@ -350,8 +351,10 @@ class ModifySubCommand(private val plugin: RedeemCodeX) : JSubCommand {
         val success = codeRepo.upsertCode(redeemCode)
         if (!success) {
             sendMessage(JMessage.Code.Modify.FAILED)
+            JLogger(plugin).logModify(redeemCode.code)
             return false
         }
+        JLogger(plugin).logModify(redeemCode.code + " - ${redeemCode.template}")
         return true
     }
 
@@ -363,7 +366,9 @@ class ModifySubCommand(private val plugin: RedeemCodeX) : JSubCommand {
             codes.add(it.code)
             if (!codeRepo.templateToRedeemCode(it, template)) return false
             if (template.permissionRequired) it.permission = it.permission.replace("{code}", it.code.lowercase()) else it.permission = ""
+            it.modified = JService.getCurrentTime()
         }
+
         placeHolder.totalCodes = codes.size
         placeHolder.code = codes.joinToString(" ")
 
@@ -373,8 +378,10 @@ class ModifySubCommand(private val plugin: RedeemCodeX) : JSubCommand {
 
     private fun upsertTemplate(template: RedeemTemplate): Boolean {
         val success = config.upsertTemplate(template)
-        if (upsetCodes(template)) sendMessage(JMessage.Template.Modify.CODES_MODIFIED)
-
+        if (upsetCodes(template)) {
+            JLogger(plugin).logModify(template.name + " (TEMPLATE)")
+            sendMessage(JMessage.Template.Modify.CODES_MODIFIED)
+        }
         if (!success) {
             config.sendMsg(JMessage.Template.Modify.FAILED, placeHolder)
             return false

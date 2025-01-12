@@ -6,7 +6,7 @@
  *  This software is licensed under the Apache License 2.0 with a Commons Clause restriction.
  *  See the LICENSE file for details.
  *
- *  This file handles the core logic for redeeming codes and managing associated data.
+ *
  *
  */
 
@@ -35,6 +35,7 @@ import org.bukkit.inventory.ItemStack
 import java.io.File
 import java.math.BigDecimal
 import java.math.RoundingMode
+import kotlin.text.Typography.section
 
 class SoundHolder(val plugin: RedeemCodeX, val player: Player, private val redeemData: RedeemType, row: Int, title: String) : InventoryHolder,
     GUIHandle {
@@ -331,8 +332,8 @@ class SoundHolder(val plugin: RedeemCodeX, val player: Player, private val redee
             favouriteSounds.add(soundName)
         }
         val config = plugin.configManager.getConfig(JFiles.GUI)
-        val section = config.getConfigurationSection("filter")
-        favouriteSounds.let { section?.set("favourite", it) }
+        val section = config.getConfigurationSection("filter") ?: config.createSection("filter")
+        favouriteSounds.let { section.set("favourite", it) }
         config.save(File(plugin.dataFolder, JFiles.GUI.filename))
     }
 
