@@ -4,6 +4,8 @@
 * [Table of Contents](#table-of-contents)
 * [RedeemCodeX Plugin](#redeemcodex-plugin)
     * [Features](#features)
+  * [Redeem Command](#redeem-command)
+    * [/redeem](#redeem-)
   * [RCX Command](#rcx-command)
     * [/rcx gen](#rcx-gen)
     * [/rcx modify](#rcx-modify)
@@ -32,13 +34,19 @@ This plugin provides a comprehensive redeem code system.  It allows for the crea
 
 ---
 
+## Redeem Command
+
+### /redeem 
+```
+/redeem <code> [pin]
+```
+
 ## RCX Command
 
 The `RCXCommand` allows administrators to manage redeem codes with the following subcommands:
 
 ### /rcx gen
 ```
-/redeem <code> [CONFIRM]
 /rcx gen code <CUSTOM> [TEMPLATE]
 /rcx gen code <DIGIT> [TEMPLATE] [AMOUNT]
 /rcx gen template <template>
@@ -103,7 +111,7 @@ The `RCXCommand` allows administrators to manage redeem codes with the following
 ## TODO List
 * GUI Support
 * Improvement on Reward GUI
-* Improvement on generation `custom` code to support bulk generation
+* Improvement on generation `CUSTOM` code to support bulk generation
 * Add option to `modify` various code using single command
   * `Example: /rcx modify CODE01 pin 1234 CODE02 CODE03 CODE99`
 
