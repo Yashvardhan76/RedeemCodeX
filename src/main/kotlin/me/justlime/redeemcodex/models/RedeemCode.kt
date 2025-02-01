@@ -16,7 +16,7 @@ import org.bukkit.inventory.ItemStack
 import java.sql.Timestamp
 
 data class RedeemCode(
-    val code: String, var enabledStatus: Boolean,
+    var code: String, var enabledStatus: Boolean,
 
     var template: String, //Blank for disabled
     var sync: Boolean,

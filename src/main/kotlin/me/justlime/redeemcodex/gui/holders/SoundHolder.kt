@@ -13,13 +13,15 @@
 package me.justlime.redeemcodex.gui.holders
 
 import me.justlime.redeemcodex.RedeemCodeX
-import me.justlime.redeemcodex.commands.subcommands.ModifySubCommand
+import me.justlime.redeemcodex.api.RedeemXAPI
 import me.justlime.redeemcodex.data.repository.ConfigRepository
 import me.justlime.redeemcodex.data.repository.RedeemCodeRepository
 import me.justlime.redeemcodex.enums.JFiles
+import me.justlime.redeemcodex.enums.JProperty
 import me.justlime.redeemcodex.enums.RedeemType
 import me.justlime.redeemcodex.gui.InventoryManager
 import me.justlime.redeemcodex.models.SoundState
+import me.justlime.redeemcodex.utilities.JService
 import org.bukkit.Bukkit
 import org.bukkit.Material
 import org.bukkit.Sound
@@ -35,10 +37,11 @@ import org.bukkit.inventory.ItemStack
 import java.io.File
 import java.math.BigDecimal
 import java.math.RoundingMode
-import kotlin.text.Typography.section
 
 class SoundHolder(val plugin: RedeemCodeX, val player: Player, private val redeemData: RedeemType, row: Int, title: String) : InventoryHolder,
     GUIHandle {
+    private val guiConfig = plugin.configManager.getConfig(JFiles.GUI)
+    private val soundConfig = guiConfig.getConfigurationSection("sounds") ?: guiConfig.createSection("sounds")
     private val inventory = Bukkit.createInventory(this, row * 9, title)
     private val musicDiscs = listOf(
         Material.MUSIC_DISC_13,
@@ -80,7 +83,6 @@ class SoundHolder(val plugin: RedeemCodeX, val player: Player, private val redee
         InventoryManager.outlineInventory(inventory)
         loadSounds()
         val soundEntries = getSortedSounds()
-//        plugin.logger.info("$sortMode - ${soundEntries.size} - (${currentPage})")
 
         val startIndex = currentPage * itemsPerPage
         val endIndex = (startIndex + itemsPerPage).coerceAtMost(soundEntries.size)
@@ -90,14 +92,19 @@ class SoundHolder(val plugin: RedeemCodeX, val player: Player, private val redee
         for (i in startIndex until endIndex) {
             val sound = soundEntries[i]
             val disc = ItemStack(musicDiscs[i % musicDiscs.size])
-            val meta = disc.itemMeta ?: continue
-            meta.setDisplayName(sound.name)
-            val loreList: MutableList<String> = mutableListOf("§aClick to Select")
-            if (slotIndex == selectedSlot) {
-                loreList[0] = "§aSelected"
-            }
-            if (meta.displayName in favouriteSounds) loreList.add("§aFavourite") else loreList.remove("§aFavourite")
-            meta.lore = loreList
+            val meta = disc.itemMeta?.apply {
+                this.setDisplayName(sound.name)
+                this.lore = if (sound.name in favouriteSounds) {
+                    if (slotIndex == selectedSlot) {
+                        guiConfig.getStringList("sel-fav-disc.item.lore").toMutableList()
+                    } else guiConfig.getStringList("fav-disc.item.lore").toMutableList()
+                } else {
+                    if (slotIndex == selectedSlot) {
+                        guiConfig.getStringList("sel-disc.item.lore").toMutableList()
+                    } else guiConfig.getStringList("disc.item.lore").toMutableList()
+                }
+
+            } ?: continue
             disc.itemMeta = meta
             inventory.setItem(InventoryManager.selectedSlots[slotIndex++], disc)
             if (slotIndex >= InventoryManager.selectedSlots.size) break
@@ -106,9 +113,7 @@ class SoundHolder(val plugin: RedeemCodeX, val player: Player, private val redee
         // Navigation and control items
         val backArrow = ItemStack(Material.ARROW).apply { itemMeta = itemMeta?.apply { setDisplayName("§ePrevious Page") } }
         val forwardArrow = ItemStack(Material.ARROW).apply { itemMeta = itemMeta?.apply { setDisplayName("§eNext Page") } }
-        val netherStar = ItemStack(Material.NETHER_STAR).apply {
-            itemMeta = itemMeta?.apply { setDisplayName("§aSave Selected Sound") }
-        }
+        val netherStar = ItemStack(Material.NETHER_STAR).apply { itemMeta = itemMeta?.apply { setDisplayName("§aSave Selected Sound") } }
         val pitchItem = ItemStack(Material.REDSTONE).apply { itemMeta = itemMeta?.apply { setDisplayName("§aPitch: $pitch") } }
         val volumeItem = ItemStack(Material.GLOWSTONE_DUST).apply { itemMeta = itemMeta?.apply { setDisplayName("§aVolume: $volume") } }
         val searchItem = ItemStack(Material.BOOK).apply { itemMeta = itemMeta?.apply { setDisplayName("§aSearch Sound") } }
@@ -150,6 +155,11 @@ class SoundHolder(val plugin: RedeemCodeX, val player: Player, private val redee
         return
     }
 
+    private fun getRedeemName(): String = when (redeemData) {
+        is RedeemType.Code -> redeemData.redeemCode.code
+        is RedeemType.Template -> redeemData.redeemTemplate.name
+    }
+
     private fun handleArrowClick(slot: Int) {
         val soundEntries = getSortedSounds()
         val maxPages = (soundEntries.size + itemsPerPage - 1) / itemsPerPage
@@ -167,13 +177,17 @@ class SoundHolder(val plugin: RedeemCodeX, val player: Player, private val redee
     }
 
     private fun handleSaveClick(player: Player) {
-        player.sendMessage("§aSelected Sound Saved! $pitch $volume")
+        player.sendMessage(
+            JService.applyColors(
+                guiConfig.getString("save-message", "&aSound for &e{code} &ahas been saved.")?.replace("{code}", getRedeemName()) ?: ""
+            )
+        )
         val codeRepository = RedeemCodeRepository(plugin)
         val configRepository = ConfigRepository(plugin)
         if (redeemData is RedeemType.Code) codeRepository.upsertCode(redeemData.redeemCode)
         else if (redeemData is RedeemType.Template) {
             configRepository.upsertTemplate(redeemData.redeemTemplate)
-            ModifySubCommand(plugin).execute(player, mutableListOf("modify", "template", redeemData.redeemTemplate.name, "sync"))
+            RedeemXAPI.modifyTemplate(redeemData.redeemTemplate.name, JProperty.SYNC.property, sender = player)
         }
         val soundName = selectedSound.sound?.name ?: return
         saveRecentSound(soundName)
@@ -198,18 +212,18 @@ class SoundHolder(val plugin: RedeemCodeX, val player: Player, private val redee
             if (soundName in favouriteSounds) return
             saveFavouriteSound(soundName)
             loadSounds()
-            val meta = clickedItem.itemMeta
-            val loreList: MutableList<String> = mutableListOf("§aClick to Select")
-            if (meta?.displayName in favouriteSounds) loreList.add("§aFavourite") else loreList.remove("§aFavourite")
-            meta?.lore = loreList
-            clickedItem.itemMeta = meta
+            clickedItem.itemMeta?.apply {
+                lore = if (soundName in favouriteSounds) guiConfig.getStringList("fav-disc.item.lore").toMutableList()
+                else guiConfig.getStringList("disc.item.lore").toMutableList()
+            }
             return
         }
         selectedSlot?.let { deselectSlot(it) }
         selectedSlot = slot
         val meta = clickedItem.itemMeta
         meta?.addEnchant(Enchantment.UNBREAKING, 1, true)
-        meta?.lore = listOf("§aSelected")
+        meta?.lore = if (soundName in favouriteSounds) guiConfig.getStringList("sel-fav-disc.item.lore").toMutableList()
+        else guiConfig.getStringList("sel-disc.item.lore").toMutableList()
         clickedItem.itemMeta = meta
         selectedSound = SoundState(sound, volume, pitch)
         selectedSound.playSound(player)
@@ -308,8 +322,8 @@ class SoundHolder(val plugin: RedeemCodeX, val player: Player, private val redee
     }
 
     private fun loadSounds() {
-        val guiConfig = plugin.configManager.getConfig(JFiles.GUI)
-        val filter = guiConfig.getConfigurationSection("filter") ?: return
+        val guiConfigLive = plugin.configManager.getConfig(JFiles.GUI)
+        val filter = guiConfigLive.getConfigurationSection("sounds.filter") ?: return
         recentSounds = filter.getStringList("recent-sounds").toMutableList()
         recentSounds.reverse()
         favouriteSounds = filter.getStringList("favourite").toMutableList()
@@ -321,20 +335,20 @@ class SoundHolder(val plugin: RedeemCodeX, val player: Player, private val redee
             recentSounds.add(soundName)
             if (recentSounds.size > 56) recentSounds.removeAt(0) // Keep only the last 10
         }
-        val config = plugin.configManager.getConfig(JFiles.GUI)
-        val section = config.getConfigurationSection("filter")
+        val guiConfig = plugin.configManager.getConfig(JFiles.GUI)
+        val section = guiConfig.getConfigurationSection("filter")
         recentSounds.let { section?.set("recent-sounds", it) }
-        config.save(File(plugin.dataFolder, JFiles.GUI.filename))
+        guiConfig.save(File(plugin.dataFolder, JFiles.GUI.filename))
     }
 
     private fun saveFavouriteSound(soundName: String) {
         if (!favouriteSounds.contains(soundName)) {
             favouriteSounds.add(soundName)
         }
-        val config = plugin.configManager.getConfig(JFiles.GUI)
-        val section = config.getConfigurationSection("filter") ?: config.createSection("filter")
+        val guiConfig = plugin.configManager.getConfig(JFiles.GUI)
+        val section = guiConfig.getConfigurationSection("filter") ?: guiConfig.createSection("filter")
         favouriteSounds.let { section.set("favourite", it) }
-        config.save(File(plugin.dataFolder, JFiles.GUI.filename))
+        guiConfig.save(File(plugin.dataFolder, JFiles.GUI.filename))
     }
 
     private fun removeFavouriteSound(soundName: String) {

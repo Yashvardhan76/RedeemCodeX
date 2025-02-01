@@ -411,7 +411,7 @@ class ModifySubCommand(private val plugin: RedeemCodeX) : JSubCommand {
                 sender.openInventory(soundHolder.inventory)
             }
         }
-        return upsertCode(redeemCode)
+        return true
     }
 
     private fun openGUI(redeemTemplate: RedeemTemplate, value: String, sender: CommandSender): Boolean {
@@ -432,7 +432,7 @@ class ModifySubCommand(private val plugin: RedeemCodeX) : JSubCommand {
                 sender.openInventory(soundHolder.inventory)
             }
         }
-        return upsertTemplate(redeemTemplate)
+        return true
     }
 
     private fun setRedemption(redeemCode: RedeemCode, value: String): Boolean {

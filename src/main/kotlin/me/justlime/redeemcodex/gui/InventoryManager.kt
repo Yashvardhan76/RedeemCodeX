@@ -12,8 +12,13 @@
 
 package me.justlime.redeemcodex.gui
 
+import me.justlime.redeemcodex.api.RedeemXAPI
+import me.justlime.redeemcodex.enums.JFiles
+import me.justlime.redeemcodex.utilities.JService
 import org.bukkit.Material
+import org.bukkit.enchantments.Enchantment
 import org.bukkit.inventory.Inventory
+import org.bukkit.inventory.ItemFlag
 import org.bukkit.inventory.ItemStack
 
 object InventoryManager {
@@ -23,12 +28,31 @@ object InventoryManager {
     var timeOut: Long = 600L //In seconds
 
     fun outlineInventory(inventory: Inventory, size: Int = 6) {
-        val item = ItemStack(Material.GRAY_STAINED_GLASS_PANE)
-        val meta = item.itemMeta
-        meta?.setDisplayName(" ")
-        item.itemMeta = meta
+        val guiConfig = RedeemXAPI.getPlugin().configManager.getConfig(JFiles.GUI)
+        val borderItem = guiConfig.getConfigurationSection("border.item") ?: return
+        val material = borderItem.getString("material")
+            ?.let { if (Material.valueOf(it) == Material.AIR) Material.RED_STAINED_GLASS_PANE else Material.valueOf(it) }
+            ?: Material.RED_STAINED_GLASS_PANE
+        val name = JService.applyColors(borderItem.getString("name") ?: "")
+        val lore = borderItem.getStringList("lore").map { JService.applyColors(it) }
+        val glint = borderItem.getBoolean("glint", false)
+        val item = createItem(material, name, lore, glint)
+
         if (size == 6) outlinedSlotsFull.forEach { inventory.setItem(it, item) }
         if (size == 3) outlinedSlotsHalf.forEach { inventory.setItem(it, item) }
+    }
+
+    fun createItem(material: Material, name: String, lore: List<String>, glint: Boolean): ItemStack {
+        return ItemStack(material).apply {
+            itemMeta = itemMeta?.apply {
+                setDisplayName(name)
+                if (glint) {
+                    this.addEnchant(Enchantment.UNBREAKING, 1, true)
+                    this.addItemFlags(ItemFlag.HIDE_ENCHANTS)
+                }
+                this.lore = lore
+            }
+        }
     }
 
 }

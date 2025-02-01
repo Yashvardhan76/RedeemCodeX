@@ -63,9 +63,7 @@ class ConfigRepository(val plugin: RedeemCodeX) {
         config.sendMsg(key, placeHolder)
     }
 
-    fun sendTemplateMsg(template: String, placeHolder: CodePlaceHolder){
-        config.sendTemplateMsg(template, placeHolder)
-    }
+
 
     fun loadDefaultTemplateValues(template: String): RedeemTemplate {
         return config.loadDefaultTemplateValues(template)

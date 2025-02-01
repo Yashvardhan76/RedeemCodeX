@@ -1,1 +1,94 @@
-recent_sounds:
+
+border:
+  item:
+    material: GRAY_STAINED_GLASS_PANE
+    name: " "
+    glint: false
+    lore: []
+
+messages:
+  message:
+    timeout: 240 #In Seconds
+    item:
+      material: PAPER
+      name: "&aChat Messages"
+      glint: true
+      lore:
+        - "&eClick to Edit"
+      slot: 10
+  actionbar:
+    timeout: 60 #In Seconds
+    item:
+      material: FEATHER
+      name: "&aAction Bar Messages"
+      glint: true
+      lore:
+        - "&eClick to Edit"
+      slot: 13
+  title:
+    timeout: 60 #In Seconds
+    item:
+      material: BOOK
+      name: "&aTitle Messages"
+      glint: true
+      lore:
+        - "&eClick to Edit"
+      slot: 16
+  save:
+    item:
+      material: NETHER_STAR
+      name: "&aSave Changes"
+      glint: true
+      lore:
+        - "&bEditing - {code}"
+      slot: 22
+
+rewards:
+  save-message: "&aSaving rewards..."
+  save:
+    item:
+      material: NETHER_STAR
+      name: "&aSave Changes"
+      glint: true
+      lore:
+        - "&bEditing - {code}"
+      slot: 49
+
+sounds:
+  save-message: "&aSound for &e{code} &ahas been saved."
+  disc:
+    item:
+      lore:
+        - "&eClick to Select"
+  sel-disc:
+    item:
+      lore:
+        - "&aSelected"
+  fav-disc:
+    item:
+      lore:
+        - "&eClick to Select"
+        - "§aFavourite"
+  sel-fav-disc:
+    item:
+      lore:
+        - "&aSelected"
+        - "§aFavourite"
+  save:
+    item:
+      material: NETHER_STAR
+      name: "&aSave Changes"
+      glint: true
+      lore:
+        - "&bEditing - {code}"
+      slot: 49
+
+
+
+  filter:
+    recent-sounds: [ ]
+    favourite: [ ]
+
+
+
+

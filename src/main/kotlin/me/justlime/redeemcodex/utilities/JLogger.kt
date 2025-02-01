@@ -16,7 +16,7 @@ import java.io.File
 import java.io.FileWriter
 import java.io.IOException
 import java.text.SimpleDateFormat
-import java.util.Date
+import java.util.*
 
 class JLogger(private val plugin: RedeemCodeX) {
 
@@ -29,7 +29,6 @@ class JLogger(private val plugin: RedeemCodeX) {
     private val logDelete: Boolean
     private val logRedeemed: Boolean
 
-
     init {
         // Load logging preferences from config.yml
         val config = plugin.configRepo
@@ -37,8 +36,6 @@ class JLogger(private val plugin: RedeemCodeX) {
         logModify = config.getConfigValue("logger.modify").toBoolean()
         logDelete = config.getConfigValue("logger.delete").toBoolean()
         logRedeemed = config.getConfigValue("logger.redeemed").toBoolean()
-
-
 
         // Create the logs directory if it doesn't exist
         if (!logFolder.exists() && !logFolder.mkdirs()) {
@@ -81,8 +78,7 @@ class JLogger(private val plugin: RedeemCodeX) {
         if (logDelete) logToFile("DELETE", message)
     }
 
-
-    fun logRedeemed(message: String){
+    fun logRedeemed(message: String) {
         if (logRedeemed) logToFile("REDEEMED", message)
     }
 

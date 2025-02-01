@@ -33,7 +33,10 @@ class RedeemCodeX : JavaPlugin() {
     lateinit var configRepo: ConfigRepository
 
     override fun onEnable() {
+        //To Support older version of Minecraft
         Class.forName("org.sqlite.JDBC")
+
+
         if (!this.dataFolder.exists()) this.dataFolder.mkdir()
         RedeemXAPI.initialize(this)
         configManager = ConfigManager(this)

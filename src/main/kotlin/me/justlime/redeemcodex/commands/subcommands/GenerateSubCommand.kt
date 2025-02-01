@@ -14,6 +14,8 @@
 package me.justlime.redeemcodex.commands.subcommands
 
 import me.justlime.redeemcodex.RedeemCodeX
+import me.justlime.redeemcodex.api.RedeemXAPI.generateCode
+import me.justlime.redeemcodex.api.RedeemXAPI.generateTemplate
 import me.justlime.redeemcodex.commands.JSubCommand
 import me.justlime.redeemcodex.data.repository.ConfigRepository
 import me.justlime.redeemcodex.data.repository.RedeemCodeRepository
@@ -59,22 +61,46 @@ class GenerateSubCommand(private val plugin: RedeemCodeX) : JSubCommand {
         val amount = if (digit != null) args.getOrNull(4)?.toIntOrNull() ?: 1 else 1
 
         if (args[1] == JTab.Type.CODE && amount >= 1) {
-            val codes = mutableListOf<RedeemCode>()
-            for (index in 1..amount) {
-                if (digit != null) {
-                    handleNumericGeneration(digit, args.getOrNull(3) ?: "DEFAULT")?.let { codes.add(it) } ?: break
-                } else {
-                    handleCodeCreation(args[2], args.getOrNull(3) ?: "DEFAULT")?.let { codes.add(it) } ?: return true
+            val codes = mutableSetOf<RedeemCode>()
+            val cacheCode = if (digit != null) {
+                handleNumericGeneration(digit, args.getOrNull(3) ?: "DEFAULT")
+            } else handleCodeCreation(args[2], args.getOrNull(3) ?: "DEFAULT") ?: return true
+
+            if (cacheCode != null) {
+                val textCodes = generateCode(cacheCode.code.length, amount, mutableSetOf(cacheCode.code)).toMutableList()
+                textCodes.add(0, cacheCode.code)
+
+                for (index in 1..amount) {
+                    if (textCodes.isEmpty()) break
+
+                    try {
+                        val newCode = cacheCode.copy(code = textCodes[index])
+                        codes.add(newCode)
+                    } catch (e: Exception) {
+                        codes.clear()
+                        break
+                    }
                 }
             }
+            placeHolder.codeGenerateDigit = digit.toString()
             if (isDefaultLoaded) sendMessage(JMessage.Code.Generate.MISSING)
-            if (codes.size == 1) {
-                upsertRedeemCode(codes[0])
-            } else upsertRedeemCodes(codes)
+            if (codes.isNotEmpty()) {
+                try {
+                    if (codes.size == 1) {
+                        upsertRedeemCode(codes.first())
+                    } else {
+                        upsertRedeemCodes(codes.toList())
+                    }
+                } catch (e: Exception) {
+                    sendMessage(JMessage.Code.Generate.INVALID_LENGTH)
+                }
+            } else {
+                sendMessage(JMessage.Code.Generate.INVALID_LENGTH)
 
-//            CommandManager(plugin).tabCompleterList.fetched()
+            }
 
             // Reset
+
             usingDefault = false
             isDefaultLoaded = false
 
@@ -83,7 +109,6 @@ class GenerateSubCommand(private val plugin: RedeemCodeX) : JSubCommand {
         if (args[1] == JTab.Type.CODE && amount < 1) sendMessage(JMessage.Code.Generate.INVALID_AMOUNT)
         if (type == JTab.Type.TEMPLATE) {
             generateTemplate(args[2].uppercase())
-//            CommandManager(plugin).tabCompleterList.fetched()
             if (isDefaultLoaded) sendMessage(JMessage.Code.Generate.MISSING)
             // Reset
             isDefaultLoaded = false
@@ -144,14 +169,14 @@ class GenerateSubCommand(private val plugin: RedeemCodeX) : JSubCommand {
             sendMessage(JMessage.Code.Generate.INVALID_RANGE)
             return null
         }
-        val uniqueCode = generateCode(codeLength)
-        if (uniqueCode == null) {
+        val uniqueCodes = generateCode(codeLength, 1)
+        if (uniqueCodes.isEmpty()) {
             sendMessage(JMessage.Code.Generate.INVALID_LENGTH)
             return null
         }
-        placeHolder.code = uniqueCode
+        placeHolder.code = uniqueCodes.first()
         val template = config.getTemplate(templateName) ?: return null
-        return createRedeemCode(uniqueCode, template)
+        return createRedeemCode(uniqueCodes.first(), template)
     }
 
     private fun handleCodeCreation(code: String, templateName: String): RedeemCode? {
@@ -216,7 +241,15 @@ class GenerateSubCommand(private val plugin: RedeemCodeX) : JSubCommand {
             if (success) {
                 placeHolder.code = if (redeemCodes.size <= displayAmount) redeemCodes.joinToString(" ") { it.code }
                 else redeemCodes.subList(0, displayAmount + 1).joinToString(" ") { it.code }.plus("...")
-                redeemCodes.forEach { JLogger(plugin).logGenerate(it.code + " - ${it.template}") }
+                if (redeemCodes.size > 1000) {
+                    val log = redeemCodes.map { it.code }.joinToString(", ")
+                    JLogger(plugin).logGenerate("${redeemCodes[0].template.uppercase()} - " + log)
+                } else {
+                    redeemCodes.forEach {
+                        JLogger(plugin).logGenerate(it.code + " - ${redeemCodes[0].template.uppercase()}")
+                    }
+                }
+
                 sendMessage(JMessage.Code.Generate.SUCCESS)
                 generatedCodesList.addAll(redeemCodes.map { it.code })
             } else {
@@ -228,13 +261,29 @@ class GenerateSubCommand(private val plugin: RedeemCodeX) : JSubCommand {
         }
     }
 
-    private fun generateCode(length: Int): String? {
+    private fun generateCode(length: Int, amount: Int, existingCodes: Set<String> = emptySet()): List<String> {
         val charset = ('A'..'Z') + ('0'..'9')
-        repeat(1024) {
-            // Max attempts
-            val code = (1..length).map { charset.random() }.joinToString("")
-            if (plugin.redeemCodeDB.get(code) == null) return code
+        val generatedCodes = mutableSetOf<String>()
+        var attempt = 0
+        while (generatedCodes.size < amount) {
+            attempt++
+            val batchSize = amount - generatedCodes.size
+
+            val codeBatch = (1..batchSize).map { (1..length).map { charset.random() }.joinToString("") }.toSet()
+
+            // Fetch existing codes in bulk
+            try {
+                val existingInDb = plugin.redeemCodeDB.lookUpCodes(codeBatch)
+                generatedCodes.addAll(codeBatch - existingInDb - existingCodes)
+                if (attempt > 10) {
+                    generatedCodes.clear()
+                    break
+                }
+            } catch (e: Exception) {
+                return emptyList()
+            }
         }
-        return null // Failed to generate a unique code
+
+        return generatedCodes.toList()
     }
 }

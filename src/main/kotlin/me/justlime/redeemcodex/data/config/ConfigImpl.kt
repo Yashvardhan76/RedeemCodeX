@@ -126,10 +126,6 @@ class ConfigImpl(private val plugin: RedeemCodeX) : ConfigDao {
         }
     }
 
-    override fun sendTemplateMsg(template: String, placeHolder: CodePlaceHolder) {
-        sendMsg("$template.messages", placeHolder)
-    }
-
     override fun loadDefaultTemplateValues(template: String): RedeemTemplate {
         return RedeemTemplate(
             name = template,

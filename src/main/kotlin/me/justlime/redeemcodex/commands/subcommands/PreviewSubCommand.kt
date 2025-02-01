@@ -85,7 +85,6 @@ class PreviewSubCommand(val plugin: RedeemCodeX) : JSubCommand {
                         if(redeemCode.sound.sound != null) redeemCode.sound.playSound(sender)
 
                     }
-                    config.sendTemplateMsg(redeemCode.template, placeHolder)
                     sendMessage(JMessage.Code.Preview.PREVIEW)
                     return true
                 }
@@ -109,7 +108,6 @@ class PreviewSubCommand(val plugin: RedeemCodeX) : JSubCommand {
                         }))
                     }
 
-                    config.sendTemplateMsg(redeemTemplate.name, placeHolder)
 
                     sendMessage(JMessage.Code.Preview.PREVIEW)
                     return true

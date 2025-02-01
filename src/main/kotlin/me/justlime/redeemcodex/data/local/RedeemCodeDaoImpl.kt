@@ -13,10 +13,12 @@
 
 package me.justlime.redeemcodex.data.local
 
+import me.justlime.redeemcodex.api.RedeemXAPI
 import me.justlime.redeemcodex.enums.JProperty
 import me.justlime.redeemcodex.models.RedeemCode
 import me.justlime.redeemcodex.models.RedeemCodeDatabase
 import me.justlime.redeemcodex.utilities.Converter
+import org.bukkit.Bukkit
 import java.sql.Connection
 import java.sql.PreparedStatement
 import java.sql.Statement
@@ -107,16 +109,18 @@ class RedeemCodeDaoImpl(private val dbManager: DatabaseManager) : RedeemCodeDao 
     }
 
     override fun upsertCodes(redeemCodes: List<RedeemCode>): Boolean {
+
         if (redeemCodes.isEmpty()) return false
+        val existingCodes = fetchExistingCodes(redeemCodes.map { it.code }) // Fetch all codes that exist in the DB
 
         var isSuccess = false
         dbManager.getConnection()?.use { conn ->
-            val selectSql = "SELECT 1 FROM redeem_codes WHERE ${JProperty.CODE.property} = ?"
             val updateSql = """
-            UPDATE redeem_codes 
+            UPDATE redeem_codes
             SET ${JProperty.entries.joinToString(", ") { "${it.property} = ?" }}
             WHERE ${JProperty.CODE.property} = ?
         """.trimIndent()
+
             val insertSql = """
             INSERT INTO redeem_codes (${JProperty.entries.joinToString(", ") { it.property }})
             VALUES (${JProperty.entries.joinToString(", ") { "?" }})
@@ -125,14 +129,10 @@ class RedeemCodeDaoImpl(private val dbManager: DatabaseManager) : RedeemCodeDao 
             conn.autoCommit = false // Disable auto-commit for batch processing
 
             try {
-                conn.prepareStatement(insertSql).use { insertStatement ->
-                    conn.prepareStatement(updateSql).use { updateStatement ->
-
-                        for (redeemCode in redeemCodes) {
-                            val exists = conn.prepareStatement(selectSql).use { statement ->
-                                statement.setString(1, redeemCode.code)
-                                statement.executeQuery().next()
-                            }
+                conn.prepareStatement(updateSql).use { updateStatement ->
+                    conn.prepareStatement(insertSql).use { insertStatement ->
+                        redeemCodes.forEach { redeemCode ->
+                            val exists = existingCodes.contains(redeemCode.code)
 
                             if (exists) {
                                 // Add to the UPDATE batch
@@ -163,9 +163,19 @@ class RedeemCodeDaoImpl(private val dbManager: DatabaseManager) : RedeemCodeDao 
                 conn.autoCommit = true // Restore auto-commit
             }
         }
-
+        val startTime = System.currentTimeMillis()
         fetch() // Refresh in-memory data if needed
+        val endTime = System.currentTimeMillis()
+        val timeTook2 = endTime - startTime
+        Bukkit.broadcastMessage("Executed batch in $timeTook2 ms")
         return isSuccess
+    }
+
+    private fun fetchExistingCodes(codes: List<String>): Set<String> {
+        if (codes.isEmpty()) return emptySet()
+
+        val query = "SELECT code FROM redeem_codes WHERE code IN (${codes.joinToString(",") { "?" }})"
+        return fetchRedeemCodes(query, *codes.toTypedArray()).map { it.code }.toSet()
     }
 
     private fun setStatementParameters(statement: PreparedStatement, redeemCode: RedeemCode) {
@@ -195,13 +205,30 @@ class RedeemCodeDaoImpl(private val dbManager: DatabaseManager) : RedeemCodeDao 
         return fetchRedeemCodes("SELECT * FROM redeem_codes WHERE code = ?", code).firstOrNull()
     }
 
-    override fun fetch() {
-        getCachedCodes.clear()
-        getAllCodes().forEach { state ->
-            getCachedTargetList[state.code] = state.target
-            getCachedUsageList[state.code] = state.usedBy
-            getCachedCodes.add(state.code)
+    override fun lookUpCodes(codes: Set<String>): Set<String> {
+        if (codes.isEmpty()) return emptySet()
+
+        val batchSize = 999
+        val result = mutableSetOf<String>()
+
+        codes.chunked(batchSize).forEach { batch ->
+            val placeholders = batch.joinToString(",") { "?" }
+            val query = "SELECT code FROM redeem_codes WHERE code IN ($placeholders)"
+            result += fetchRedeemCodes(query, *batch.toTypedArray()).map { it.code }
         }
+
+        return result
+    }
+
+    override fun fetch() {
+        Bukkit.getScheduler().runTaskAsynchronously(RedeemXAPI.getPlugin(), Runnable {
+            getCachedCodes.clear()
+            getAllCodes().forEach { state ->
+                getCachedTargetList[state.code] = state.target
+                getCachedUsageList[state.code] = state.usedBy
+                getCachedCodes.add(state.code)
+            }
+        })
     }
 
     override fun getCachedCodes(): List<String> {

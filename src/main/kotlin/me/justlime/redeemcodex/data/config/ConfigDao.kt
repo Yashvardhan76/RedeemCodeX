@@ -26,7 +26,6 @@ interface ConfigDao {
     fun getFormattedMessage(message: String, placeholders: CodePlaceHolder): String
     fun getFormattedTemplateMessage(message: String, placeholders: CodePlaceHolder): String
     fun sendMsg(key: String, placeHolder: CodePlaceHolder)
-    fun sendTemplateMsg(template: String, placeHolder: CodePlaceHolder)
     fun loadDefaultTemplateValues(template: String): RedeemTemplate
     fun getTemplate(template: String): RedeemTemplate
     fun getEntireTemplates(): List<RedeemTemplate>

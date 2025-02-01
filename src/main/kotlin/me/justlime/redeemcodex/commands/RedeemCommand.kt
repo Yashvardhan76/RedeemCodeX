@@ -153,9 +153,6 @@ class RedeemCommand(
             plugin.server.dispatchCommand(console, cmd)
         }
 
-        //Received Messages
-        config.sendTemplateMsg(redeemCode.template, placeHolder)
-
         //Received Rewards
         redeemCode.rewards.forEach { item ->
             val remaining = sender.inventory.addItem(item)
@@ -169,15 +166,14 @@ class RedeemCommand(
         }
         if (redeemCode.sound.sound != null) redeemCode.sound.playSound(sender)
         if (redeemCode.messages.text.isNotEmpty()) redeemCode.messages.sendMessage(sender, placeHolder)
-        else {
-            JLogger(plugin).logRedeemed(redeemCode.code + " by ${sender.name}")
-            config.sendMsg(JMessage.Redeem.SUCCESS, placeHolder)
-            if (config.getConfigValue("auto-delete.redeemed-codes")
-                    .toBoolean() && redeemCode.usedBy.all { redeemCode.redemption == it.value } && redeemCode.playerLimit == redeemCode.usedBy.size
-            ) {
-                codeRepo.deleteCode(redeemCode.code)
-                JLogger(plugin).logDelete(redeemCode.code)
-            }
+        else config.sendMsg(JMessage.Redeem.SUCCESS, placeHolder)
+
+        JLogger(plugin).logRedeemed(redeemCode.code + " by ${sender.name}")
+        if (config.getConfigValue("auto-delete.redeemed-codes")
+                .toBoolean() && redeemCode.usedBy.all { redeemCode.redemption == it.value } && redeemCode.playerLimit == redeemCode.usedBy.size
+        ) {
+            codeRepo.deleteCode(redeemCode.code)
+            JLogger(plugin).logDelete(redeemCode.code)
         }
         return true
 

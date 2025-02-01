@@ -156,7 +156,7 @@ code:
     missing: "&cError: Default template configuration missing; fallback defaults applied."
     invalid-amount: "&cThe amount must be a positive integer."
     invalid-range: "&cError: Invalid range for generating a code. Range must be between {min} and {max}."
-    invalid-length: "Unable to generate a unique code of length {code}. Please try a different length or name."
+    invalid-length: "Unable to generate a unique code of length {digit}. Please try a different length or name."
 
   modify:
     success: "&aCode &e{code}&a has been modified."
@@ -364,7 +364,7 @@ template:
     invalid-amount: "&cThe amount must be a positive integer."
     invalid-range: "&cError: Invalid range for generating a code. Range must be between {min} and {max}."
     invalid-template: "&e{template} &cnot found. &cFallback to &edefault&c Template for generating codes..."
-    invalid-length: "Unable to generate a unique code of length ${code}. Please try a different length or name."
+    invalid-length: "Unable to generate a unique code of length ${digit}. Please try a different length or name."
 
   modify:
     success: "&aTemplate &e{template}&a has been modified."

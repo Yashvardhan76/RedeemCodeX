@@ -21,6 +21,7 @@ import me.justlime.redeemcodex.data.repository.ConfigRepository
 import me.justlime.redeemcodex.data.repository.RedeemCodeRepository
 import me.justlime.redeemcodex.enums.JTab
 import me.justlime.redeemcodex.models.CodePlaceHolder
+import org.bukkit.command.CommandSender
 
 @Suppress("unused")
 object RedeemXAPI {
@@ -70,7 +71,7 @@ object RedeemXAPI {
         return gen.jList
     }
 
-    fun modifyCode(code: String, property: String, value: String = ""): List<String> {
+    fun modifyCode(code: String, property: String, value: String = "",sender: CommandSender? = null): List<String> {
 
         val options = mutableListOf(JTab.Modify.ENABLED, JTab.Modify.SYNC)
         val optionsWithValue = mutableListOf(
@@ -97,12 +98,12 @@ object RedeemXAPI {
         )
         else if (property in options) mutableListOf(JTab.GeneralActions.Modify.value, JTab.Type.CODE, code, property)
         else return emptyList()
-        modify.execute(sender, args)
+        modify.execute(sender ?: plugin.server.consoleSender, args)
         placeHolder = modify.placeHolder
         return modify.jList
     }
 
-    fun modifyTemplate(template: String, property: String, value: String = ""): List<String> {
+    fun modifyTemplate(template: String, property: String, value: String = "",sender: CommandSender? = null): List<String> {
         val options = mutableListOf(JTab.Modify.ENABLED, JTab.Modify.SYNC)
         val optionsWithValue = mutableListOf(
             JTab.Modify.SET_REDEMPTION,
@@ -126,7 +127,7 @@ object RedeemXAPI {
         )
         else if (property in options) mutableListOf(JTab.GeneralActions.Modify.value, JTab.Type.TEMPLATE, template, property)
         else return emptyList()
-        modify.execute(sender, args)
+        modify.execute( sender?: plugin.server.consoleSender, args)
         placeHolder = modify.placeHolder
         return modify.jList
     }

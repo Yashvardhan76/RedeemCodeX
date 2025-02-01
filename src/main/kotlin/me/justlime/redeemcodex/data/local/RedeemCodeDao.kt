@@ -24,6 +24,7 @@ interface RedeemCodeDao {
     fun deleteByCodes(codes: List<String>): Boolean
     fun deleteAllCodes(): Boolean
     fun get(code: String): RedeemCode?
+    fun lookUpCodes(codes: Set<String>): Set<String>
     fun fetch()
     fun getCachedCodes(): List<String>
     fun getCachedTargets(): MutableMap<String, MutableList<String>>
