@@ -15,9 +15,12 @@
     * [/rcx renew](#rcx-renew)
     * [/rcx reload](#rcx-reload)
     * [/rcx info](#rcx-info)
+  * [RCX Modify Properties](#rcx-modify-properties)
   * [Permissions Overview](#permissions-overview)
   * [TODO List](#todo-list)
 <!-- TOC -->
+
+---
 
 # RedeemCodeX Plugin
 
@@ -94,6 +97,26 @@ The `RCXCommand` allows administrators to manage redeem codes with the following
 ```
 /rcx info
 ```
+
+---
+
+## RCX Modify Properties
+- **`enabled`**: Enable/disable a code.
+- **`duration`**: Add/Remove/Set the validity duration of a code (e.g., 1d, 1h, 1m, 1s).
+- **`redemption`**: Set the maximum number of times a code can be redeemed.
+- **`playerLimit`**: Set the maximum number of players who can redeem a code.
+- **`permission`**: Set the permission required to redeem a code.
+- **`pin`**: Set a PIN for the code.
+- **`target`**: Set the target players or groups allowed to redeem the code.
+- **`commands`**: Add/Remove/Set the commands to execute upon code redemption.
+- **`template`**: Set the template for the code.
+- **`code sync`**: Set true/false to code to wheater sync code from template or not.
+- **`template sync`**: Set true/false to code to wheater sync code from template or not.
+- **`cooldown`**: Set the cooldown period for the code.
+- **`rewards`**: Set the rewards for the code.
+- **`messages`**: Set the messages for the code.
+- **`sound`**: Set the sound for the code.
+- **`edit`**: Edit The Rewards/Sounds/Messages
 
 ---
 
