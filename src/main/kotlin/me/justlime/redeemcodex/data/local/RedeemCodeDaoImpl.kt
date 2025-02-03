@@ -163,11 +163,7 @@ class RedeemCodeDaoImpl(private val dbManager: DatabaseManager) : RedeemCodeDao 
                 conn.autoCommit = true // Restore auto-commit
             }
         }
-        val startTime = System.currentTimeMillis()
-        fetch() // Refresh in-memory data if needed
-        val endTime = System.currentTimeMillis()
-        val timeTook2 = endTime - startTime
-        Bukkit.broadcastMessage("Executed batch in $timeTook2 ms")
+        fetch()
         return isSuccess
     }
 
