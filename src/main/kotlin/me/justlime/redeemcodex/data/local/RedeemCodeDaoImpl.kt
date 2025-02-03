@@ -111,7 +111,7 @@ class RedeemCodeDaoImpl(private val dbManager: DatabaseManager) : RedeemCodeDao 
     override fun upsertCodes(redeemCodes: List<RedeemCode>): Boolean {
 
         if (redeemCodes.isEmpty()) return false
-        val existingCodes = fetchExistingCodes(redeemCodes.map { it.code }) // Fetch all codes that exist in the DB
+        val existingCodes = fetchExistingCodes(redeemCodes.map { it.code })// Fetch all codes that exist in the DB
 
         var isSuccess = false
         dbManager.getConnection()?.use { conn ->
@@ -174,9 +174,25 @@ class RedeemCodeDaoImpl(private val dbManager: DatabaseManager) : RedeemCodeDao 
     private fun fetchExistingCodes(codes: List<String>): Set<String> {
         if (codes.isEmpty()) return emptySet()
 
-        val query = "SELECT code FROM redeem_codes WHERE code IN (${codes.joinToString(",") { "?" }})"
-        return fetchRedeemCodes(query, *codes.toTypedArray()).map { it.code }.toSet()
+        val placeholders = codes.joinToString(",") { "?" }
+        val query = "SELECT ${JProperty.CODE.property} FROM redeem_codes WHERE ${JProperty.CODE.property} IN ($placeholders)" // Use property
+
+        return dbManager.getConnection()?.use { conn ->  // Use dbManager for connection
+            conn.prepareStatement(query).use { statement ->
+                codes.forEachIndexed { index, code ->
+                    statement.setString(index + 1, code) // Set parameters individually
+                }
+
+                val resultSet = statement.executeQuery()
+                val foundCodes = mutableSetOf<String>()
+                while (resultSet.next()) {
+                    foundCodes.add(resultSet.getString(JProperty.CODE.property)) // Use property for retrieval
+                }
+                foundCodes
+            }
+        } ?: emptySet() // Handle null connection
     }
+
 
     private fun setStatementParameters(statement: PreparedStatement, redeemCode: RedeemCode) {
         val mappedData: RedeemCodeDatabase = Converter.mapRedeemCodeToDatabase(redeemCode)
@@ -301,7 +317,10 @@ class RedeemCodeDaoImpl(private val dbManager: DatabaseManager) : RedeemCodeDao 
         dbManager.getConnection()?.use { conn ->
             conn.prepareStatement(query).use { statement ->
                 params.forEachIndexed { index, param ->
-                    statement.setObject(index + 1, param)
+                    when (param) {
+                        is String -> statement.setString(index + 1, param)
+                        else -> statement.setObject(index + 1, param)
+                    }
                 }
                 val result = statement.executeQuery()
                 while (result.next()) {

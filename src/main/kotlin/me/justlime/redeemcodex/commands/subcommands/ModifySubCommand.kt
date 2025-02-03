@@ -34,9 +34,9 @@ import org.bukkit.command.CommandSender
 import org.bukkit.entity.Player
 
 //rcx modify code <code> <toggle-property> [codes]
-//rcx modify code <code> <property> <value> ([codes] //Except SetCommand, AddCommand, SetMessage, AddMessage)
+//rcx modify code <code> <property> <value> ([codes] //Except SetCommand, AddCommand)
 //rcx modify template <template> <toggle-property> [codes]
-//rcx modify template <template> <property> <value> ([codes] //Except SetCommand, AddCommand, SetMessage, AddMessage)
+//rcx modify template <template> <property> <value> ([codes] //Except SetCommand, AddCommand)
 
 class ModifySubCommand(private val plugin: RedeemCodeX) : JSubCommand {
     private val config = ConfigRepository(plugin)

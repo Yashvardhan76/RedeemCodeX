@@ -1,5 +1,5 @@
 name: RedeemX
-version: 1.0-EAP
+version: 1.3-EAP
 main: me.justlime.redeemcodex.RedeemCodeX
 api-version: 1.13
 softdepend: ["PlaceholderAPI"]
@@ -28,6 +28,9 @@ permissions:
       redeemx.admin.use.delete_all: true
       redeemx.admin.use.renew: true
       redeemx.admin.use.reload: true
+      redeemx.admin.use.info: true
+      redeemx.admin.use.preview: true
+      redeemx.admin.use.usage: true
 
   redeemx.admin.use.gen:
     description: Permission to generate redeemable codes.
@@ -59,7 +62,7 @@ permissions:
 
   redeemx.admin.use.info:
     description: Permission to view plugin information.
-    default: true
+    default: op
 
   redeemx.use:
     description: Permission to redeem codes.
