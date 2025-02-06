@@ -70,6 +70,11 @@ logger:
   modify: true #Log The Code And Template with Modified Time
   delete: true #Log The Code And Template with deleted Time
   redeemed: true #Log The Player with Code who Redeemed with redeemed Time
+  webhook:
+    enabled: false #Set true to enabled webhook.
+    url: "YOUR_DISCORD_WEBHOOK_URL" #  #Optional: Set your discord webhook url to send logs to discord.
+
+  #Note if you Genrate Bulk Codes and webhook is enabled it cost time
 
 #Don't change it unless you know what you are doing
 database:

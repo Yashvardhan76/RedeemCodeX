@@ -94,6 +94,7 @@ class JLogger(private val plugin: RedeemCodeX) {
             FileWriter(logFile, true).use { writer ->
                 writer.appendLine(logMessage)
             }
+            DiscordLogger.sendDiscordLog(logMessage)
         } catch (e: IOException) {
             plugin.logger.severe("Failed to write to log file: ${e.message}")
         }

@@ -26,11 +26,9 @@ dependencies {
     compileOnly("org.spigotmc:spigot-api:1.21.1-R0.1-SNAPSHOT")
 
     compileOnly("me.clip:placeholderapi:2.11.6")
-//    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-bukkit:1.7.3") TODO
 
     // Kotlin Standard Library for JDK 8 features
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
-//    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3") TODO
     // HikariCP for efficient JDBC connection pooling
     implementation("com.zaxxer:HikariCP:4.0.3")
 

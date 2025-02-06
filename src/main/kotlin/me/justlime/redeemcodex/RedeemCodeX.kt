@@ -19,8 +19,10 @@ import me.justlime.redeemcodex.data.config.ConfigManager
 import me.justlime.redeemcodex.data.local.DatabaseManager
 import me.justlime.redeemcodex.data.local.RedeemCodeDaoImpl
 import me.justlime.redeemcodex.data.repository.ConfigRepository
+import me.justlime.redeemcodex.enums.JFiles
 import me.justlime.redeemcodex.gui.holders.GUIHandle
 import me.justlime.redeemcodex.listener.ListenerManager
+import me.justlime.redeemcodex.utilities.DiscordLogger
 import org.bukkit.Bukkit
 import org.bukkit.plugin.java.JavaPlugin
 import java.sql.SQLException
@@ -52,6 +54,11 @@ class RedeemCodeX : JavaPlugin() {
             this.logger.info("\u001B[32mSuccessfully fetched redeem codes from database\u001B[0m")
         } catch (e: SQLException) {
             this.logger.log(Level.SEVERE, "Failed to fetch redeem codes from database", e)
+        }
+        if(configManager.getConfig(JFiles.CONFIG).getBoolean("logger.webhook.enabled")){
+            Bukkit.getScheduler().runTaskTimerAsynchronously(this, Runnable {
+                DiscordLogger.run()
+            }, 0, 20 * 3)
         }
 
         configRepo = ConfigRepository(this)

@@ -9,12 +9,13 @@ commands:
     usage: "/rcx <subcommand>"
     description: Main command for managing redeemable codes.
     aliases: [redeemx,redeemcodex]
+    permission: redeemx.admin.use
 
   redeem:
     usage: "/redeem <code>"
     description: Redeem a code for rewards.
     permission: redeemx.use
-    aliases: [claim, voucher]
+    aliases: [voucher]
 
 permissions:
   redeemx.admin.use.*:
