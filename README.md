@@ -101,22 +101,110 @@ The `RCXCommand` allows administrators to manage redeem codes with the following
 ---
 
 ## RCX Modify Properties
-- **`enabled`**: Enable/disable a code.
-- **`duration`**: Add/Remove/Set the validity duration of a code (e.g., 1d, 1h, 1m, 1s).
+- **`enabled`**: toggle Enable/disable a code/template.
+```
+/rcx modify code <code> enabled
+/rcx modify template <template> enabled
+```
+
 - **`redemption`**: Set the maximum number of times a code can be redeemed.
+```
+/rcx modify code <code> redemption <value>
+/rcx modify template <template> redemption <value>
+```
+
 - **`playerLimit`**: Set the maximum number of players who can redeem a code.
+```
+/rcx modify code <code> playerLimit <value>
+/rcx modify template <template> playerLimit <value>
+```
+
 - **`permission`**: Set the permission required to redeem a code.
+```
+/rcx modify code <code> permission <value>
+/rcx modify template <template> permission <value>
+```
+
 - **`pin`**: Set a PIN for the code.
+```
+/rcx modify code <code> pin <value>
+/rcx modify template <template> pin <value>
+```
+
 - **`target`**: Set the target players or groups allowed to redeem the code.
-- **`commands`**: Add/Remove/Set the commands to execute upon code redemption.
+```
+/rcx modify code <code> addTarget <player> <player> <player>...
+/rcx modify code <code> removeTarget <player> <player> <player>...
+/rcx modify code <code> setTarget <player> <player> <player>...
+```
+
+- **`duration`**: Add/Remove/Set the validity duration of a code (e.g. value 1d, 1h, 1m, 1s).
+```
+/rcx modify code <code> addDuration <value>
+/rcx modify template <template> addDuration <value>
+
+/rcx modify code <code> setDuration <value>
+/rcx modify template <template> setDuration <value>
+
+/rcx modify code <code> removeDuration <value>
+/rcx modify template <template> removeDuration <value>
+```
+
+- **`cooldown`**: Set the cooldown period for the code. (e.g.value 1d, 1h, 1m, 1s)
+```
+/rcx modify code <code> cooldown <value>
+/rcx modify template <template> cooldown <value>
+
+```
+
+- **`Commands`**: Add/Remove/Set the commands to execute upon code redemption.
+```
+/rcx modify code <code> addCommand <command>
+/rcx modify template <template> addCommand <command>
+
+/rcx modify code <code> removeCommand <id>
+/rcx modify template <template> removeCommand <id>
+
+/rcx modify code <code> setCommand <id> <command>
+/rcx modify template <template> setCommand <id> <command>
+
+```
+
 - **`template`**: Set the template for the code.
-- **`code sync`**: Set true/false to code to wheater sync code from template or not.
-- **`template sync`**: Set true/false to code to wheater sync code from template or not.
-- **`cooldown`**: Set the cooldown period for the code.
-- **`rewards`**: Set the rewards for the code.
-- **`messages`**: Set the messages for the code.
-- **`sound`**: Set the sound for the code.
-- **`edit`**: Edit The Rewards/Sounds/Messages
+```
+/rcx modify code <code> template <template>
+
+```
+
+- **`sync`**: toggle true/false to sync properities.
+```
+/rcx modify code <code> sync
+/rcx modify template <template> sync 
+
+```
+
+
+
+- **`rewards`**: Edit the rewards for the code. (Open in GUI)
+```
+/rcx modify code <code> edit rewards
+/rcx modify template <template> edit rewards
+
+```
+
+- **`messages`**: Edit the messages for the code. (Open in GUI)
+```
+/rcx modify code <code> edit messages
+/rcx modify template <template> messages
+
+```
+
+- **`sound`**: Edit the sound for the code. (Open in GUI)
+```
+/rcx modify code <code> edit sound
+/rcx modify template <template> sound
+
+```
 
 ---
 
