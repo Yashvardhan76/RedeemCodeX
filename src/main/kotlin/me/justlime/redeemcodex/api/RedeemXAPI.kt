@@ -40,7 +40,7 @@ object RedeemXAPI {
      * @param uniqueName The unique name of the code to generate.
      * @return List of Code if Success else empty List
      **/
-    fun generateCode(uniqueName: String, template: String = "default"): List<String> {
+    fun generateCode(uniqueName: String, template: String = "DEFAULT"): List<String> {
         val args = mutableListOf(JTab.GeneralActions.Gen.value, JTab.Type.CODE, uniqueName, template)
         val gen = GenerateSubCommand(plugin)
         gen.execute(sender, args)
@@ -49,13 +49,13 @@ object RedeemXAPI {
     }
 
     /**
-     *      * Generate Numeric Codes
+     *      Generate Numeric Codes
      *
      * @param digit The number of digits to generate for each code.
      * @param amount The number of codes to generate.
      * @return List of Code if Success else empty List
      */
-    fun generateCode(digit: Int, amount: Int = 1, template: String = "default"): List<String> {
+    fun generateCode(digit: Int, amount: Int = 1, template: String = "DEFAULT"): List<String> {
         val args = mutableListOf(JTab.GeneralActions.Gen.value, JTab.Type.CODE, digit.toString(), template, amount.toString())
         val gen = GenerateSubCommand(plugin)
         gen.execute(sender, args)
