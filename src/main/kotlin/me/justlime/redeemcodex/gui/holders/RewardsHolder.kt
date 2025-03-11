@@ -14,7 +14,6 @@ package me.justlime.redeemcodex.gui.holders
 
 import me.justlime.redeemcodex.RedeemCodeX
 import me.justlime.redeemcodex.api.RedeemXAPI
-import me.justlime.redeemcodex.commands.subcommands.ModifySubCommand
 import me.justlime.redeemcodex.data.repository.ConfigRepository
 import me.justlime.redeemcodex.data.repository.RedeemCodeRepository
 import me.justlime.redeemcodex.enums.JFiles
@@ -42,12 +41,13 @@ class RewardsHolder(val sender: Player, private val redeemData: RedeemType, row:
     private val guiConfig =
         plugin.configManager.getConfig(JFiles.GUI).getConfigurationSection("rewards") ?: plugin.configManager.getConfig(JFiles.GUI)
             .createSection("rewards")
+    private var outLinedSlots: List<Int> = listOf()
 
     override fun getInventory(): Inventory = inventory
 
     override fun loadContent() {
         inventory.clear()
-        InventoryManager.outlineInventory(inventory)
+        outLinedSlots = InventoryManager.outlineInventory(inventory)
         val saveItem = guiConfig.getConfigurationSection("save.item") ?: guiConfig.createSection("save.item")
         val saveMaterial = saveItem.getString("material")?.let { Material.valueOf(it) } ?: Material.NETHER_STAR
         val saveName = JService.applyColors(saveItem.getString("name") ?: "").replace("{code}", getRedeemName())
@@ -57,12 +57,15 @@ class RewardsHolder(val sender: Player, private val redeemData: RedeemType, row:
     }
 
     override fun onClick(event: InventoryClickEvent, clickedInventory: Inventory, player: Player) {
-        val playerInventory = player.inventory
-        val upperInventory = event.inventory
-        event.isCancelled = true
-        if (clickedInventory === playerInventory) handlePlayerInventoryClick(event, player, upperInventory)
-        if (clickedInventory === upperInventory) handleGuiClick(event, player, upperInventory)
-        return
+        if (clickedInventory != inventory) return
+        if (event.slot in outLinedSlots) event.isCancelled = true
+        if (event.clickedInventory == null) return
+        val saveItemSlot: Int = guiConfig.getInt("save.item.slot", 49)
+
+        if (event.clickedInventory == inventory && event.slot == saveItemSlot ) {
+                saveInventoryItems(plugin, inventory)
+                player.closeInventory()
+        }
     }
 
     override fun onOpen(event: InventoryOpenEvent, player: Player) {
@@ -113,14 +116,8 @@ class RewardsHolder(val sender: Player, private val redeemData: RedeemType, row:
     private fun handleGuiClick(event: InventoryClickEvent, player: Player, rewardsInventory: Inventory) {
         val clickedItem = event.currentItem ?: return
         if (clickedItem.type == Material.AIR) return
-        val saveItemSlot: Int = guiConfig.getInt("save.item.slot", 49)
-        if (inventory === rewardsInventory && event.slot == saveItemSlot) {
-            saveInventoryItems(plugin, inventory)
-            player.closeInventory()
-            return
-        }
+
         if (event.slot !in selectedSlots) return
-        if (event.click.isShiftClick) rewardsInventory.setItem(event.slot, null) // Remove from GUI
         resortInventory(rewardsInventory) // Resort rewards GUI
     }
 
@@ -167,7 +164,7 @@ class RewardsHolder(val sender: Player, private val redeemData: RedeemType, row:
                         return false
                     }
                     configRepo.sendMsg(JMessage.Template.Gui.Save.REWARDS, placeHolder)
-                    RedeemXAPI.modifyTemplate(redeemData.redeemTemplate.name,JProperty.SYNC.property, sender = player)
+                    RedeemXAPI.modifyTemplate(redeemData.redeemTemplate.name, JProperty.SYNC.property, sender = player)
                     return true
                 } catch (e: Exception) {
                     configRepo.sendMsg(JMessage.Template.Modify.FAILED, placeHolder)

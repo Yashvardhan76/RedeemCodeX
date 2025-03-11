@@ -32,5 +32,7 @@ enum class JProperty(val property: String) {
     REWARDS("rewards"),
     Message("messages"),
     Sound("sound"),
+    PlayerIp("ip"),
+    Condition("condition"),
     MODIFIED("modified") //Last Modified at
 }

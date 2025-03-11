@@ -14,45 +14,145 @@ package me.justlime.redeemcodex.gui
 
 import me.justlime.redeemcodex.api.RedeemXAPI
 import me.justlime.redeemcodex.enums.JFiles
+import me.justlime.redeemcodex.enums.JProperty
+import me.justlime.redeemcodex.enums.RedeemType
+import me.justlime.redeemcodex.gui.holders.TemplateHolder
+import me.justlime.redeemcodex.gui.holders.ValueHolder
+import me.justlime.redeemcodex.models.CodePlaceHolder
+import me.justlime.redeemcodex.models.RedeemTemplate
 import me.justlime.redeemcodex.utilities.JService
 import org.bukkit.Material
+import org.bukkit.configuration.ConfigurationSection
 import org.bukkit.enchantments.Enchantment
+import org.bukkit.entity.Player
 import org.bukkit.inventory.Inventory
 import org.bukkit.inventory.ItemFlag
 import org.bukkit.inventory.ItemStack
 
 object InventoryManager {
+    val pluginInstance = RedeemXAPI.getPlugin()
+    val isPlaceHolderHooked = { RedeemXAPI.getPlugin().server.pluginManager.isPluginEnabled("PlaceholderAPI") }
     val selectedSlots = listOf(10..16, 19..25, 28..34, 37..43).flatMap { it.step(1).toList() }
     val outlinedSlotsFull = listOf(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 17, 18, 26, 27, 35, 36, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53)
     val outlinedSlotsHalf = listOf(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26)
     var timeOut: Long = 600L //In seconds
 
-    fun outlineInventory(inventory: Inventory, size: Int = 6) {
-        val guiConfig = RedeemXAPI.getPlugin().configManager.getConfig(JFiles.GUI)
-        val borderItem = guiConfig.getConfigurationSection("border.item") ?: return
-        val material = borderItem.getString("material")
-            ?.let { if (Material.valueOf(it) == Material.AIR) Material.RED_STAINED_GLASS_PANE else Material.valueOf(it) }
-            ?: Material.RED_STAINED_GLASS_PANE
-        val name = JService.applyColors(borderItem.getString("name") ?: "")
-        val lore = borderItem.getStringList("lore").map { JService.applyColors(it) }
-        val glint = borderItem.getBoolean("glint", false)
-        val item = createItem(material, name, lore, glint)
-
-        if (size == 6) outlinedSlotsFull.forEach { inventory.setItem(it, item) }
-        if (size == 3) outlinedSlotsHalf.forEach { inventory.setItem(it, item) }
+    fun outlineInventory(inventory: Inventory): List<Int> {
+        val item = Material.valueOf(pluginInstance.configManager.getConfig(JFiles.GUI).getString("outline.material") ?: "GRAY_STAINED_GLASS_PANE")
+        val itemStack = ItemStack(item)
+        val itemMeta = itemStack.itemMeta.apply {
+            this?.itemFlags?.clear()
+        }
+        itemStack.itemMeta = itemMeta
+        val slots = mutableListOf<Int>()
+        for (i in 0 until inventory.size) {
+            if (i in 0..8 || i >= inventory.size - 9 || i % 9 == 0 || (i + 1) % 9 == 0) {
+                inventory.setItem(i, itemStack)
+                slots.add(i)
+            }
+        }
+        return slots
     }
 
-    fun createItem(material: Material, name: String, lore: List<String>, glint: Boolean): ItemStack {
+    fun createItem(material: Material, name: String, lore: List<String>, glint: Boolean, flags: MutableList<String> = mutableListOf(),qty: Int = 0):
+            ItemStack {
         return ItemStack(material).apply {
             itemMeta = itemMeta?.apply {
                 setDisplayName(name)
+                setLore(lore) // Use setLore() for better compatibility
+
+                // Apply enchantment for glint effect
                 if (glint) {
-                    this.addEnchant(Enchantment.UNBREAKING, 1, true)
-                    this.addItemFlags(ItemFlag.HIDE_ENCHANTS)
+                    addEnchant(Enchantment.UNBREAKING, 1, true)
                 }
-                this.lore = lore
+                if (flags.isNotEmpty()) {
+                    flags.forEach {
+                        try {
+                            addItemFlags(ItemFlag.valueOf(it))
+                        } catch (e: IllegalArgumentException) {
+                            RedeemXAPI.getPlugin().logger.warning("Unknown flag: $it at item: $name")
+                        }
+                    }
+                }
+
+            }
+            amount = qty
+        }
+    }
+
+    fun loadItem(
+        section: ConfigurationSection,
+        inventory: Inventory,
+        placeHolder: CodePlaceHolder,
+        slots: List<Int> = listOf(),
+        lore: MutableList<String> = mutableListOf()
+    ): List<Int> {
+        val flags = section.getStringList("flags")
+        val material = try {
+            Material.valueOf(section.getString("item") ?: "PAPER")
+        } catch (e: Exception) {
+            pluginInstance.logger.warning("Invalid material: ${section.getString("item")} at item: ${section.getString("name")}")
+            Material.PAPER
+        }
+        val nameWithPH = JService.applyPlaceholders(section.getString("name") ?: "", placeHolder, isPlaceHolderHooked)
+        val name = JService.applyColors(nameWithPH)
+        val newLoreWithPH = if (lore.isEmpty()) section.getStringList("lore")
+            .map { JService.applyPlaceholders(it ?: "", placeHolder, isPlaceHolderHooked) } else lore
+        val newLore = newLoreWithPH.map { JService.applyColors(it) }
+        val glow = section.getBoolean("glow")
+        val slotList = section.getIntegerList("slot")
+        val item = createItem(material, name, newLore, glow, flags)
+        if (slots.isNotEmpty()) {
+            slots.forEach { inventory.setItem(it, item) }
+            return slots
+        }
+        if (slotList.isNotEmpty()) {
+            try {
+                slotList.forEach {
+                    inventory.setItem(it, item)
+                }
+                return slotList
+            } catch (e: Exception) {
+                pluginInstance.logger.warning("Invalid slot: $slotList at item: $nameWithPH")
             }
         }
+        try {
+            val slot = section.getString("slot", " ")?.toIntOrNull()
+            if (slot == null) return listOf()
+            inventory.setItem(slot, item)
+            return listOf(slot)
+        } catch (e: Exception) {
+            pluginInstance.logger.warning("Invalid slot: ${section.getString("slot")} at item: ${section.getString("name")}")
+            return listOf()
+        }
+    }
+
+    fun createCertainItem(section: ConfigurationSection, itemSlot: Int, itemSlots: List<Int>, inventory: Inventory) {
+        val backMaterial = Material.valueOf(section.getString("item") ?: "PAPER")
+        val backName = JService.applyColors(section.getString("name") ?: " ")
+        val backLore = section.getStringList("lore").map { JService.applyColors(it) }
+        val backGlow = section.getBoolean("glow")
+        val flags = section.getStringList("flags")
+        if (itemSlots.isNotEmpty()) {
+            itemSlots.forEach { inventory.setItem(it, createItem(backMaterial, backName, backLore, backGlow, flags)) }
+        }
+        inventory.setItem(itemSlot, createItem(backMaterial, backName, backLore, backGlow, flags))
+    }
+
+    fun openTemplateSetting(player: Player, redeemTemplate: RedeemTemplate): Boolean {
+        val row = 6
+        val title = "Editing " + redeemTemplate.name
+        val inventory = TemplateHolder(player,row,title,redeemTemplate).inventory
+        player.openInventory(inventory)
+        return true
+    }
+
+    fun openValueHolder(player: Player,redeemTemplate: RedeemTemplate,property: JProperty): Boolean {
+        val row = 6
+        val title = "Editing " + redeemTemplate.name
+        val inventory = ValueHolder(row,title,RedeemType.Template(redeemTemplate),property).inventory
+        player.openInventory(inventory)
+        return true
     }
 
 }

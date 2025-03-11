@@ -40,5 +40,7 @@ data class RedeemCode(
     var rewards: MutableList<ItemStack> = mutableListOf(),
     var messages: MessageState,
     var sound: SoundState,
+    var playerIp: MutableMap<String, String>,//Key - Ip, Value - PlayerName
+    var condition: String,
     var modified: Timestamp
 )

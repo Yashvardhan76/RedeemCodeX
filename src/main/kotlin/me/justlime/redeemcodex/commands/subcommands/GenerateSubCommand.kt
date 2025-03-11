@@ -14,8 +14,6 @@
 package me.justlime.redeemcodex.commands.subcommands
 
 import me.justlime.redeemcodex.RedeemCodeX
-import me.justlime.redeemcodex.api.RedeemXAPI.generateCode
-import me.justlime.redeemcodex.api.RedeemXAPI.generateTemplate
 import me.justlime.redeemcodex.commands.JSubCommand
 import me.justlime.redeemcodex.data.repository.ConfigRepository
 import me.justlime.redeemcodex.data.repository.RedeemCodeRepository
@@ -46,7 +44,6 @@ class GenerateSubCommand(private val plugin: RedeemCodeX) : JSubCommand {
     override fun execute(sender: CommandSender, args: MutableList<String>): Boolean {
         this.sender = sender
         placeHolder = CodePlaceHolder(sender, args)
-        // Validate minimum arguments
         if (!hasPermission(sender)) {
             sendMessage(JMessage.Command.NO_PERMISSION)
             return true
@@ -56,7 +53,7 @@ class GenerateSubCommand(private val plugin: RedeemCodeX) : JSubCommand {
             return false
         }
 
-        val type = args[1].lowercase()
+        val category = args[1].lowercase()
         val digit = args[2].toIntOrNull()
         val amount = if (digit != null) args.getOrNull(4)?.toIntOrNull() ?: 1 else 1
 
@@ -66,13 +63,12 @@ class GenerateSubCommand(private val plugin: RedeemCodeX) : JSubCommand {
                 handleNumericGeneration(digit, args.getOrNull(3) ?: "DEFAULT")
             } else handleCodeCreation(args[2], args.getOrNull(3) ?: "DEFAULT") ?: return true
 
-            if (cacheCode != null) {
+            if (cacheCode != null && digit != null) {
                 val textCodes = generateCode(cacheCode.code.length, amount, mutableSetOf(cacheCode.code)).toMutableList()
                 textCodes.add(0, cacheCode.code)
 
                 for (index in 1..amount) {
                     if (textCodes.isEmpty()) break
-
                     try {
                         val newCode = cacheCode.copy(code = textCodes[index])
                         codes.add(newCode)
@@ -81,6 +77,8 @@ class GenerateSubCommand(private val plugin: RedeemCodeX) : JSubCommand {
                         break
                     }
                 }
+            } else if (cacheCode != null) {
+                codes.add(cacheCode)
             }
             placeHolder.codeGenerateDigit = digit.toString()
             if (isDefaultLoaded) sendMessage(JMessage.Code.Generate.MISSING)
@@ -107,7 +105,7 @@ class GenerateSubCommand(private val plugin: RedeemCodeX) : JSubCommand {
             return true
         }
         if (args[1] == JTab.Type.CODE && amount < 1) sendMessage(JMessage.Code.Generate.INVALID_AMOUNT)
-        if (type == JTab.Type.TEMPLATE) {
+        if (category == JTab.Type.TEMPLATE) {
             generateTemplate(args[2].uppercase())
             if (isDefaultLoaded) sendMessage(JMessage.Code.Generate.MISSING)
             // Reset
@@ -157,7 +155,7 @@ class GenerateSubCommand(private val plugin: RedeemCodeX) : JSubCommand {
         val template = config.loadDefaultTemplateValues(templateName)
         template.defaultSync = true
         config.createTemplate(template)
-        JLogger(plugin).logGenerate("$templateName (TEMPLATE)")
+        JLogger(plugin).logGenerate("$templateName (TEMPLATE)", sender.name)
         sendMessage(JMessage.Template.Generate.SUCCESS)
         return true
     }
@@ -193,30 +191,36 @@ class GenerateSubCommand(private val plugin: RedeemCodeX) : JSubCommand {
         return redeemCode
     }
 
-    private fun createRedeemCode(code: String, redeemTemplate: RedeemTemplate): RedeemCode = RedeemCode(
-        code = code.uppercase(),
-        template = redeemTemplate.name,
-        commands = redeemTemplate.commands,
-        validFrom = JService.getCurrentTime(),
-        duration = redeemTemplate.duration,
-        enabledStatus = true,
-        redemption = redeemTemplate.redemption,
-        playerLimit = redeemTemplate.playerLimit,
-        permission = if (redeemTemplate.permissionRequired) redeemTemplate.permissionValue.replace("{code}", code.lowercase()) else "",
-        pin = redeemTemplate.pin,
-        sync = redeemTemplate.defaultSync,
-        usedBy = mutableMapOf(),
-        target = mutableListOf(),
-        lastRedeemed = mutableMapOf(),
-        cooldown = "0s",
-        modified = JService.getCurrentTime(),
-        rewards = redeemTemplate.rewards,
-        sound = SoundState(
-            sound = if (redeemTemplate.sound in Sound.entries.map { it.name }) Sound.valueOf(redeemTemplate.sound.uppercase())
-            else null, volume = redeemTemplate.soundVolume, pitch = redeemTemplate.soundPitch
-        ),
-        messages = redeemTemplate.messages,
-    )
+    private fun createRedeemCode(code: String, redeemTemplate: RedeemTemplate): RedeemCode {
+        val soundName = redeemTemplate.sound.uppercase()
+        val soundEnum = enumValues<Sound>().find { it.name.equals(soundName, ignoreCase = true) }
+
+        return RedeemCode(
+            code = code.uppercase(),
+            template = redeemTemplate.name,
+            commands = redeemTemplate.commands,
+            validFrom = JService.getCurrentTime(),
+            duration = redeemTemplate.duration,
+            enabledStatus = true,
+            redemption = redeemTemplate.redemption,
+            playerLimit = redeemTemplate.playerLimit,
+            permission = if (redeemTemplate.permissionRequired) redeemTemplate.permissionValue.replace("{code}", code.lowercase()) else "",
+            pin = redeemTemplate.pin,
+            sync = redeemTemplate.defaultSync,
+            usedBy = mutableMapOf(),
+            target = mutableListOf(),
+            lastRedeemed = mutableMapOf(),
+            cooldown = "0s",
+            modified = JService.getCurrentTime(),
+            rewards = redeemTemplate.rewards,
+            sound = SoundState(
+                sound = soundEnum, volume = redeemTemplate.soundVolume, pitch = redeemTemplate.soundPitch
+            ),
+            messages = redeemTemplate.messages,
+            playerIp = mutableMapOf(),
+            condition = redeemTemplate.condition
+        )
+    }
 
     private fun upsertRedeemCode(redeemCode: RedeemCode) {
         try {
@@ -225,7 +229,7 @@ class GenerateSubCommand(private val plugin: RedeemCodeX) : JSubCommand {
                 placeHolder.code = redeemCode.code
                 sendMessage(JMessage.Code.Generate.SUCCESS)
                 generatedCodesList.add(redeemCode.code)
-                JLogger(plugin).logGenerate(redeemCode.code + " - ${redeemCode.template}")
+                JLogger(plugin).logGenerate(redeemCode.code + " - ${redeemCode.template}", sender.name)
             } else sendMessage(JMessage.Code.Generate.FAILED)
 
         } catch (e: Exception) {
@@ -243,10 +247,10 @@ class GenerateSubCommand(private val plugin: RedeemCodeX) : JSubCommand {
                 else redeemCodes.subList(0, displayAmount + 1).joinToString(" ") { it.code }.plus("...")
                 if (redeemCodes.size > 1000) {
                     val log = redeemCodes.map { it.code }.joinToString(", ")
-                    JLogger(plugin).logGenerate("${redeemCodes[0].template.uppercase()} - " + log)
+                    JLogger(plugin).logGenerate("${redeemCodes[0].template.uppercase()} - " + log, sender.name)
                 } else {
                     redeemCodes.forEach {
-                        JLogger(plugin).logGenerate(it.code + " - ${redeemCodes[0].template.uppercase()}")
+                        JLogger(plugin).logGenerate(it.code + " - ${redeemCodes[0].template.uppercase()}", sender.name)
                     }
                 }
 

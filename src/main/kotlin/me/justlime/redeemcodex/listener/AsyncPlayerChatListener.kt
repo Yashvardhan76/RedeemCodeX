@@ -14,6 +14,7 @@ package me.justlime.redeemcodex.listener
 
 import org.bukkit.entity.Player
 import org.bukkit.event.EventHandler
+import org.bukkit.event.EventPriority
 import org.bukkit.event.Listener
 import org.bukkit.event.player.AsyncPlayerChatEvent
 import java.util.concurrent.ConcurrentHashMap
@@ -56,7 +57,7 @@ class AsyncPlayerChatListener : Listener {
     /**
      * Event handler for player chat input.
      */
-    @EventHandler
+    @EventHandler(priority = EventPriority.HIGHEST)
     fun onChat(event: AsyncPlayerChatEvent) {
         val player = event.player
         val callback = playerCallbacks[player] ?: return

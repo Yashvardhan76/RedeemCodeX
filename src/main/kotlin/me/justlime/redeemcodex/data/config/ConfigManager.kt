@@ -42,7 +42,6 @@ class ConfigManager(val plugin: RedeemCodeX) {
     fun getConfig(configFile: JFiles): FileConfiguration {
         if (!plugin.dataFolder.exists()) plugin.dataFolder.mkdir()
         val file = getFile(configFile)
-
         if (!file.exists()) {
             plugin.logger.log(Level.WARNING, "File not found: ${file.name}. Falling back to default or generating new.")
             if (configFile == JFiles.MESSAGES) {

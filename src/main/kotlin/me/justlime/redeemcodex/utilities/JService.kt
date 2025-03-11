@@ -15,6 +15,7 @@ package me.justlime.redeemcodex.utilities
 import me.clip.placeholderapi.PlaceholderAPI
 import me.justlime.redeemcodex.models.CodePlaceHolder
 import me.justlime.redeemcodex.models.RedeemCode
+import net.kyori.adventure.text.minimessage.MiniMessage
 import org.bukkit.ChatColor
 import org.bukkit.entity.Player
 import java.sql.Timestamp
@@ -26,6 +27,8 @@ object JService {
     fun getCurrentTime(): Timestamp {
         return Timestamp.from(Instant.now())
     }
+    var miniMessage = MiniMessage.miniMessage();
+
 
     fun adjustDuration(existingDuration: String, adjustmentDuration: String, isAdding: Boolean): String {
         val totalExistingSeconds = parseDurationToSeconds(existingDuration)
@@ -154,6 +157,7 @@ object JService {
 
             "template" to placeholder.template,
             "locked" to placeholder.templateLocked,
+            "sound" to placeholder.sound,
 
             "min" to placeholder.minLength,
             "max" to placeholder.maxLength,

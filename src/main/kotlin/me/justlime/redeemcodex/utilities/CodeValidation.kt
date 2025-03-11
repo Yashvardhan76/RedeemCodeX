@@ -28,25 +28,29 @@ class CodeValidation(val plugin: RedeemCodeX, private val userCode: String, priv
     lateinit var redeemCode: RedeemCode
 
     fun isPlayerOnCooldown(): Boolean {
-        val COOLDOWN_KEY = NamespacedKey(plugin, "cooldown")
+        val cooldownKey = NamespacedKey(plugin, "cooldown")
         val cooldown = plugin.configRepo.getConfigValue("redeem-command.cooldown")
-        if(sender !is Player) return false
+        if (sender !is Player) return false
 
         fun getLastRedeemed(): Long {
             val container = sender.persistentDataContainer
-            return  container.get(COOLDOWN_KEY, PersistentDataType.LONG) ?: 0L
+            return container.get(cooldownKey, PersistentDataType.LONG) ?: 0L
         }
+
         fun setLastRedeemed(timestamp: Long) {
             val container = sender.persistentDataContainer
-            container.set(COOLDOWN_KEY, PersistentDataType.LONG, timestamp)
+            container.set(cooldownKey, PersistentDataType.LONG, timestamp)
         }
+
         val onCooldown: Boolean = JService.onCoolDown(cooldown, mutableMapOf(sender.name to Timestamp(getLastRedeemed())), sender.name)
-        if (!onCooldown){ setLastRedeemed(JService.getCurrentTime().time) }
+        if (!onCooldown) {
+            setLastRedeemed(JService.getCurrentTime().time)
+        }
         return onCooldown
     }
 
     private fun isValidCode(code: String): Boolean {
-        return code.matches(Regex("^[a-zA-Z0-9]{1,100}$"))
+        return code.matches(Regex("^[a-zA-Z0-9_-]{1,100}$"))
     }
 
     fun isCodeExist(): Boolean {
@@ -55,7 +59,8 @@ class CodeValidation(val plugin: RedeemCodeX, private val userCode: String, priv
         return true
     }
 
-    fun isReachedMaximumRedeem(sender: CommandSender): Boolean {
+    fun isReachedMaximumRedeem(sender: Player): Boolean {
+        if (!isIpEligible(sender, redeemCode)) return true
         if (redeemCode.redemption <= 0) return false
         return (redeemCode.usedBy[sender.name] ?: 0) >= redeemCode.redemption
     }
@@ -86,7 +91,7 @@ class CodeValidation(val plugin: RedeemCodeX, private val userCode: String, priv
     }
 
     fun isPinRequired(): Boolean {
-        return redeemCode.pin > 0
+        return redeemCode.pin.takeIf { it > 0 } != null
     }
 
     fun isCorrectPin(pin: Int): Boolean {
@@ -103,20 +108,35 @@ class CodeValidation(val plugin: RedeemCodeX, private val userCode: String, priv
     }
 
     fun isCooldown(placeHolder: CodePlaceHolder): Boolean {
-        if (JService.onCoolDown(redeemCode.cooldown, redeemCode.lastRedeemed, sender.name)) {
-            val lastRedeemedTime = redeemCode.lastRedeemed[sender.name]?.time
-            if (lastRedeemedTime != null) {
-                val currentTimeMillis = JService.getCurrentTime().time
-                val elapsedTimeInSeconds =
-                    (lastRedeemedTime / 1000) + JService.parseDurationToSeconds(redeemCode.cooldown) - (currentTimeMillis / 1000)
-                val duration = JService.adjustDuration(JService.formatSecondsToDuration(elapsedTimeInSeconds), "0s", true)
-                placeHolder.cooldown = duration
-            }
-            return true
-        }
-        redeemCode.lastRedeemed[sender.name] = JService.getCurrentTime()
+        val lastRedeemedTime = redeemCode.lastRedeemed[sender.name]?.time ?: return false
+        val currentTimeMillis = JService.getCurrentTime().time
+        val cooldownSeconds = JService.parseDurationToSeconds(redeemCode.cooldown)
 
-        return false
+        val elapsedTimeInSeconds = (lastRedeemedTime / 1000) + cooldownSeconds - (currentTimeMillis / 1000)
+
+        return if (elapsedTimeInSeconds > 0) {
+            placeHolder.cooldown = JService.adjustDuration(JService.formatSecondsToDuration(elapsedTimeInSeconds), "0s", true)
+            true
+        } else {
+            redeemCode.lastRedeemed[sender.name] = JService.getCurrentTime()
+            false
+        }
     }
 
+    private fun isIpEligible(player: Player, code: RedeemCode): Boolean {
+        return true
+        val playerIpAddress = player.address?.address?.hostAddress ?: return false
+
+        // Get all accounts that have used this IP
+        val accountsOnThisIp = code.playerIp.filter { it.key == playerIpAddress }.values
+
+        // No previous usage, allow redemption
+        if (accountsOnThisIp.isEmpty()) return true
+
+        // Sum total redemptions across all accounts with this IP
+        val totalRedemptions = accountsOnThisIp.sumOf { code.usedBy[it] ?: 0 }
+
+        // Return true only if total redemptions are within limit
+        return totalRedemptions < code.redemption
+    }
 }

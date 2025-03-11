@@ -13,7 +13,6 @@
 
 package me.justlime.redeemcodex.data.config
 
-
 import me.justlime.redeemcodex.RedeemCodeX
 import me.justlime.redeemcodex.enums.JFiles
 import me.justlime.redeemcodex.enums.JMessage
@@ -158,8 +157,8 @@ class ConfigImpl(private val plugin: RedeemCodeX) : ConfigDao {
             syncMessages = true,
             syncSound = true,
             syncRewards = true,
-
-            )
+            condition = "true"
+        )
     }
 
     override fun getTemplate(template: String): RedeemTemplate {
@@ -187,9 +186,9 @@ class ConfigImpl(private val plugin: RedeemCodeX) : ConfigDao {
                 title = Title(
                     title = templateSection.getString("messages.title") ?: "",
                     subTitle = templateSection.getString("messages.subtitle") ?: "",
-                    fadeIn = templateSection.getInt("messages.fade-in",1),
-                    stay = templateSection.getInt("messages.stay",2),
-                    fadeOut = templateSection.getInt("messages.fade-out",1)
+                    fadeIn = templateSection.getInt("messages.fade-in", 1),
+                    stay = templateSection.getInt("messages.stay", 2),
+                    fadeOut = templateSection.getInt("messages.fade-out", 1)
                 )
             ),
             sound = templateSection.getString("sound.name") ?: "",
@@ -211,7 +210,8 @@ class ConfigImpl(private val plugin: RedeemCodeX) : ConfigDao {
             syncPermission = templateSection.getBoolean("sync.permission", true),
             syncMessages = templateSection.getBoolean("sync.messages", true),
             syncSound = templateSection.getBoolean("sync.sound", true),
-            syncRewards = templateSection.getBoolean("sync.rewards", true))
+            syncRewards = templateSection.getBoolean("sync.rewards", true),
+            condition = templateSection.getString("condition", "true") ?: "")
     }
 
     override fun getEntireTemplates(): List<RedeemTemplate> {

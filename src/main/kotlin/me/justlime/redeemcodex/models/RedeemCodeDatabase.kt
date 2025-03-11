@@ -33,6 +33,8 @@ data class RedeemCodeDatabase(
     val rewards: String,
     val messages: String,
     val sound: String,
+    val playerIp: String,
+    val condition: String,
     val created_at: Timestamp = Timestamp(System.currentTimeMillis()),
     val last_modified: Timestamp = Timestamp(System.currentTimeMillis())
 )

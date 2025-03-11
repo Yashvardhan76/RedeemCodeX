@@ -1,10 +1,11 @@
 
-border:
+filler:
   item:
     material: GRAY_STAINED_GLASS_PANE
     name: " "
     glint: false
     lore: []
+
 
 messages:
   message:
@@ -89,6 +90,139 @@ sounds:
     recent-sounds: [ ]
     favourite: [ ]
 
+template:
+  limit:
+    item: NAME_TAG
+    name: "&a&l▶ Player Limit ◀"
+    lore:
+      - "&7 Sets the maximum number of unique players"
+      - "&7 who can redeem this code."
+      - " "
+      - "&f Current Value ➡ &b&l{max_player_limit}"
 
+    glow: false
+    slot: 11
+    flags: []
 
+  redemption:
+    item: ENDER_PEARL
+    name: "&a&l▶ Redemption Limit ◀"
+    lore:
+      - "&7 Sets how many times a player can redeem this code."
+      - " "
+      - "&f Current Value ➡ &b&l{max_redemption}"
+
+    glow: false
+    slot: 12
+    flags: []
+  commands:
+    item: COMMAND_BLOCK
+    name: "&c&l▶ Commands ◀"
+    lore:
+      - "&7 Defines the commands executed upon redemption."
+    glow: false
+    slot: 13
+    flags: []
+  rewards:
+    item: DIAMOND
+    name: "&e&l▶ Rewards ◀"
+    lore:
+      - "&7 Specifies the rewards given upon redemption."
+    glow: false
+    slot: 14
+    flags: []
+  permission:
+    item: PAPER
+    name: "&c&l▶ Permission ◀"
+    lore:
+      - "&7 Sets the required permission to redeem this code."
+      - " "
+      - "&fCurrent Value ➡ &l{permission}"
+    glow: false
+    slot: 15
+    flags: []
+  duration:
+    item: CLOCK
+    name: "&b&l▶ Duration ◀"
+    lore:
+      - "&7 Determines how long this code remains valid."
+      - " "
+      - "&f Current Value ➡ &b&l{duration}"
+    glow: false
+    slot: 20
+    flags: []
+  cooldown:
+    item: REPEATER
+    name: "&b&l▶ Cooldown ◀"
+    lore:
+      - "&7 Sets the waiting time before a player can"
+      - "&7 redeem this code again."
+      - " "
+      - "&f Current Value ➡ &b&l{cooldown}"
+    glow: false
+    slot: 21
+    flags: []
+  pin:
+    item: NAME_TAG
+    name: "&c&l▶ PIN ◀"
+    lore:
+      - "&7 Sets a PIN required for code redemption."
+      - " "
+      - "&f Current Value ➡ &b&l{pin}"
+    glow: false
+    slot: 15
+    flags: []
+  messages:
+    item: WRITABLE_BOOK
+    name: "&f&l▶ Messages ◀"
+    lore:
+      - "&7 Configures messages sent upon redemption."
+    glow: false
+    slot: 22
+    flags: []
+  sounds:
+    item: MUSIC_DISC_13
+    name: "&f&l▶ Sounds ◀"
+    lore:
+      - "&7 Defines the sounds played upon redemption."
+      - " "
+      - "&f Current Value ➡ &b&l{sound}"
+
+    glow: false
+    slot: 23
+    flags: []
+  condition:
+    item: REDSTONE_TORCH
+    name: "&c&l▶ Condition ◀"
+    lore:
+      - "&7 Specifies the conditions required"
+      - "&7 before redeeming this code."
+      - " "
+      - "&c&lComing Soon"
+    glow: false
+    slot: 24
+    flags: []
+
+modifier:
+  increment:
+    name: "&aAdd {value}"
+    item: GREEN_STAINED_GLASS_PANE
+
+  decrement:
+    name: "&cRemove {value}"
+    item: RED_STAINED_GLASS_PANE
+
+  save:
+    item:
+      material: NETHER_STAR
+      name: "&aSave Changes"
+      glint: true
+      lore:
+        - "&bEditing - {code}"
+      slot: 49
+outline:
+  material: GRAY_STAINED_GLASS_PANE
+  name: " "
+  glint: false
+  lore: []
 

@@ -60,34 +60,34 @@ class JLogger(private val plugin: RedeemCodeX) {
     /**
      * Logs a generate event if enabled.
      */
-    fun logGenerate(message: String) {
-        if (logGenerate) logToFile("GENERATE", message)
+    fun logGenerate(message: String, sender: String) {
+        if (logGenerate) logToFile("GENERATE", message, sender)
     }
 
     /**
      * Logs a modify event if enabled.
      */
-    fun logModify(message: String) {
-        if (logModify) logToFile("MODIFY", message)
+    fun logModify(message: String, sender: String) {
+        if (logModify) logToFile("MODIFY", message, sender)
     }
 
     /**
      * Logs a delete event if enabled.
      */
-    fun logDelete(message: String) {
-        if (logDelete) logToFile("DELETE", message)
+    fun logDelete(message: String, sender: String) {
+        if (logDelete) logToFile("DELETE", message, sender)
     }
 
-    fun logRedeemed(message: String) {
-        if (logRedeemed) logToFile("REDEEMED", message)
+    fun logRedeemed(message: String, sender: String) {
+        if (logRedeemed) logToFile("REDEEMED", message, sender)
     }
 
     /**
      * Generic logging function with a tag.
      */
-    private fun logToFile(tag: String, message: String) {
+    private fun logToFile(tag: String, message: String, sender: String) {
         val timestamp = SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(Date())
-        val logMessage = "[$timestamp] [$tag] $message"
+        val logMessage = "[$timestamp] [$tag] $message by $sender"
 
         // Append to log file
         try {

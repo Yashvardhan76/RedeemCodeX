@@ -28,6 +28,11 @@ redeem-command:
   #Set cooldown for using /redeem
   cooldown: "3s"
 
+  prevent-alt-account: true #  #Prevent player from using alt account to redeem code.
+  #It will check the ip address of player if same ip address already redeemed code then it will prevent them.
+  #Note: It will only work if you set `player-limit` to 1.
+
+
 
 auto-delete:
   #It will only be done when server got restart.

@@ -22,6 +22,7 @@ import me.justlime.redeemcodex.enums.JPermission
 import me.justlime.redeemcodex.enums.JTab
 import me.justlime.redeemcodex.enums.JTemplate
 import me.justlime.redeemcodex.enums.RedeemType
+import me.justlime.redeemcodex.gui.InventoryManager
 import me.justlime.redeemcodex.gui.holders.MessageHolder
 import me.justlime.redeemcodex.gui.holders.RewardsHolder
 import me.justlime.redeemcodex.gui.holders.SoundHolder
@@ -42,12 +43,14 @@ class ModifySubCommand(private val plugin: RedeemCodeX) : JSubCommand {
     private val config = ConfigRepository(plugin)
     private val codeRepo = RedeemCodeRepository(plugin)
     lateinit var placeHolder: CodePlaceHolder
+    lateinit var sender: CommandSender
     override var jList: List<String> = emptyList()
     override val permission: String = JPermission.Admin.MODIFY
     override fun execute(sender: CommandSender, args: MutableList<String>): Boolean {
         placeHolder = CodePlaceHolder(sender)
+        this.sender = sender
         if (!hasPermission(sender)) return sendMessage(JMessage.Command.NO_PERMISSION)
-        if (args.size < 4) return !sendMessage(JMessage.Command.UNKNOWN_COMMAND)
+        if (args.size < 3) return !sendMessage(JMessage.Command.UNKNOWN_COMMAND)
         val type = args[1]
         return when (type) {
             JTab.Type.CODE -> codeModification(sender, args)
@@ -80,7 +83,9 @@ class ModifySubCommand(private val plugin: RedeemCodeX) : JSubCommand {
             JTab.Modify.LIST_TARGET,
             JTab.Modify.SET_COOLDOWN,
             JTab.Modify.SET_TEMPLATE,
-            JTab.Modify.EDIT
+            JTab.Modify.Edit.REWARD,
+            JTab.Modify.Edit.MESSAGE,
+            JTab.Modify.Edit.SOUND,
         )
         val templateOptions = mutableListOf(
             JTab.Modify.ENABLED,
@@ -99,7 +104,9 @@ class ModifySubCommand(private val plugin: RedeemCodeX) : JSubCommand {
             JTab.Modify.SET_PIN,
             JTab.Modify.SET_COOLDOWN,
             JTab.Modify.SET_TEMPLATE,
-            JTab.Modify.EDIT
+            JTab.Modify.Edit.REWARD,
+            JTab.Modify.Edit.MESSAGE,
+            JTab.Modify.Edit.SOUND,
         )
         val completions = mutableListOf<String>()
 
@@ -135,7 +142,7 @@ class ModifySubCommand(private val plugin: RedeemCodeX) : JSubCommand {
                     JTab.Modify.SET_TEMPLATE -> completions.addAll(cachedTemplate)
                     else -> return mutableListOf()
                 }
-                if (args[1] == JTab.Type.TEMPLATE) when (args[3]){
+                if (args[1] == JTab.Type.TEMPLATE) when (args[3]) {
                     JTab.Modify.SET_COMMAND -> completions.add("ID")
                     JTab.Modify.REMOVE_COMMAND -> completions.add("ID")
                     JTab.Modify.EDIT -> {
@@ -177,9 +184,12 @@ class ModifySubCommand(private val plugin: RedeemCodeX) : JSubCommand {
         val options = mutableListOf(
             JTab.Modify.ENABLED,
             JTab.Modify.SYNC,
-            JTab.Modify.SET_PERMISSION,
             JTab.Modify.LIST_TARGET,
             JTab.Modify.LIST_COMMAND,
+            JTab.Modify.SET_PLAYER_LIMIT,
+            JTab.Modify.Edit.REWARD,
+            JTab.Modify.Edit.MESSAGE,
+            JTab.Modify.Edit.SOUND,
         )
         val optionsWithValue = mutableListOf(
             JTab.Modify.SET_TEMPLATE,
@@ -188,9 +198,7 @@ class ModifySubCommand(private val plugin: RedeemCodeX) : JSubCommand {
             JTab.Modify.REMOVE_DURATION,
             JTab.Modify.SET_COOLDOWN,
             JTab.Modify.SET_REDEMPTION,
-            JTab.Modify.SET_PLAYER_LIMIT,
-            JTab.Modify.SET_PIN,
-            JTab.Modify.EDIT
+            JTab.Modify.SET_PERMISSION,
         )
         val optionsWithValues = mutableListOf(
             JTab.Modify.SET_TARGET,
@@ -215,8 +223,10 @@ class ModifySubCommand(private val plugin: RedeemCodeX) : JSubCommand {
     private fun templateModification(sender: CommandSender, args: MutableList<String>): Boolean {
         val template = args[2].uppercase()
         val redeemTemplate = config.getTemplate(template) ?: return sendMessage(JMessage.Template.NOT_FOUND)
-
+        if (args.size < 4 && sender is Player) return InventoryManager.openTemplateSetting(sender, redeemTemplate)
+        if (args.size < 4) return !sendMessage(JMessage.Command.UNKNOWN_COMMAND)
         placeHolder = CodePlaceHolder.applyByTemplate(redeemTemplate, sender).also { it.property = args[3] }
+
         jList = listOf(template)
         val options = mutableListOf(
             JTab.Modify.ENABLED,
@@ -224,6 +234,9 @@ class ModifySubCommand(private val plugin: RedeemCodeX) : JSubCommand {
             JTab.Modify.SET_PERMISSION,
             JTab.Modify.LIST_TARGET,
             JTab.Modify.LIST_COMMAND,
+            JTab.Modify.Edit.REWARD,
+            JTab.Modify.Edit.MESSAGE,
+            JTab.Modify.Edit.SOUND,
         )
         val optionsWithValue = mutableListOf(
             JTab.Modify.SET_DURATION,
@@ -233,7 +246,7 @@ class ModifySubCommand(private val plugin: RedeemCodeX) : JSubCommand {
             JTab.Modify.SET_REDEMPTION,
             JTab.Modify.SET_PLAYER_LIMIT,
             JTab.Modify.SET_PIN,
-            JTab.Modify.EDIT
+
         )
         val optionsWithValues = mutableListOf(
             JTab.Modify.SET_COMMAND,
@@ -259,6 +272,9 @@ class ModifySubCommand(private val plugin: RedeemCodeX) : JSubCommand {
             JTab.Modify.SET_PERMISSION -> setPermission(redeemCode)
             JTab.Modify.LIST_TARGET -> sendMessage(JMessage.Code.Usages.TARGET)
             JTab.Modify.LIST_COMMAND -> sendMessage(JMessage.Code.Usages.COMMAND)
+            JTab.Modify.Edit.REWARD -> openGUI(redeemCode, JTab.Modify.Edit.REWARD, placeHolder.sender)
+            JTab.Modify.Edit.MESSAGE -> openGUI(redeemCode, JTab.Modify.Edit.MESSAGE, placeHolder.sender)
+            JTab.Modify.Edit.SOUND -> openGUI(redeemCode, JTab.Modify.Edit.SOUND, placeHolder.sender)
             else -> false
         }
     }
@@ -275,6 +291,10 @@ class ModifySubCommand(private val plugin: RedeemCodeX) : JSubCommand {
                 return true
             }
 
+            JTab.Modify.Edit.REWARD -> openGUI(redeemTemplate, JTab.Modify.Edit.REWARD, placeHolder.sender)
+            JTab.Modify.Edit.MESSAGE -> openGUI(redeemTemplate, JTab.Modify.Edit.MESSAGE, placeHolder.sender)
+            JTab.Modify.Edit.SOUND -> openGUI(redeemTemplate, JTab.Modify.Edit.SOUND, placeHolder.sender)
+
             else -> false
         }
     }
@@ -290,7 +310,6 @@ class ModifySubCommand(private val plugin: RedeemCodeX) : JSubCommand {
             JTab.Modify.SET_PLAYER_LIMIT -> setPlayerLimit(redeemCode, value)
             JTab.Modify.SET_PERMISSION -> setPermission(redeemCode, value)
             JTab.Modify.SET_PIN -> setPin(redeemCode, value)
-            JTab.Modify.EDIT -> openGUI(redeemCode, value, placeHolder.sender)
             else -> false
         }
     }
@@ -305,7 +324,6 @@ class ModifySubCommand(private val plugin: RedeemCodeX) : JSubCommand {
             JTab.Modify.SET_PLAYER_LIMIT -> setPlayerLimit(redeemTemplate, value)
             JTab.Modify.SET_PERMISSION -> setPermission(redeemTemplate, value)
             JTab.Modify.SET_PIN -> setPin(redeemTemplate, value)
-            JTab.Modify.EDIT -> openGUI(redeemTemplate, value, placeHolder.sender)
             else -> false
 
         }
@@ -351,10 +369,10 @@ class ModifySubCommand(private val plugin: RedeemCodeX) : JSubCommand {
         val success = codeRepo.upsertCode(redeemCode)
         if (!success) {
             sendMessage(JMessage.Code.Modify.FAILED)
-            JLogger(plugin).logModify(redeemCode.code)
+            JLogger(plugin).logModify(redeemCode.code, sender.name)
             return false
         }
-        JLogger(plugin).logModify(redeemCode.code + " - ${redeemCode.template}")
+        JLogger(plugin).logModify(redeemCode.code + " - ${redeemCode.template}", sender.name)
         return true
     }
 
@@ -379,7 +397,7 @@ class ModifySubCommand(private val plugin: RedeemCodeX) : JSubCommand {
     private fun upsertTemplate(template: RedeemTemplate): Boolean {
         val success = config.upsertTemplate(template)
         if (upsetCodes(template)) {
-            JLogger(plugin).logModify(template.name + " (TEMPLATE)")
+            JLogger(plugin).logModify(template.name + " (TEMPLATE)",sender.name)
             sendMessage(JMessage.Template.Modify.CODES_MODIFIED)
         }
         if (!success) {
@@ -407,7 +425,7 @@ class ModifySubCommand(private val plugin: RedeemCodeX) : JSubCommand {
 
             JTab.Modify.Edit.SOUND -> {
                 if (redeemCode.sync && config.getTemplate(redeemCode.template)?.syncSound == true) return sendMessage(JMessage.Code.Modify.SYNC_LOCKED)
-                val soundHolder = SoundHolder(plugin,sender,RedeemType.Code(redeemCode), 6,"Sound GUI")
+                val soundHolder = SoundHolder(plugin, sender, RedeemType.Code(redeemCode), 6, "Sound GUI")
                 sender.openInventory(soundHolder.inventory)
             }
         }
@@ -428,7 +446,7 @@ class ModifySubCommand(private val plugin: RedeemCodeX) : JSubCommand {
             }
 
             JTab.Modify.Edit.SOUND -> {
-                val soundHolder = SoundHolder(plugin,sender,RedeemType.Template(redeemTemplate), 6,"Sound GUI - $redeemTemplate.name")
+                val soundHolder = SoundHolder(plugin, sender, RedeemType.Template(redeemTemplate), 6, "Sound GUI - $redeemTemplate.name")
                 sender.openInventory(soundHolder.inventory)
             }
         }
@@ -520,7 +538,7 @@ class ModifySubCommand(private val plugin: RedeemCodeX) : JSubCommand {
         if (redeemCode.sync && config.getTemplate(redeemCode.template)?.syncPermission == true) return sendMessage(JMessage.Code.Modify.SYNC_LOCKED)
 
         //Set Custom Permission
-        if (value.isNotBlank()) {
+        if (value.isNotBlank() && value != "false") {
             redeemCode.permission = value.replace("{code}", redeemCode.code)
             placeHolder.permission = redeemCode.permission
             sendMessage(JMessage.Code.Modify.SET_PERMISSION)
@@ -528,7 +546,7 @@ class ModifySubCommand(private val plugin: RedeemCodeX) : JSubCommand {
         }
 
         //Toggle Permission
-        if (redeemCode.permission.isNotBlank()) {
+        if (redeemCode.permission.isNotBlank() && redeemCode.permission != "false") {
             redeemCode.permission = ""
             placeHolder.permission = config.getMessage(JMessage.Code.Placeholder.DISABLED, placeHolder)
             sendMessage(JMessage.Code.Modify.SET_PERMISSION)
@@ -544,7 +562,7 @@ class ModifySubCommand(private val plugin: RedeemCodeX) : JSubCommand {
 
     private fun setPermission(redeemTemplate: RedeemTemplate, value: String = ""): Boolean {
         //Set Custom Permission
-        if (value.isNotBlank()) {
+        if (value.isNotBlank() && value != "false") {
             redeemTemplate.permissionValue = value
             redeemTemplate.permissionRequired = true
             placeHolder.permission = redeemTemplate.permissionValue
@@ -553,15 +571,8 @@ class ModifySubCommand(private val plugin: RedeemCodeX) : JSubCommand {
         }
 
         //Toggle Permission
-        if (redeemTemplate.permissionRequired) {
-            redeemTemplate.permissionRequired = false
-            placeHolder.permission = config.getMessage(JMessage.Code.Placeholder.DISABLED, placeHolder)
-            sendMessage(JMessage.Template.Modify.SET_PERMISSION)
-            return upsertTemplate(redeemTemplate)
-        }
-
-        redeemTemplate.permissionRequired = true
-        placeHolder.permission = redeemTemplate.permissionValue
+        redeemTemplate.permissionRequired = !redeemTemplate.permissionRequired
+        placeHolder.permission = config.getMessage(JMessage.Code.Placeholder.DISABLED, placeHolder)
         sendMessage(JMessage.Template.Modify.SET_PERMISSION)
         return upsertTemplate(redeemTemplate)
     }
@@ -667,7 +678,6 @@ class ModifySubCommand(private val plugin: RedeemCodeX) : JSubCommand {
     }
 
     private fun setTemplate(redeemCode: RedeemCode, template: String): Boolean {
-
         redeemCode.template = template
         placeHolder.template = template
         val templateState = config.getTemplate(redeemCode.template) ?: return sendMessage(JMessage.Template.NOT_FOUND)
@@ -678,7 +688,7 @@ class ModifySubCommand(private val plugin: RedeemCodeX) : JSubCommand {
 
     private fun addTarget(redeemCode: RedeemCode, targetList: MutableList<String>): Boolean {
         if (redeemCode.sync && config.getTemplate(redeemCode.template)?.syncTarget == true) return sendMessage(JMessage.Code.Modify.SYNC_LOCKED)
-        if (targetList.size < 1) return !sendMessage(JMessage.Code.Modify.INVALID_VALUE)
+        if (targetList.isEmpty()) return !sendMessage(JMessage.Code.Modify.INVALID_VALUE)
         redeemCode.target.addAll(targetList)
         placeHolder.target = targetList.joinToString(", ")
         sendMessage(JMessage.Code.Modify.ADD_TARGET)
@@ -687,7 +697,7 @@ class ModifySubCommand(private val plugin: RedeemCodeX) : JSubCommand {
 
     private fun removeTarget(redeemCode: RedeemCode, targetList: MutableList<String>): Boolean {
         if (redeemCode.sync && config.getTemplate(redeemCode.template)?.syncTarget == true) return sendMessage(JMessage.Code.Modify.SYNC_LOCKED)
-        if (targetList.size < 1) return !sendMessage(JMessage.Code.Modify.INVALID_VALUE)
+        if (targetList.isEmpty()) return !sendMessage(JMessage.Code.Modify.INVALID_VALUE)
         redeemCode.target.removeAll(targetList)
         placeHolder.target = targetList.joinToString(", ")
         sendMessage(JMessage.Code.Modify.REMOVE_TARGET)
@@ -703,3 +713,5 @@ class ModifySubCommand(private val plugin: RedeemCodeX) : JSubCommand {
         return upsertCode(redeemCode)
     }
 }
+
+

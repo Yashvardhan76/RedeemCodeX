@@ -14,12 +14,13 @@ package me.justlime.redeemcodex.models
 
 import me.justlime.redeemcodex.RedeemCodeX
 import me.justlime.redeemcodex.utilities.JService
+import org.bukkit.Material
 import org.bukkit.command.CommandSender
 
 data class CodePlaceHolder(
     var sender: CommandSender,
     val args: List<String> = emptyList(),
-    var sentMessage:String = "",
+    var sentMessage: String = "",
 
     var code: String = "none",
     var totalCodes: Int = 1,
@@ -49,9 +50,9 @@ data class CodePlaceHolder(
 
     var validTo: String = "none",
     var validFrom: String = "none",
-    var lastRedeemed: String = "none"
+    var lastRedeemed: String = "none",
+    var sound: String = "None",
 ) {
-
     companion object {
         fun fetchByDB(plugin: RedeemCodeX, code: String, sender: CommandSender): CodePlaceHolder {
             val redeemCode = plugin.redeemCodeDB.get(code) ?: return CodePlaceHolder(sender, code = code)
@@ -87,7 +88,8 @@ data class CodePlaceHolder(
                 isExpired = JService.isExpired(redeemCode).toString(),
                 minLength = plugin.configRepo.getConfigValue("code-minimum-digit"),
                 maxLength = plugin.configRepo.getConfigValue("code-maximum-digit"),
-                codeGenerateDigit = plugin.configRepo.getConfigValue("default.code-generate-digit")
+                codeGenerateDigit = plugin.configRepo.getConfigValue("default.code-generate-digit"),
+                sound = redeemCode.sound.sound.toString(),
             )
         } //TODO Remove it
 
@@ -134,7 +136,7 @@ data class CodePlaceHolder(
                 maxLength = "none",
                 codeGenerateDigit = "none",
                 command = template.commands.toString().removeSurrounding("{", "}").trim()
-                )
+            )
         }
 
     }

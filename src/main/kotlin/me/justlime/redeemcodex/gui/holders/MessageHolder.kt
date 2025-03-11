@@ -58,8 +58,10 @@ class MessageHolder(
 
     override fun loadContent() {
         inventory.clear()
-        InventoryManager.outlineInventory(inventory, 3)
+        InventoryManager.outlineInventory(inventory)
         loadMainMenu()
+
+        Material.ENDER_PEARL
     }
 
     private fun getRedeemName(): String = when (redeemData) {

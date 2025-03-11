@@ -36,6 +36,7 @@ class RedeemCommand(
 ) : CommandExecutor, TabCompleter {
     private val config = ConfigRepository(plugin)
     private val codeRepo = RedeemCodeRepository(plugin)
+    private lateinit var sender: CommandSender
 
     override fun onCommand(
         sender: CommandSender,
@@ -43,6 +44,7 @@ class RedeemCommand(
         label: String,
         args: Array<out String>,
     ): Boolean {
+        this.sender = sender
         var placeHolder = CodePlaceHolder(sender, args.toMutableList())
         if (sender !is Player) {
             config.sendMsg(JMessage.Command.RESTRICTED_TO_PLAYERS, placeHolder)
@@ -133,10 +135,14 @@ class RedeemCommand(
         }
 
         // MAIN STUFF
-
         redeemCode.usedBy[sender.name] = (redeemCode.usedBy[sender.name]?.plus(1)) ?: 1
         redeemCode.lastRedeemed[sender.name] = JService.getCurrentTime()
 
+        val player = sender.name
+        val playerIp = sender.address?.address.toString()
+        if (playerIp != null) {
+            redeemCode.playerIp[playerIp] = player
+        }
         val success = codeRepo.upsertCode(redeemCode)
         if (!success) {
             config.sendMsg(JMessage.Redeem.FAILED, placeHolder)
@@ -168,13 +174,17 @@ class RedeemCommand(
         if (redeemCode.messages.text.isNotEmpty()) redeemCode.messages.sendMessage(sender, placeHolder)
         else config.sendMsg(JMessage.Redeem.SUCCESS, placeHolder)
 
-        JLogger(plugin).logRedeemed(redeemCode.code + " by ${sender.name}")
+        //Logger
+        JLogger(plugin).logRedeemed(redeemCode.code , sender.name)
+
+        //Auto Delete Code if Enabled
         if (config.getConfigValue("auto-delete.redeemed-codes")
                 .toBoolean() && redeemCode.usedBy.all { redeemCode.redemption == it.value } && redeemCode.playerLimit == redeemCode.usedBy.size
         ) {
             codeRepo.deleteCode(redeemCode.code)
-            JLogger(plugin).logDelete(redeemCode.code)
+            JLogger(plugin).logDelete(redeemCode.code, sender.name)
         }
+
         return true
 
     }

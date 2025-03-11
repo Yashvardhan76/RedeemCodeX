@@ -16,6 +16,7 @@ import com.google.gson.GsonBuilder
 import com.google.gson.JsonPrimitive
 import com.google.gson.JsonSerializer
 import com.google.gson.reflect.TypeToken
+import me.justlime.redeemcodex.api.RedeemXAPI
 import me.justlime.redeemcodex.enums.JProperty
 import me.justlime.redeemcodex.models.MessageState
 import me.justlime.redeemcodex.models.RedeemCode
@@ -40,6 +41,7 @@ object Converter {
 
     private val listType: Type = object : TypeToken<MutableList<String>>() {}.type
     private val usedByType: Type = object : TypeToken<MutableMap<String, Int>>() {}.type
+    private val playerIpType: Type = object : TypeToken<MutableMap<String, String>>() {}.type
     private val lastRedeemedType: Type = object : TypeToken<MutableMap<String, Timestamp>>() {}.type
 
     fun mapResultSetToRedeemCode(result: ResultSet): RedeemCode {
@@ -62,7 +64,9 @@ object Converter {
             modified = result.getTimestamp(JProperty.MODIFIED.property),
             rewards = deserializeItemStackList(result.getString(JProperty.REWARDS.property)) ?: mutableListOf(),
             sound = deserializeSound(result.getString(JProperty.Sound.property)) ?: SoundState(sound = null, 1f, 1f),
-            messages = deserializeMessage(result.getString(JProperty.Message.property)) ?: MessageState(mutableListOf(), "", Title())
+            messages = deserializeMessage(result.getString(JProperty.Message.property)) ?: MessageState(mutableListOf(), "", Title()),
+            playerIp = safeFromJson(result.getString(JProperty.PlayerIp.property), playerIpType) ?: mutableMapOf(),
+            condition = result.getString(JProperty.Condition.property) ?: "true"
         )
     }
 
@@ -84,8 +88,10 @@ object Converter {
             lastRedeemed = gson.toJson(redeemCode.lastRedeemed),
             cooldown = redeemCode.cooldown,
             rewards = serializeItemStackList(redeemCode.rewards),
-            messages = serializeMessage( redeemCode.messages),
+            messages = serializeMessage(redeemCode.messages),
             sound = serializeSound(redeemCode.sound),
+            playerIp = gson.toJson(redeemCode.playerIp),
+            condition = redeemCode.condition,
             last_modified = redeemCode.modified
         )
     }
@@ -94,6 +100,7 @@ object Converter {
         return try {
             gson.fromJson(json, type)
         } catch (e: Exception) {
+            RedeemXAPI.getPlugin().logger.warning("Failed to parse JSON: $json - ${e.message}")
             null
         }
     }
@@ -149,7 +156,9 @@ object Converter {
                 val (key, value) = it.split("=")
                 key.trim() to value.trim()
             }
-            val sound = serializedData["sound"]?.takeIf { it.isNotBlank() }?.let { Sound.valueOf(it) }
+            val sound = serializedData["sound"]?.takeIf { it.isNotBlank() }?.let { soundName ->
+                enumValues<Sound>().find { it.name.equals(soundName, ignoreCase = true) }
+            }
             val volume = serializedData["volume"]?.toFloatOrNull() ?: 1.0f
             val pitch = serializedData["pitch"]?.toFloatOrNull() ?: 1.0f
             SoundState(sound, volume, pitch)
@@ -158,6 +167,7 @@ object Converter {
             null
         }
     }
+
     private fun serializeMessage(item: MessageState): String {
         // Use Gson to serialize the entire object to JSON
         val serializedJson = gson.toJson(item)

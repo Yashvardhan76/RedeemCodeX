@@ -57,6 +57,8 @@ class RedeemCodeDaoImpl(private val dbManager: DatabaseManager) : RedeemCodeDao 
                         ${JProperty.REWARDS.property} TEXT,
                         ${JProperty.Message.property} TEXT,
                         ${JProperty.Sound.property} TEXT,
+                        ${JProperty.PlayerIp.property} TEXT,
+                        ${JProperty.Condition.property} TEXT,
                         ${JProperty.MODIFIED.property} TIMESTAMP,
                         created TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 );
@@ -189,7 +191,6 @@ class RedeemCodeDaoImpl(private val dbManager: DatabaseManager) : RedeemCodeDao 
         } ?: emptySet() // Handle null connection
     }
 
-
     private fun setStatementParameters(statement: PreparedStatement, redeemCode: RedeemCode) {
         val mappedData: RedeemCodeDatabase = Converter.mapRedeemCodeToDatabase(redeemCode)
         statement.setString(1, mappedData.code)
@@ -210,7 +211,9 @@ class RedeemCodeDaoImpl(private val dbManager: DatabaseManager) : RedeemCodeDao 
         statement.setString(16, mappedData.rewards)
         statement.setString(17, mappedData.messages)
         statement.setString(18, mappedData.sound)
-        statement.setTimestamp(19, mappedData.last_modified)
+        statement.setString(19, mappedData.playerIp)
+        statement.setString(20, mappedData.condition)
+        statement.setTimestamp(21, mappedData.last_modified)
     }
 
     override fun get(code: String): RedeemCode? {
