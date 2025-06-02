@@ -21,6 +21,8 @@ import me.justlime.redeemcodex.data.repository.ConfigRepository
 import me.justlime.redeemcodex.data.repository.RedeemCodeRepository
 import me.justlime.redeemcodex.enums.JTab
 import me.justlime.redeemcodex.models.CodePlaceHolder
+import me.justlime.redeemcodex.models.RedeemCode
+import me.justlime.redeemcodex.models.RedeemTemplate
 import org.bukkit.command.CommandSender
 
 @Suppress("unused")
@@ -28,11 +30,43 @@ object RedeemXAPI {
     private lateinit var plugin: RedeemCodeX
     lateinit var placeHolder: CodePlaceHolder
     val sender by lazy { plugin.server.consoleSender }
+
+    /**
+     * - Initialize the Api on start up of plugin
+     * - No need for you to do this manually
+     */
     fun initialize(pluginInstance: RedeemCodeX) {
         plugin = pluginInstance
         placeHolder = CodePlaceHolder(sender)
         plugin.logger.info("RedeemXAPI Initialized")
     }
+
+    /**
+     * Get Code
+     * @param code
+     * @return RedeemCode if found, else null
+     */
+    fun getCode(code: String): RedeemCode? {
+        return RedeemCodeRepository(plugin).getCode(code)
+    }
+
+    /**
+     * Get All Codes
+     *
+     * @return List of All Codes. If no code found return an empty list
+     *
+     **/
+
+    fun getCodes(): List<String> = RedeemCodeRepository(plugin).getCachedCode()
+
+    fun getTemplate(template: String): RedeemTemplate? = ConfigRepository(plugin).getTemplate(template)
+
+    /**
+     * Get All Templates
+     *
+     * @return List of All Templates
+     **/
+    fun getTemplates(): List<String> = ConfigRepository(plugin).getAllTemplates().map { it.name }
 
     /**
      *Generate Custom Code
@@ -49,14 +83,31 @@ object RedeemXAPI {
     }
 
     /**
-     *      Generate Numeric Codes
+     * Generate Numeric Codes
      *
      * @param digit The number of digits to generate for each code.
+     * @param template The name of the template to use for code generation.
      * @param amount The number of codes to generate.
      * @return List of Code if Success else empty List
      */
-    fun generateCode(digit: Int, amount: Int = 1, template: String = "DEFAULT"): List<String> {
+    fun generateCode(digit: Int, template: String = "DEFAULT", amount: Int): List<String> {
         val args = mutableListOf(JTab.GeneralActions.Gen.value, JTab.Type.CODE, digit.toString(), template, amount.toString())
+        val gen = GenerateSubCommand(plugin)
+        gen.execute(sender, args)
+        placeHolder = gen.placeHolder
+        return gen.jList
+    }
+
+    fun generateCode(digit: Int, template: String = "DEFAULT"): String {
+        val args = mutableListOf(JTab.GeneralActions.Gen.value, JTab.Type.CODE, digit.toString(), template, "1")
+        val gen = GenerateSubCommand(plugin)
+        gen.execute(sender, args)
+        placeHolder = gen.placeHolder
+        return gen.jList.firstOrNull() ?: ""
+    }
+
+    fun generateCode(digit: Int, amount: Int = 1): List<String> {
+        val args = mutableListOf(JTab.GeneralActions.Gen.value, JTab.Type.CODE, digit.toString(), "DEFAULT", amount.toString())
         val gen = GenerateSubCommand(plugin)
         gen.execute(sender, args)
         placeHolder = gen.placeHolder
@@ -71,7 +122,7 @@ object RedeemXAPI {
         return gen.jList
     }
 
-    fun modifyCode(code: String, property: String, value: String = "",sender: CommandSender? = null): List<String> {
+    fun modifyCode(code: String, property: String, value: String = "", sender: CommandSender? = null): List<String> {
 
         val options = mutableListOf(JTab.Modify.ENABLED, JTab.Modify.SYNC)
         val optionsWithValue = mutableListOf(
@@ -103,7 +154,7 @@ object RedeemXAPI {
         return modify.jList
     }
 
-    fun modifyTemplate(template: String, property: String, value: String = "",sender: CommandSender? = null): List<String> {
+    fun modifyTemplate(template: String, property: String, value: String = "", sender: CommandSender? = null): List<String> {
         val options = mutableListOf(JTab.Modify.ENABLED, JTab.Modify.SYNC)
         val optionsWithValue = mutableListOf(
             JTab.Modify.SET_REDEMPTION,
@@ -127,7 +178,7 @@ object RedeemXAPI {
         )
         else if (property in options) mutableListOf(JTab.GeneralActions.Modify.value, JTab.Type.TEMPLATE, template, property)
         else return emptyList()
-        modify.execute( sender?: plugin.server.consoleSender, args)
+        modify.execute(sender ?: plugin.server.consoleSender, args)
         placeHolder = modify.placeHolder
         return modify.jList
     }
@@ -158,13 +209,7 @@ object RedeemXAPI {
         placeHolder = delete.placeHolder
     }
 
-    fun deleteTemplate(template: String): List<String> {
-        val delete = DeleteSubCommand(plugin)
-        val args = mutableListOf(JTab.GeneralActions.Delete.value, JTab.Type.TEMPLATE, template)
-        delete.execute(sender, args)
-        placeHolder = delete.placeHolder
-        return delete.jList
-    }
+    fun deleteTemplate(template: String): Boolean = ConfigRepository(plugin).deleteTemplate(template)
 
     fun usageCode(code: String): CodePlaceHolder {
         val usage = UsageSubCommand(plugin)
@@ -174,9 +219,9 @@ object RedeemXAPI {
         return usage.placeHolder
     }
 
-    fun usageTemplate(template: String): CodePlaceHolder {
+    fun usageTemplate(templateName: String): CodePlaceHolder {
         val usage = UsageSubCommand(plugin)
-        val args = mutableListOf(JTab.GeneralActions.Usage.value, JTab.Type.TEMPLATE, template)
+        val args = mutableListOf(JTab.GeneralActions.Usage.value, JTab.Type.TEMPLATE, templateName)
         usage.execute(sender, args)
         placeHolder = usage.placeHolder
         return usage.placeHolder
@@ -184,9 +229,30 @@ object RedeemXAPI {
 
     fun getPlugin(): RedeemCodeX = plugin
 
-    fun getCodes(): List<String> = RedeemCodeRepository(plugin).getCachedCode()
+    /**
+     * Upsert a code
+     *
+     * @param code The code to upsert.
+     * - Use this function after you have modified the redeemCode Property
+     * - Note: If you are upsert lots of codes use `upsertCodes()` Method instead.It will be faster and more efficient.
+     */
+    fun upsertCode(code: RedeemCode) {
+        RedeemCodeRepository(plugin).upsertCode(code)
+    }
 
-    fun getTemplates(): List<String> = ConfigRepository(plugin).getAllTemplates().map { it.name }
+    /**
+     * Upsert a list of codes
+     *
+     * @param code The list of codes to upsert.
+     * - Use this function after you have modified the redeemCode Property
+     */
+    fun upsertCodes(code: List<RedeemCode>) {
+        RedeemCodeRepository(plugin).upsertCodes(code)
+    }
+
+    fun upsertTemplate(template: RedeemTemplate) {
+        ConfigRepository(plugin).upsertTemplate(template)
+    }
 
     fun isInitialized() = ::plugin.isInitialized
 }

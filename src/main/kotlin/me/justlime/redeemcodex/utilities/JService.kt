@@ -12,10 +12,13 @@
 
 package me.justlime.redeemcodex.utilities
 
+import jdk.internal.joptsimple.internal.Messages.message
 import me.clip.placeholderapi.PlaceholderAPI
 import me.justlime.redeemcodex.models.CodePlaceHolder
 import me.justlime.redeemcodex.models.RedeemCode
 import net.kyori.adventure.text.minimessage.MiniMessage
+import net.md_5.bungee.api.chat.ClickEvent
+import net.md_5.bungee.api.chat.TextComponent
 import org.bukkit.ChatColor
 import org.bukkit.entity.Player
 import java.sql.Timestamp
@@ -27,8 +30,8 @@ object JService {
     fun getCurrentTime(): Timestamp {
         return Timestamp.from(Instant.now())
     }
-    var miniMessage = MiniMessage.miniMessage();
 
+    var miniMessage = MiniMessage.miniMessage();
 
     fun adjustDuration(existingDuration: String, adjustmentDuration: String, isAdding: Boolean): String {
         val totalExistingSeconds = parseDurationToSeconds(existingDuration)
@@ -100,7 +103,7 @@ object JService {
         //Example: 29oct < 28oct + 2d = 30oct (true) [29oct - current date]
     }
 
-    fun applyColors(message: String): String {
+    fun applyHexColors(message: String): String {
         var coloredMessage = ChatColor.translateAlternateColorCodes('&', message)
         val hexPattern = Pattern.compile("&#[a-fA-F0-9]{6}")
         val matcher = hexPattern.matcher(coloredMessage)
@@ -124,6 +127,38 @@ object JService {
 
         return plainMessage
     }
+
+    fun createClickableMessage(message: String): TextComponent {
+        // Regex to find text enclosed in single quotes.
+        val pattern = Regex("`([^`]+)`")
+        val baseComponent = TextComponent()
+        var lastIndex = 0
+
+        // Process all matches of text enclosed in single quotes.
+        pattern.findAll(message).forEach { match ->
+            val range = match.range
+            // Append any text before the matched part.
+            if (range.first > lastIndex) {
+                val plainText = message.substring(lastIndex, range.first)
+                baseComponent.addExtra(TextComponent(plainText))
+            }
+            // Extract the command from within the single quotes.
+            val commandText = match.groupValues[1].trim()
+            // Create a clickable component for the command.
+            val clickableComponent = TextComponent(commandText)
+            clickableComponent.clickEvent = ClickEvent(ClickEvent.Action.RUN_COMMAND, commandText)
+            baseComponent.addExtra(clickableComponent)
+            lastIndex = range.last + 1
+        }
+
+        // Append any remaining text after the last match.
+        if (lastIndex < message.length) {
+            baseComponent.addExtra(TextComponent(message.substring(lastIndex)))
+        }
+
+        return baseComponent
+    }
+
 
     fun applyPlaceholders(message: String, placeholder: CodePlaceHolder, isPlaceholderHooked: () -> Boolean = { false }): String {
         val placeholders: Map<String, String> = mapOf(
@@ -156,7 +191,7 @@ object JService {
             "redeemed_by" to placeholder.redeemedBy,
 
             "template" to placeholder.template,
-            "locked" to placeholder.templateLocked,
+            "sync" to placeholder.templateSync,
             "sound" to placeholder.sound,
 
             "min" to placeholder.minLength,

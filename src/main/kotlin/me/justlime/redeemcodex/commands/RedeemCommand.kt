@@ -152,7 +152,7 @@ class RedeemCommand(
         //Execute Command
         val console = plugin.server.consoleSender
         redeemCode.commands.forEach {
-            val cmd = JService.applyColors(JService.applyPlaceholders(it, CodePlaceHolder.applyByRedeemCode(redeemCode, placeHolder.sender)) {
+            val cmd = JService.applyHexColors(JService.applyPlaceholders(it, CodePlaceHolder.applyByRedeemCode(redeemCode, placeHolder.sender)) {
                 plugin.server.pluginManager.isPluginEnabled("PlaceholderAPI")
             })
             //set using placeholder api

@@ -186,7 +186,6 @@ class ModifySubCommand(private val plugin: RedeemCodeX) : JSubCommand {
             JTab.Modify.SYNC,
             JTab.Modify.LIST_TARGET,
             JTab.Modify.LIST_COMMAND,
-            JTab.Modify.SET_PLAYER_LIMIT,
             JTab.Modify.Edit.REWARD,
             JTab.Modify.Edit.MESSAGE,
             JTab.Modify.Edit.SOUND,
@@ -198,6 +197,7 @@ class ModifySubCommand(private val plugin: RedeemCodeX) : JSubCommand {
             JTab.Modify.REMOVE_DURATION,
             JTab.Modify.SET_COOLDOWN,
             JTab.Modify.SET_REDEMPTION,
+            JTab.Modify.SET_PLAYER_LIMIT,
             JTab.Modify.SET_PERMISSION,
         )
         val optionsWithValues = mutableListOf(
@@ -247,7 +247,7 @@ class ModifySubCommand(private val plugin: RedeemCodeX) : JSubCommand {
             JTab.Modify.SET_PLAYER_LIMIT,
             JTab.Modify.SET_PIN,
 
-        )
+            )
         val optionsWithValues = mutableListOf(
             JTab.Modify.SET_COMMAND,
             JTab.Modify.ADD_COMMAND,
@@ -397,7 +397,7 @@ class ModifySubCommand(private val plugin: RedeemCodeX) : JSubCommand {
     private fun upsertTemplate(template: RedeemTemplate): Boolean {
         val success = config.upsertTemplate(template)
         if (upsetCodes(template)) {
-            JLogger(plugin).logModify(template.name + " (TEMPLATE)",sender.name)
+            JLogger(plugin).logModify(template.name + " (TEMPLATE)", sender.name)
             sendMessage(JMessage.Template.Modify.CODES_MODIFIED)
         }
         if (!success) {
@@ -670,9 +670,9 @@ class ModifySubCommand(private val plugin: RedeemCodeX) : JSubCommand {
 
     private fun toggleTemplateSyncStatus(redeemCode: RedeemCode): Boolean {
         if (redeemCode.sync && config.getTemplate(redeemCode.template)?.syncLockedStatus == true) return sendMessage(JMessage.Code.Modify.SYNC_LOCKED)
-        placeHolder.templateLocked = redeemCode.sync.toString()
-        if (redeemCode.template.isBlank()) return !sendMessage(JMessage.Template.NOT_FOUND)
+        placeHolder.templateSync = redeemCode.sync.toString()
         redeemCode.sync = !redeemCode.sync
+        if (redeemCode.template.isBlank()) return !sendMessage(JMessage.Template.NOT_FOUND)
         sendMessage(JMessage.Code.Modify.SYNC_STATUS)
         return upsertCode(redeemCode)
     }

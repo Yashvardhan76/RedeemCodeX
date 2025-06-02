@@ -39,7 +39,7 @@ redeemx.admin.use.reload
 PLACEHOLDER
 
 code
-locked
+sync
 enabled
 template
 duration

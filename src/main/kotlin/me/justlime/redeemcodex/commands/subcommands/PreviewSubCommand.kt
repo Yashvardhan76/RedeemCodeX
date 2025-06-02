@@ -64,7 +64,7 @@ class PreviewSubCommand(val plugin: RedeemCodeX) : JSubCommand {
                     }
                 } else {
                     redeemCode.commands.forEach {
-                        console.server.dispatchCommand(console, JService.applyColors(JService.applyPlaceholders(it, placeHolder) {
+                        console.server.dispatchCommand(console, JService.applyHexColors(JService.applyPlaceholders(it, placeHolder) {
                             plugin.server.pluginManager.isPluginEnabled("PlaceholderAPI")
                         }))
                     }
@@ -103,7 +103,7 @@ class PreviewSubCommand(val plugin: RedeemCodeX) : JSubCommand {
                 } else {
                     if(redeemTemplate.sound.isNotBlank()) redeemTemplate.let{ SoundState(Sound.valueOf(it.sound),it.soundVolume,it.soundPitch).playSound(sender) }
                     redeemTemplate.commands.forEach {
-                        console.server.dispatchCommand(console, JService.applyColors(JService.applyPlaceholders(it, placeHolder) {
+                        console.server.dispatchCommand(console, JService.applyHexColors(JService.applyPlaceholders(it, placeHolder) {
                             plugin.server.pluginManager.isPluginEnabled("PlaceholderAPI")
                         }))
                     }

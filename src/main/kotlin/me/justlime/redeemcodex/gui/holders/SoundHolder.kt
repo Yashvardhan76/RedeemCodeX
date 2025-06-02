@@ -178,7 +178,7 @@ class SoundHolder(val plugin: RedeemCodeX, val player: Player, private val redee
 
     private fun handleSaveClick(player: Player) {
         player.sendMessage(
-            JService.applyColors(
+            JService.applyHexColors(
                 guiConfig.getString("save-message", "&aSound for &e{code} &ahas been saved.")?.replace("{code}", getRedeemName()) ?: ""
             )
         )

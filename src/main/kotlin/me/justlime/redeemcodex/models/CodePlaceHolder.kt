@@ -14,7 +14,6 @@ package me.justlime.redeemcodex.models
 
 import me.justlime.redeemcodex.RedeemCodeX
 import me.justlime.redeemcodex.utilities.JService
-import org.bukkit.Material
 import org.bukkit.command.CommandSender
 
 data class CodePlaceHolder(
@@ -25,7 +24,7 @@ data class CodePlaceHolder(
     var code: String = "none",
     var totalCodes: Int = 1,
     var template: String = "none",
-    var templateLocked: String = "none",
+    var templateSync: String = "none",
     var command: String = "none",
     var commandId: String = "none",
     var duration: String = "none",
@@ -83,7 +82,7 @@ data class CodePlaceHolder(
                 target = redeemCode.target.toString(),
                 usedBy = redeemCode.usedBy.toString(),
                 template = redeemCode.template,
-                templateLocked = redeemCode.sync.toString(),
+                templateSync = redeemCode.sync.toString(),
                 cooldown = redeemCode.cooldown,
                 isExpired = JService.isExpired(redeemCode).toString(),
                 minLength = plugin.configRepo.getConfigValue("code-minimum-digit"),
@@ -109,7 +108,7 @@ data class CodePlaceHolder(
                 usedBy = redeemCode.usedBy.map {
                     "${it.key} = ${it.value}"
                 }.joinToString(", "),
-                templateLocked = redeemCode.sync.toString(),
+                templateSync = redeemCode.sync.toString(),
                 cooldown = redeemCode.cooldown,
                 minLength = "none",
                 maxLength = "none",
@@ -122,7 +121,7 @@ data class CodePlaceHolder(
                 sender = sender,
                 template = template.name,
                 status = template.defaultEnabledStatus.toString(),
-                templateLocked = template.defaultSync.toString(),
+                templateSync = template.defaultSync.toString(),
 
                 duration = template.duration,
                 cooldown = template.cooldown,

@@ -50,8 +50,8 @@ class RewardsHolder(val sender: Player, private val redeemData: RedeemType, row:
         outLinedSlots = InventoryManager.outlineInventory(inventory)
         val saveItem = guiConfig.getConfigurationSection("save.item") ?: guiConfig.createSection("save.item")
         val saveMaterial = saveItem.getString("material")?.let { Material.valueOf(it) } ?: Material.NETHER_STAR
-        val saveName = JService.applyColors(saveItem.getString("name") ?: "").replace("{code}", getRedeemName())
-        val saveLore = saveItem.getStringList("lore").map { JService.applyColors(it).replace("{code}", getRedeemName()) }
+        val saveName = JService.applyHexColors(saveItem.getString("name") ?: "").replace("{code}", getRedeemName())
+        val saveLore = saveItem.getStringList("lore").map { JService.applyHexColors(it).replace("{code}", getRedeemName()) }
         val saveGlint = saveItem.getBoolean("glint", false)
         inventory.setItem(saveItem.getInt("slot", 49), createItem(saveMaterial, saveName, saveLore, saveGlint))
     }
@@ -127,7 +127,7 @@ class RewardsHolder(val sender: Player, private val redeemData: RedeemType, row:
         val player = if (inventory.viewers.first() is Player) holder.inventory.viewers.first() as Player else return false
         val saveItemMessage: String = guiConfig.getString("save-message", "49") ?: "&aRewards Saved"
 
-        player.sendMessage(JService.applyColors(saveItemMessage))
+        player.sendMessage(JService.applyHexColors(saveItemMessage))
 
         val codeRepo = RedeemCodeRepository(plugin) //Used to update the database
         val configRepo = ConfigRepository(plugin) //Used to send the msg

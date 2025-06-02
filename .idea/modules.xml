@@ -2,6 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
+      <module fileurl="file://$PROJECT_DIR$/.idea/RedeemCodeX.iml" filepath="$PROJECT_DIR$/.idea/RedeemCodeX.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/RedeemCodeX.main.iml" filepath="$PROJECT_DIR$/.idea/modules/RedeemCodeX.main.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/RedeemCodeX.test.iml" filepath="$PROJECT_DIR$/.idea/modules/RedeemCodeX.test.iml" />
     </modules>

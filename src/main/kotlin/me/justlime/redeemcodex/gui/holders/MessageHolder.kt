@@ -110,9 +110,9 @@ class MessageHolder(
 
         listOf(messageItem, actionBarItem, titleItem, saveItem).forEachIndexed { index, item ->
             val material = item.getString("material")?.let { Material.valueOf(it) } ?: Material.PAPER
-            val name = JService.applyColors(item.getString("name") ?: "").replace("{code}", getRedeemName())
+            val name = JService.applyHexColors(item.getString("name") ?: "").replace("{code}", getRedeemName())
             val lore = item.getStringList("lore").map {
-                JService.applyColors(it).replace("{code}", getRedeemName())
+                JService.applyHexColors(it).replace("{code}", getRedeemName())
             }
             val slot = item.getInt("slot", 10 + index)
             val glint = item.getBoolean("glint", false)
@@ -133,7 +133,7 @@ class MessageHolder(
                 finalizeInput(player, "§aChat messages updated.")
                 listener.unregisterCallback(player)
             } else {
-                val formattedMessage = JService.applyColors(message)
+                val formattedMessage = JService.applyHexColors(message)
                 messageState.text.add(formattedMessage)
                 player.sendMessage("§aAdded: $formattedMessage")
             }
@@ -148,7 +148,7 @@ class MessageHolder(
         listener.registerCallback(player, timeout * 20, {
             handleInputTimeout("§cAction bar message input timed out.")
         }, callback = { message ->
-            messageState.actionbar = JService.applyColors(message)
+            messageState.actionbar = JService.applyHexColors(message)
             finalizeInput(player, "§aActionbar message set to: ${messageState.actionbar}")
         })
     }
@@ -179,8 +179,8 @@ class MessageHolder(
     private fun parseTitleInput(parts: List<String>): Title? {
         return try {
             Title(
-                title = JService.applyColors(parts[0]),
-                subTitle = JService.applyColors(parts[1]),
+                title = JService.applyHexColors(parts[0]),
+                subTitle = JService.applyHexColors(parts[1]),
                 fadeIn = parts[2].toIntOrNull() ?: 1,
                 stay = parts[3].toIntOrNull() ?: 2,
                 fadeOut = parts[4].toIntOrNull() ?: 1

@@ -95,10 +95,10 @@ object InventoryManager {
             Material.PAPER
         }
         val nameWithPH = JService.applyPlaceholders(section.getString("name") ?: "", placeHolder, isPlaceHolderHooked)
-        val name = JService.applyColors(nameWithPH)
+        val name = JService.applyHexColors(nameWithPH)
         val newLoreWithPH = if (lore.isEmpty()) section.getStringList("lore")
             .map { JService.applyPlaceholders(it ?: "", placeHolder, isPlaceHolderHooked) } else lore
-        val newLore = newLoreWithPH.map { JService.applyColors(it) }
+        val newLore = newLoreWithPH.map { JService.applyHexColors(it) }
         val glow = section.getBoolean("glow")
         val slotList = section.getIntegerList("slot")
         val item = createItem(material, name, newLore, glow, flags)
@@ -129,8 +129,8 @@ object InventoryManager {
 
     fun createCertainItem(section: ConfigurationSection, itemSlot: Int, itemSlots: List<Int>, inventory: Inventory) {
         val backMaterial = Material.valueOf(section.getString("item") ?: "PAPER")
-        val backName = JService.applyColors(section.getString("name") ?: " ")
-        val backLore = section.getStringList("lore").map { JService.applyColors(it) }
+        val backName = JService.applyHexColors(section.getString("name") ?: " ")
+        val backLore = section.getStringList("lore").map { JService.applyHexColors(it) }
         val backGlow = section.getBoolean("glow")
         val flags = section.getStringList("flags")
         if (itemSlots.isNotEmpty()) {

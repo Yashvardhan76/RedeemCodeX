@@ -174,9 +174,13 @@ code:
       chat:
         - "{prefix}"
         - ""
-        - "&cProperty &e{property}&c is locked!"
-        - "&bUse `/rcx modify template {template} {property} <value>`"
-        - "&bor disabled the specific `sync property` in &etemplate.yml"
+        - "&cProperty &e{property}&c is currently synchronized with {template}!"
+        - ""
+        - "&bTo disable synchronization, choose one of the following options:"
+        - "&#e0b0161. /rcx modify code {code} sync"
+        - "&#e0b0162. /rcx modify template code {code} {property} <value>"
+        - "&#e0b0163. Disable the {property} sync property in the template.yml"
+
     invalid-value: "&cInvalid value provided. Please provide a valid integer or duration."
     invalid-id: "&cInvalid ID provided. Please provide a valid ID."
 
@@ -184,9 +188,9 @@ code:
       chat:
         - "{prefix}"
         - ""
-        - "&aSync Status Set to &b{locked}&a for &e{code}"
+        - "&aSync Status Set to &b{sync}&a for &e{code}"
         - ""
-      actionbar: "&aLocked Status For code {code} set to {&b{locked}&a"
+      actionbar: "&aSync Status for code {code} set to {&b{sync}&a"
 
     enabled-status:
       chat:
@@ -325,7 +329,7 @@ code:
         - "&aCode: &e{code}"
         - "&aEnabled: &b{status}"
         - "&aTemplate: &b{template}"
-        - "&aLocked: &b{locked}"
+        - "&aSync: &b{sync}"
         - "&aMax Redeems: &e{max_redemption}"
         - "&aPlayers Limit: &e{player_redeemed}/&e{max_player_limit}"
         - "&aPin: &e{pin}"

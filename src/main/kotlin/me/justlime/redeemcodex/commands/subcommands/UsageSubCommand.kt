@@ -66,7 +66,7 @@ class UsageSubCommand(plugin: RedeemCodeX) : JSubCommand {
                 placeHolder.target = redeemCode.target.joinToString(", ")
                 placeHolder.command = commandPrinter(redeemCode.commands)
                 if(placeHolder.pin == "none") placeHolder.pin = config.getMessage(JMessage.Code.Placeholder.DISABLED,placeHolder)
-                if (placeHolder.permission == "") placeHolder.permission = JService.applyColors(config.getMessage(JMessage.Code.Placeholder.DISABLED,
+                if (placeHolder.permission == "") placeHolder.permission = JService.applyHexColors(config.getMessage(JMessage.Code.Placeholder.DISABLED,
                     placeHolder))
 
                 sendMessage(JMessage.Code.Usages.USAGE)
@@ -81,7 +81,7 @@ class UsageSubCommand(plugin: RedeemCodeX) : JSubCommand {
                 placeHolder = CodePlaceHolder.applyByTemplate(template, sender)
                 placeHolder.command = commandPrinter(template.commands)
                 if(placeHolder.pin == "none") placeHolder.pin = config.getMessage(JMessage.Code.Placeholder.DISABLED,placeHolder)
-                if (placeHolder.permission == "") placeHolder.permission = JService.applyColors(config.getMessage(JMessage.Code.Placeholder.DISABLED,
+                if (placeHolder.permission == "") placeHolder.permission = JService.applyHexColors(config.getMessage(JMessage.Code.Placeholder.DISABLED,
                     placeHolder))
 
                 sendMessage(JMessage.Template.USAGE)

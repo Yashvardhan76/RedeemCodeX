@@ -40,7 +40,7 @@ class ConfigImpl(private val plugin: RedeemCodeX) : ConfigDao {
     override fun getString(path: String, configFile: JFiles, applyColor: Boolean): String? {
         val fileConfig = configManager.getConfig(configFile)
         val message = fileConfig.getString(path) ?: return null
-        return if (applyColor) JService.applyColors(message) else message
+        return if (applyColor) JService.applyHexColors(message) else message
     }
 
     override fun getMessage(key: String): String {

@@ -22,17 +22,17 @@ data class MessageState(
 ) {
     fun sendMessage(player: Player, placeHolder: CodePlaceHolder, isPlaceholderHooked: () -> Boolean = { false }) {
         actionbar.let {
-            val newBar = JService.applyColors(JService.applyPlaceholders(it, placeHolder, isPlaceholderHooked))
+            val newBar = JService.applyHexColors(JService.applyPlaceholders(it, placeHolder, isPlaceholderHooked))
             if (it.isNotEmpty()) player.spigot().sendMessage(ChatMessageType.ACTION_BAR, TextComponent(newBar.removePrefix(" ")))
         }
         title.let {
-            val newTitle = JService.applyColors(JService.applyPlaceholders(it.title, placeHolder, isPlaceholderHooked))
-            val newSubTitle = JService.applyColors(JService.applyPlaceholders(it.subTitle, placeHolder, isPlaceholderHooked))
+            val newTitle = JService.applyHexColors(JService.applyPlaceholders(it.title, placeHolder, isPlaceholderHooked))
+            val newSubTitle = JService.applyHexColors(JService.applyPlaceholders(it.subTitle, placeHolder, isPlaceholderHooked))
             if (it.title.isNotEmpty()) player.sendTitle(newTitle.removePrefix(" "), newSubTitle, it.fadeIn, it.stay, it.fadeOut)
         }
         text.let {
             if (it.isNotEmpty()) it.forEach { msg ->
-                val newMsg = JService.applyColors(JService.applyPlaceholders(msg, placeHolder, isPlaceholderHooked))
+                val newMsg = JService.applyHexColors(JService.applyPlaceholders(msg, placeHolder, isPlaceholderHooked))
                 player.sendMessage(newMsg)
             }
         }
