@@ -156,6 +156,8 @@ sealed interface JMessage {
             const val INVALID_ID = "template.modify.invalid-id"
             const val NOT_FOUND = "template.modify.not-found"
             const val SET_PERMISSION = "template.modify.set-permission"
+            const val ENABLED_PERMISSION = "template.modify.enabled-permission"
+            const val DISABLED_PERMISSION = "template.modify.disabled-permission"
             const val SET_DURATION = "template.modify.set-duration"
             const val ADD_DURATION = "template.modify.add-duration"
             const val REMOVE_DURATION = "template.modify.remove-duration"

@@ -31,6 +31,7 @@ data class CodePlaceHolder(
     var status: String = "none",
 
     var permission: String = "none",
+    var requiredPermission: String = "none",
     var pin: String = "none",
     var target: String = "none",
     var cooldown: String = "none",

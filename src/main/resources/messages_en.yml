@@ -249,7 +249,7 @@ code:
       chat:
         - "{prefix}"
         - ""
-        - "&aPermission Set to {permission} for &e{code}"
+        - "&bPermission set to &a{permission} &bfor &e{code}"
         - ""
 
     set-target:
@@ -383,41 +383,41 @@ template:
       chat:
         - "{prefix}"
         - ""
-        - "&aEnabled Status Set to &b{status}&a for &b{template}"
+        - "&bEnabled Status Set to &b{status}&a for &b{template}"
         - ""
       actionbar: "&aEnabled Status For template &b{template} set to &b{status}&a"
     set-redemption:
       chat:
         - "{prefix}"
         - ""
-        - "&aRedemption Set to &b{max_redemption}&a for &b{template}"
+        - "&bRedemption Set to &b{max_redemption}&a for &b{template}"
         - ""
       actionbar: "&aMaximum Redemption Set to &b{max_redemption} for Each Player"
     set-player-limit:
       chat:
         - "{prefix}"
         - ""
-        - "&aPlayer Limit Set to &b{max_player_limit} &afor &b{template}"
+        - "&bPlayer Limit Set to &b{max_player_limit} &afor &b{template}"
         - ""
       actionbar: "&aPlayer Limit Set to {max_player_limit} for &b{template}"
     set-pin:
       chat:
         - "{prefix}"
         - ""
-        - "&aPin Set to &b{pin} for &b{template}"
+        - "&bPin Set to &b{pin} for &b{template}"
         - ""
     set-cooldown:
       chat:
         - "{prefix}"
         - ""
-        - "&aCooldown Set to {cooldown} for &b{template}"
+        - "&bCooldown Set to {cooldown} for &b{template}"
         - ""
 
     set-duration:
       chat:
         - "{prefix}"
         - ""
-        - "&aDuration &aSet &b{duration} for &b{template}"
+        - "&bDuration &aSet &b{duration} for &b{template}"
         - ""
     add-duration:
       chat:
@@ -429,16 +429,27 @@ template:
       chat:
         - "{prefix}"
         - ""
-        - "&aDuration &b{duration} &aRemoved from for &b{template}"
+        - "&cDuration &b{duration} &aRemoved from for &b{template}"
         - ""
 
     set-permission:
       chat:
         - "{prefix}"
         - ""
-        - "&aPermission Set to {permission} for &b{template}"
+        - "&bPermission Set to {permission} for &b{template}"
         - ""
-
+    enabled-permission:
+      chat:
+        - "{prefix}"
+        - ""
+        - "&aPermission is enabled for &b{template}"
+        - ""
+    disabled-permission:
+      chat:
+        - "{prefix}"
+        - ""
+        - "&cPermission is disabled for &b{template}"
+        - ""
     set-command:
       chat:
         - "{prefix}"

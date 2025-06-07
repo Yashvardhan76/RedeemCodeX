@@ -189,6 +189,7 @@ class ModifySubCommand(private val plugin: RedeemCodeX) : JSubCommand {
             JTab.Modify.Edit.REWARD,
             JTab.Modify.Edit.MESSAGE,
             JTab.Modify.Edit.SOUND,
+            JTab.Modify.SET_PERMISSION,
         )
         val optionsWithValue = mutableListOf(
             JTab.Modify.SET_TEMPLATE,
@@ -208,12 +209,14 @@ class ModifySubCommand(private val plugin: RedeemCodeX) : JSubCommand {
             JTab.Modify.ADD_COMMAND,
             JTab.Modify.REMOVE_COMMAND,
         )
+        if (placeHolder.property in options && args.size == 4) {
+            return modify(redeemCode, placeHolder.property)
+        }
 
         if (placeHolder.property in optionsWithValue && args.size < 5) return sendMessage(JMessage.Code.Modify.INVALID_VALUE)
         if (placeHolder.property in optionsWithValues && args.size < 5) return sendMessage(JMessage.Code.Modify.INVALID_VALUE)
 
         when (placeHolder.property) {
-            in options -> return modify(redeemCode, placeHolder.property)
             in optionsWithValue -> return modify(redeemCode, placeHolder.property, args[4])
             in optionsWithValues -> return modify(redeemCode, placeHolder.property, args.drop(4).toMutableList())
         }
@@ -232,6 +235,7 @@ class ModifySubCommand(private val plugin: RedeemCodeX) : JSubCommand {
             JTab.Modify.ENABLED,
             JTab.Modify.SYNC,
             JTab.Modify.SET_PERMISSION,
+            JTab.Modify.REQUIRED_PERMISSION,
             JTab.Modify.LIST_TARGET,
             JTab.Modify.LIST_COMMAND,
             JTab.Modify.Edit.REWARD,
@@ -246,23 +250,24 @@ class ModifySubCommand(private val plugin: RedeemCodeX) : JSubCommand {
             JTab.Modify.SET_REDEMPTION,
             JTab.Modify.SET_PLAYER_LIMIT,
             JTab.Modify.SET_PIN,
+            JTab.Modify.SET_PERMISSION,
 
-            )
+        )
         val optionsWithValues = mutableListOf(
             JTab.Modify.SET_COMMAND,
             JTab.Modify.ADD_COMMAND,
             JTab.Modify.REMOVE_COMMAND,
         )
+        if (placeHolder.property in options && args.size == 4) return modify(redeemTemplate, placeHolder.property)
 
         if (placeHolder.property in optionsWithValue && args.size < 5) return sendMessage(JMessage.Template.Modify.INVALID_VALUE)
         if (placeHolder.property in optionsWithValues && args.size < 5) return sendMessage(JMessage.Template.Modify.INVALID_VALUE)
 
         when (placeHolder.property) {
-            in options -> return modify(redeemTemplate, placeHolder.property)
             in optionsWithValue -> return modify(redeemTemplate, placeHolder.property, args[4])
             in optionsWithValues -> return modify(redeemTemplate, placeHolder.property, args.drop(4).toMutableList())
         }
-        return false
+        return sendMessage(JMessage.Command.UNKNOWN_COMMAND)
     }
 
     private fun modify(redeemCode: RedeemCode, property: String): Boolean {
@@ -283,8 +288,8 @@ class ModifySubCommand(private val plugin: RedeemCodeX) : JSubCommand {
         return when (property) {
             JTab.Modify.SYNC -> upsertTemplate(redeemTemplate)
             JTab.Modify.ENABLED -> toggleEnabledStatus(redeemTemplate)
+            JTab.Modify.REQUIRED_PERMISSION -> toggleRequirePermission(redeemTemplate)
             JTab.Modify.SET_PERMISSION -> setPermission(redeemTemplate)
-            JTab.Modify.REQUIRED_PERMISSION -> setPermission(redeemTemplate)
             JTab.Modify.LIST_COMMAND -> {
                 val commands = redeemTemplate.commands.withIndex().joinToString("\n")
                 placeHolder.sender.sendMessage(commands)
@@ -546,7 +551,7 @@ class ModifySubCommand(private val plugin: RedeemCodeX) : JSubCommand {
         }
 
         //Toggle Permission
-        if (redeemCode.permission.isNotBlank() && redeemCode.permission != "false") {
+        if (redeemCode.permission.isNotBlank()) {
             redeemCode.permission = ""
             placeHolder.permission = config.getMessage(JMessage.Code.Placeholder.DISABLED, placeHolder)
             sendMessage(JMessage.Code.Modify.SET_PERMISSION)
@@ -560,19 +565,26 @@ class ModifySubCommand(private val plugin: RedeemCodeX) : JSubCommand {
         return upsertCode(redeemCode)
     }
 
+    private fun toggleRequirePermission(redeemTemplate: RedeemTemplate): Boolean {
+        redeemTemplate.permissionRequired = !redeemTemplate.permissionRequired
+        if (redeemTemplate.permissionRequired) sendMessage(JMessage.Template.Modify.ENABLED_PERMISSION)
+        else sendMessage(JMessage.Template.Modify.DISABLED_PERMISSION)
+        placeHolder.requiredPermission = redeemTemplate.permissionRequired.toString()
+        return upsertTemplate(redeemTemplate)
+    }
+
     private fun setPermission(redeemTemplate: RedeemTemplate, value: String = ""): Boolean {
         //Set Custom Permission
         if (value.isNotBlank() && value != "false") {
             redeemTemplate.permissionValue = value
-            redeemTemplate.permissionRequired = true
             placeHolder.permission = redeemTemplate.permissionValue
             sendMessage(JMessage.Template.Modify.SET_PERMISSION)
             return upsertTemplate(redeemTemplate)
         }
-
-        //Toggle Permission
-        redeemTemplate.permissionRequired = !redeemTemplate.permissionRequired
-        placeHolder.permission = config.getMessage(JMessage.Code.Placeholder.DISABLED, placeHolder)
+        //Set Predefined Permission
+        val templatePermission = config.getTemplateValue(redeemTemplate.name, JTemplate.PERMISSION_VALUE.property)
+        redeemTemplate.permissionValue = templatePermission
+        placeHolder.permission = redeemTemplate.permissionValue
         sendMessage(JMessage.Template.Modify.SET_PERMISSION)
         return upsertTemplate(redeemTemplate)
     }

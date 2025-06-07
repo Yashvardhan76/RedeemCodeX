@@ -73,7 +73,7 @@ sealed interface JTab {
             const val ADD_DURATION = "addDuration"
             const val REMOVE_DURATION = "removeDuration"
 
-            const val SET_PERMISSION = "permission"
+            const val SET_PERMISSION = "setPermission"
             const val REQUIRED_PERMISSION = "requiredPermission"
             const val SET_PIN = "pin"
 
