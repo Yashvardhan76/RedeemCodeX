@@ -48,10 +48,13 @@ data class CodePlaceHolder(
     var totalPlayerUsage: String = "none",
     var totalRedemption: String = "none",
 
+
     var validTo: String = "none",
     var validFrom: String = "none",
     var lastRedeemed: String = "none",
     var sound: String = "None",
+
+    var chatMessage: String = ""
 ) {
     companion object {
         fun fetchByDB(plugin: RedeemCodeX, code: String, sender: CommandSender): CodePlaceHolder {

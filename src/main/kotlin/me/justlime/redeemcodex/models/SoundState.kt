@@ -18,7 +18,7 @@ import java.io.Serializable
 
 
 data class SoundState(
-    val sound: Sound?,
+    var sound: Sound?,
     var volume: Float,
     var pitch: Float
 ): Serializable {

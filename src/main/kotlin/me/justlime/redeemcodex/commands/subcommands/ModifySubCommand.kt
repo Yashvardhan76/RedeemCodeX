@@ -31,6 +31,7 @@ import me.justlime.redeemcodex.models.RedeemCode
 import me.justlime.redeemcodex.models.RedeemTemplate
 import me.justlime.redeemcodex.utilities.JLogger
 import me.justlime.redeemcodex.utilities.JService
+import org.bukkit.Sound
 import org.bukkit.command.CommandSender
 import org.bukkit.entity.Player
 
@@ -84,8 +85,10 @@ class ModifySubCommand(private val plugin: RedeemCodeX) : JSubCommand {
             JTab.Modify.SET_COOLDOWN,
             JTab.Modify.SET_TEMPLATE,
             JTab.Modify.Edit.REWARD,
-            JTab.Modify.Edit.MESSAGE,
             JTab.Modify.Edit.SOUND,
+            JTab.Modify.ADD_MSG,
+            JTab.Modify.REMOVE_MSG,
+            JTab.Modify.SET_MSG,
         )
         val templateOptions = mutableListOf(
             JTab.Modify.ENABLED,
@@ -105,8 +108,10 @@ class ModifySubCommand(private val plugin: RedeemCodeX) : JSubCommand {
             JTab.Modify.SET_COOLDOWN,
             JTab.Modify.SET_TEMPLATE,
             JTab.Modify.Edit.REWARD,
-            JTab.Modify.Edit.MESSAGE,
             JTab.Modify.Edit.SOUND,
+            JTab.Modify.ADD_MSG,
+            JTab.Modify.REMOVE_MSG,
+            JTab.Modify.SET_MSG,
         )
         val completions = mutableListOf<String>()
 
@@ -187,8 +192,7 @@ class ModifySubCommand(private val plugin: RedeemCodeX) : JSubCommand {
             JTab.Modify.LIST_TARGET,
             JTab.Modify.LIST_COMMAND,
             JTab.Modify.Edit.REWARD,
-            JTab.Modify.Edit.MESSAGE,
-            JTab.Modify.Edit.SOUND,
+
             JTab.Modify.SET_PERMISSION,
         )
         val optionsWithValue = mutableListOf(
@@ -208,6 +212,10 @@ class ModifySubCommand(private val plugin: RedeemCodeX) : JSubCommand {
             JTab.Modify.SET_COMMAND,
             JTab.Modify.ADD_COMMAND,
             JTab.Modify.REMOVE_COMMAND,
+            JTab.Modify.ADD_MSG,
+            JTab.Modify.REMOVE_MSG,
+            JTab.Modify.SET_MSG,
+            JTab.Modify.Edit.SOUND,
         )
         if (placeHolder.property in options && args.size == 4) {
             return modify(redeemCode, placeHolder.property)
@@ -252,11 +260,14 @@ class ModifySubCommand(private val plugin: RedeemCodeX) : JSubCommand {
             JTab.Modify.SET_PIN,
             JTab.Modify.SET_PERMISSION,
 
-        )
+            )
         val optionsWithValues = mutableListOf(
             JTab.Modify.SET_COMMAND,
             JTab.Modify.ADD_COMMAND,
             JTab.Modify.REMOVE_COMMAND,
+            JTab.Modify.ADD_MSG,
+            JTab.Modify.REMOVE_MSG,
+            JTab.Modify.SET_MSG,
         )
         if (placeHolder.property in options && args.size == 4) return modify(redeemTemplate, placeHolder.property)
 
@@ -297,9 +308,6 @@ class ModifySubCommand(private val plugin: RedeemCodeX) : JSubCommand {
             }
 
             JTab.Modify.Edit.REWARD -> openGUI(redeemTemplate, JTab.Modify.Edit.REWARD, placeHolder.sender)
-            JTab.Modify.Edit.MESSAGE -> openGUI(redeemTemplate, JTab.Modify.Edit.MESSAGE, placeHolder.sender)
-            JTab.Modify.Edit.SOUND -> openGUI(redeemTemplate, JTab.Modify.Edit.SOUND, placeHolder.sender)
-
             else -> false
         }
     }
@@ -349,6 +357,11 @@ class ModifySubCommand(private val plugin: RedeemCodeX) : JSubCommand {
                 else !sendMessage(JMessage.Code.Modify.INVALID_ID)
             )
 
+            JTab.Modify.ADD_MSG -> editChatMessage(redeemCode, value, true)
+            JTab.Modify.REMOVE_MSG -> editChatMessage(redeemCode, value, false)
+            JTab.Modify.SET_MSG -> editChatMessage(redeemCode, value, null)
+            JTab.Modify.Edit.SOUND -> editSound(redeemCode, value[0], value[1].toFloatOrNull(), value[2].toFloatOrNull())
+
             else -> false
         }
     }
@@ -364,6 +377,10 @@ class ModifySubCommand(private val plugin: RedeemCodeX) : JSubCommand {
                 redeemTemplate, value[0].toIntOrNull() ?: return if (value[0] == "*") removeAllCommand(redeemTemplate)
                 else return !sendMessage(JMessage.Code.Modify.INVALID_ID)
             )
+
+            JTab.Modify.ADD_MSG -> editChatMessage(redeemTemplate, value, true)
+            JTab.Modify.REMOVE_MSG -> editChatMessage(redeemTemplate, value, false)
+            JTab.Modify.SET_MSG -> editChatMessage(redeemTemplate, value, null)
 
             else -> false
         }
@@ -456,6 +473,60 @@ class ModifySubCommand(private val plugin: RedeemCodeX) : JSubCommand {
             }
         }
         return true
+    }
+
+    private fun editChatMessage(redeemCode: RedeemCode, message: MutableList<String>, isAdding: Boolean?): Boolean {
+        if (redeemCode.sync && config.getTemplate(redeemCode.template)?.syncMessages == true) return sendMessage(JMessage.Code.Modify.SYNC_LOCKED)
+        if (isAdding == null) {
+            val id = message[0].toIntOrNull() ?: return !sendMessage(JMessage.Code.Modify.INVALID_ID)
+            if (redeemCode.messages.text.isEmpty()) {
+                redeemCode.messages.text.add(message.joinToString(" "))
+            } else if (redeemCode.messages.text.size < id) return !sendMessage(JMessage.Code.Modify.INVALID_ID)
+            else redeemCode.messages.text[id] = message.drop(1).joinToString(" ")
+
+        } else if (isAdding) {
+            redeemCode.messages.text.add(message.joinToString(" "))
+        } else {
+            val index = message[0].toIntOrNull() ?: return !sendMessage(JMessage.Code.Modify.INVALID_ID)
+            if((redeemCode.messages.text.size <= index) || (index < 0)) return !sendMessage(JMessage.Code.Modify.INVALID_ID)
+            redeemCode.messages.text.removeAt(index = index)
+        }
+        placeHolder.chatMessage = redeemCode.messages.text.joinToString("\n")
+        sendMessage(JMessage.Code.Gui.Save.MESSAGE)
+        return upsertCode(redeemCode)
+    }
+
+    private fun editChatMessage(redeemTemplate: RedeemTemplate, message: MutableList<String>, isAdding: Boolean?): Boolean {
+        if (isAdding == null) {
+            val id = message[0].toIntOrNull() ?: return !sendMessage(JMessage.Code.Modify.INVALID_ID)
+            if (redeemTemplate.messages.text.isEmpty()) {
+                redeemTemplate.messages.text.add(message.joinToString(" "))
+            } else if (redeemTemplate.messages.text.size < id) return !sendMessage(JMessage.Code.Modify.INVALID_ID)
+            else redeemTemplate.messages.text[id] = message.drop(1).joinToString(" ")
+        } else if (isAdding) {
+            redeemTemplate.messages.text.add(message.joinToString(" "))
+        } else {
+            val index = message[0].toIntOrNull() ?: return !sendMessage(JMessage.Code.Modify.INVALID_ID)
+            if((redeemTemplate.messages.text.size <= index) || (index < 0)) return !sendMessage(JMessage.Code.Modify.INVALID_ID)
+            redeemTemplate.messages.text.removeAt(index = index)
+        }
+        placeHolder.chatMessage = redeemTemplate.messages.text.joinToString("\n")
+        sendMessage(JMessage.Code.Gui.Save.MESSAGE)
+        return upsertTemplate(redeemTemplate)
+    }
+
+    private fun editSound(redeemCode: RedeemCode, sound: String, pitch: Float?, volume: Float?): Boolean {
+        if (redeemCode.sync && config.getTemplate(redeemCode.template)?.syncSound == true) return sendMessage(JMessage.Code.Modify.SYNC_LOCKED)
+        val validSound: Sound = try {
+            Sound.valueOf(sound)
+        } catch (e: Exception) {
+            return sendMessage(JMessage.Code.Modify.INVALID_VALUE)
+        }
+        redeemCode.sound.sound = validSound
+        redeemCode.sound.pitch = pitch ?: 1f
+        redeemCode.sound.volume = volume ?: 1f
+        sendMessage(JMessage.Code.Gui.Save.SOUND)
+        return upsertCode(redeemCode)
     }
 
     private fun setRedemption(redeemCode: RedeemCode, value: String): Boolean {

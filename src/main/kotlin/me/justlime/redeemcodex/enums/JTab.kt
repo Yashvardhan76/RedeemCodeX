@@ -85,6 +85,10 @@ sealed interface JTab {
             const val SET_TEMPLATE = "setTemplate"
             const val SET_COOLDOWN = "cooldown"
             const val EDIT = "edit"
+
+            const val ADD_MSG = "addMsg"
+            const val REMOVE_MSG = "removeMsg"
+            const val SET_MSG = "setMsg"
         }
 
         sealed interface Edit : JTab {
